@@ -1320,6 +1320,9 @@
   .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-fonts .setting-row {
     gap: 9px;
   }
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-fonts .setting-row {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
   .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-controls .autoscroll-compact {
     gap: 8px;
   }
@@ -1675,6 +1678,9 @@
   }
   .setting-label-plain {
     padding-top: 10px;
+  }
+  .setting-label-split {
+    line-height: 1.05;
   }
   .stepper {
     display: grid;
@@ -5630,7 +5636,7 @@ function loadCurrentSongNotes() {
                 sectionTitleHtml('font_download', 'Font Settings'),
                 '<div class="control-group compact-controls">',
                   '<div class="setting-row setting-row-inline">',
-                    '<div class="setting-label">Chord size</div>',
+                    '<div class="setting-label setting-label-split">Chord<br>size</div>',
                     '<div class="stepper">',
                       '<button class="btn btn-icon"' + (state.chordSizeLevel <= 1 ? ' disabled' : '') + ' type="button" data-app-action="change-chord-size" data-app-delta="-1">−</button>',
                       '<div class="stepper-value">' + sizeLabel(state.chordSizeLevel) + '</div>',
@@ -5638,7 +5644,7 @@ function loadCurrentSongNotes() {
                     '</div>',
                   '</div>',
                   '<div class="setting-row setting-row-inline">',
-                    '<div class="setting-label">Lyrics size</div>',
+                    '<div class="setting-label setting-label-split">Lyrics<br>size</div>',
                     '<div class="stepper">',
                       '<button class="btn btn-icon"' + (state.fontSizeLevel <= 1 ? ' disabled' : '') + ' type="button" data-app-action="change-font-size" data-app-delta="-1">−</button>',
                       '<div class="stepper-value">' + sizeLabel(state.fontSizeLevel) + '</div>',
@@ -6237,7 +6243,7 @@ function renderFloatingPlayer(song) {
     },
 
     getViewerSidebarCompactThreshold: function() {
-      return 299;
+      return 280;
     },
 
     getViewerPaneResizerWidth: function() {
