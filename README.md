@@ -21,14 +21,6 @@ https://over-keys.github.io/Personal-ChordPro-Viewer/
 - `index.html` — main application
 - `manual.html` — user manual
 
-## Local use
-
-1. Download `index.html` and `manual.html`
-2. Put them in the same folder
-3. Open `index.html` in your browser
-
 ## Notes
 
-- This app is designed mainly for personal use
-- If opened locally, YouTube playback runs in a separate window
-- For a full backup, export both song data and notes
+- This app is designed for personal use
