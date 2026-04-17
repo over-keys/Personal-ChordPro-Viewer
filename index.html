@@ -2345,6 +2345,25 @@
     color: var(--muted);
     font-weight: 700;
   }
+  .cw-tempo-marker {
+    display: inline;
+  }
+  .cw-tempo-blink {
+    display: inline-block;
+    margin-left: 0.32em;
+    color: #dc2626;
+    font-size: 0.92em;
+    line-height: 1;
+    vertical-align: baseline;
+    animation-name: cw-tempo-blink;
+    animation-duration: var(--cw-tempo-period, 1s);
+    animation-timing-function: steps(1, end);
+    animation-iteration-count: infinite;
+  }
+  @keyframes cw-tempo-blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0.18; }
+  }
   .cw-plain-line {
     white-space: pre-wrap;
     margin: 4px 0;
@@ -3250,6 +3269,23 @@
     ].join('');
   }
 
+  function renderTempoAwareComment(text) {
+    const source = String(text || '');
+    const match = source.match(/((?:(?:BPM|Tempo)|♩)\s*(?::|=|≈|≒)\s*(\d+(?:\.\d+)?))/i);
+    if (!match || match.index == null) return escapeHtml(source);
+    const bpm = parseFloat(match[2]);
+    if (!isFinite(bpm) || bpm <= 0) return escapeHtml(source);
+    const start = match.index;
+    const end = start + match[1].length;
+    const periodSec = 60 / bpm;
+    return [
+      escapeHtml(source.slice(0, start)),
+      '<span class="cw-tempo-marker">', escapeHtml(match[1]), '</span>',
+      '<span class="cw-tempo-blink" aria-hidden="true" style="--cw-tempo-period:', String(periodSec), 's;">●</span>',
+      escapeHtml(source.slice(end))
+    ].join('');
+  }
+
   function renderChordPro(content, options) {
     const text = String(content || '');
     const lines = text.split('\n');
@@ -3277,9 +3313,9 @@
           const key = inner.slice(0, colonIdx).trim().toLowerCase();
           const val = inner.slice(colonIdx + 1).trim();
           if (key === 'title' || key === 't' || key === 'subtitle' || key === 'st') return '';
-          if (key === 'comment' || key === 'c') return '<div class="cw-comment cw-directive-line">' + escapeHtml(val) + '</div>';
-          if (key === 'comment_italic' || key === 'ci') return '<div class="cw-comment-italic cw-directive-line">' + escapeHtml(val) + '</div>';
-          if (key === 'key' || key === 'k') return '<div class="cw-directive cw-directive-line">Key: ' + escapeHtml(val) + '</div>';
+          if (key === 'comment' || key === 'c') return '<div class="cw-comment cw-directive-line">' + renderTempoAwareComment(val) + '</div>';
+          if (key === 'comment_italic' || key === 'ci') return '<div class="cw-comment-italic cw-directive-line">' + renderTempoAwareComment(val) + '</div>';
+          if (key === 'key' || key === 'k') return '<div class="cw-directive cw-directive-line">Key: ' + renderTransposedChord(transposeChord(val, transpose, notation, formatOptions), formatOptions) + '</div>';
         }
         return '';
       }
