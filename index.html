@@ -304,26 +304,566 @@
     padding-bottom: 16px;
   }
   .viewer-grid {
+    --viewer-sidebar-width: 300px;
+    --viewer-sidebar-min-width: 160px;
+    --viewer-pane-resizer-size: 8px;
+    --viewer-sidebar-scale: 1;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 312px;
-    gap: 16px;
+    grid-template-columns: minmax(0, 1fr) var(--viewer-pane-resizer-size) minmax(var(--viewer-sidebar-min-width), var(--viewer-sidebar-width));
+    gap: 0;
     align-items: start;
     min-height: calc(100vh - 32px);
     height: calc(100vh - 32px);
+  }
+  .viewer-pane-resizer {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    cursor: col-resize;
+    touch-action: none;
+    user-select: none;
+    background: transparent;
+  }
+  .viewer-pane-resizer::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 12px;
+    bottom: 12px;
+    width: 2px;
+    transform: translateX(-50%);
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.6);
+    transition: background-color 0.14s ease, box-shadow 0.14s ease;
+  }
+  .viewer-pane-resizer:hover::before,
+  .viewer-grid.is-viewer-pane-resizing .viewer-pane-resizer::before {
+    background: rgba(37, 99, 235, 0.82);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+  }
+  .viewer-grid.is-pane-resize-disabled .viewer-pane-resizer {
+    cursor: default;
+  }
+  .viewer-grid.is-pane-resize-disabled .viewer-pane-resizer::before {
+    background: rgba(148, 163, 184, 0.32);
+    box-shadow: none;
   }
   .sidebar-stack {
     display: grid;
     gap: 14px;
     align-content: start;
     min-height: 0;
+    min-width: 0;
   }
   .sidebar-scroll-pane {
     min-height: 0;
+    min-width: 0;
+    width: 100%;
     height: 100%;
     align-self: start;
     max-height: calc(100vh - 32px);
     overflow: auto;
     padding-right: 2px;
+  }
+  .viewer-grid.is-sidebar-compact .setting-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .viewer-grid.is-sidebar-compact .setting-label-plain {
+    padding-top: 0;
+  }
+  .viewer-grid.is-sidebar-compact .viewer-note-toolbar-row {
+    flex-direction: column;
+    align-items: stretch;
+    flex-wrap: nowrap;
+  }
+  .viewer-grid.is-sidebar-compact .viewer-note-toolbar-btn {
+    flex: 0 0 auto;
+    width: 100%;
+    min-height: 24px;
+    padding: 4px 6px;
+    font-size: 0.68rem;
+    line-height: 1.1;
+    white-space: normal;
+  }
+  .viewer-grid.is-sidebar-compact .youtube-empty-row {
+    flex-wrap: wrap;
+  }
+  .viewer-grid.is-sidebar-compact .sidebar-panel .btn,
+  .viewer-grid.is-sidebar-compact .sidebar-panel .btn-segment,
+  .viewer-grid.is-sidebar-compact .toggle-item-text,
+  .viewer-grid.is-sidebar-compact .youtube-empty-text,
+  .viewer-grid.is-sidebar-compact .section-title-row,
+  .viewer-grid.is-sidebar-compact .setting-label {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    word-break: break-word;
+  }
+  .viewer-grid.is-viewer-pane-resizing,
+  .viewer-grid.is-viewer-pane-resizing * {
+    cursor: col-resize !important;
+    user-select: none !important;
+  }
+  .viewer-grid.is-sidebar-compact {
+    --viewer-sidebar-scale: 0.8;
+  }
+  .viewer-grid.is-sidebar-tight {
+    --viewer-sidebar-scale: 0.68;
+  }
+  .viewer-grid.is-sidebar-ultra {
+    --viewer-sidebar-scale: 0.58;
+  }
+  .viewer-grid.is-sidebar-micro {
+    --viewer-sidebar-scale: 0.5;
+  }
+  .viewer-grid .sidebar-stack {
+    gap: calc(14px * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .sidebar-panel {
+    padding: calc(18px * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .section-title {
+    margin: 0 0 calc(12px * var(--viewer-sidebar-scale, 1));
+    font-size: calc(0.98rem * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .section-title-row {
+    gap: calc(8px * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .sidebar-panel,
+  .viewer-grid .sidebar-stack,
+  .viewer-grid .setting-row,
+  .viewer-grid .autoscroll-toolbar,
+  .viewer-grid .autoscroll-time-row,
+  .viewer-grid .preset-chip-row,
+  .viewer-grid .viewer-note-toolbar-row,
+  .viewer-grid .youtube-empty-row,
+  .viewer-grid .toggle-item {
+    min-width: 0;
+  }
+  .viewer-grid .viewer-note-toolbar-row,
+  .viewer-grid .youtube-empty-row {
+    align-items: center;
+  }
+  .viewer-grid .sidebar-panel .btn,
+  .viewer-grid .sidebar-panel .btn-segment,
+  .viewer-grid .toggle-item-text,
+  .viewer-grid .youtube-empty-text,
+  .viewer-grid .section-title-row,
+  .viewer-grid .setting-label,
+  .viewer-grid .viewer-note-toolbar-btn {
+    min-width: 0;
+  }
+  .viewer-grid .section-title-icon {
+    font-size: calc(20px * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .compact-controls,
+  .viewer-grid .control-group {
+    gap: calc(8px + 4px * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid:not(.is-sidebar-compact) .setting-row {
+    grid-template-columns: calc(84px * var(--viewer-sidebar-scale, 1)) minmax(0, 1fr);
+  }
+  .viewer-grid .setting-row {
+    gap: calc(12px * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .setting-label {
+    font-size: calc(0.75rem * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .setting-label-plain {
+    padding-top: calc(10px * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .sidebar-panel .btn,
+  .viewer-grid .sidebar-panel .field,
+  .viewer-grid .sidebar-panel .select,
+  .viewer-grid .sidebar-panel .stepper-value {
+    border-radius: calc(12px * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .sidebar-panel .btn {
+    gap: calc(6px * var(--viewer-sidebar-scale, 1));
+    padding: calc(10px * var(--viewer-sidebar-scale, 1)) calc(14px * var(--viewer-sidebar-scale, 1));
+    min-height: calc(40px * var(--viewer-sidebar-scale, 1));
+    font-size: calc(0.92rem * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .sidebar-panel .field,
+  .viewer-grid .sidebar-panel .select,
+  .viewer-grid .sidebar-panel .stepper-value {
+    min-height: calc(40px * var(--viewer-sidebar-scale, 1));
+    padding: calc(10px * var(--viewer-sidebar-scale, 1)) calc(12px * var(--viewer-sidebar-scale, 1));
+    font-size: calc(0.95rem * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .sidebar-panel .stepper {
+    grid-template-columns: calc(40px * var(--viewer-sidebar-scale, 1)) minmax(0, 1fr) calc(40px * var(--viewer-sidebar-scale, 1));
+    gap: calc(8px * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .sidebar-panel .stepper-input,
+  .viewer-grid .sidebar-panel .stepper-value,
+  .viewer-grid .sidebar-panel .btn-icon {
+    min-height: calc(40px * var(--viewer-sidebar-scale, 1));
+    height: calc(40px * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .sidebar-panel .btn-icon {
+    width: calc(40px * var(--viewer-sidebar-scale, 1));
+    min-width: calc(40px * var(--viewer-sidebar-scale, 1));
+    padding: 0;
+    font-size: calc(1.05rem * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .sidebar-panel .compact-select {
+    padding-top: calc(8px * var(--viewer-sidebar-scale, 1));
+    padding-bottom: calc(8px * var(--viewer-sidebar-scale, 1));
+    font-size: calc(0.92rem * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .sidebar-panel .btn-segment {
+    min-height: calc(36px * var(--viewer-sidebar-scale, 1));
+    padding: calc(8px * var(--viewer-sidebar-scale, 1)) calc(10px * var(--viewer-sidebar-scale, 1));
+    font-size: calc(0.78rem * var(--viewer-sidebar-scale, 1));
+    line-height: 1.1;
+  }
+  .viewer-grid .toggle-list {
+    gap: calc(10px * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .toggle-list-compact-grid {
+    gap: calc(6px * var(--viewer-sidebar-scale, 1)) calc(10px * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .toggle-item {
+    gap: calc(8px * var(--viewer-sidebar-scale, 1));
+    padding: 0;
+  }
+  .viewer-grid .toggle-item-text {
+    font-size: calc(0.78rem * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .toggle-switch {
+    width: calc(40px * var(--viewer-sidebar-scale, 1));
+    height: calc(24px * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .toggle-slider::after {
+    top: calc(3px * var(--viewer-sidebar-scale, 1));
+    left: calc(3px * var(--viewer-sidebar-scale, 1));
+    width: calc(18px * var(--viewer-sidebar-scale, 1));
+    height: calc(18px * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .toggle-switch input:checked + .toggle-slider::after {
+    transform: translateX(calc(16px * var(--viewer-sidebar-scale, 1)));
+  }
+  .viewer-grid .autoscroll-toolbar,
+  .viewer-grid .autoscroll-time-row,
+  .viewer-grid .preset-chip-row,
+  .viewer-grid .viewer-note-toolbar-row,
+  .viewer-grid .youtube-empty-row {
+    gap: calc(8px * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .autoscroll-toolbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+  .viewer-grid .autoscroll-toolbar > .btn-toggle {
+    min-width: 0;
+  }
+  .viewer-grid .autoscroll-toolbar > .btn-reset-icon {
+    flex: 0 0 auto;
+  }
+  .viewer-grid .autoscroll-time-row {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: calc(4px + 4px * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .btn-save-autoscroll,
+  .viewer-grid .btn-chip,
+  .viewer-grid .viewer-note-toolbar-btn,
+  .viewer-grid .youtube-save-btn,
+  .viewer-grid .youtube-next-btn {
+    min-height: calc(30px * var(--viewer-sidebar-scale, 1));
+    padding: calc(5px * var(--viewer-sidebar-scale, 1)) calc(7px * var(--viewer-sidebar-scale, 1));
+    font-size: calc(0.78rem * var(--viewer-sidebar-scale, 1));
+    line-height: 1.12;
+  }
+  .viewer-grid .youtube-save-btn,
+  .viewer-grid .youtube-next-btn {
+    min-height: calc(24px * var(--viewer-sidebar-scale, 1));
+    padding: calc(3px * var(--viewer-sidebar-scale, 1)) calc(8px * var(--viewer-sidebar-scale, 1));
+    font-size: calc(0.72rem * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .youtube-auto-page-label {
+    font-size: calc(0.76rem * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .field-compact {
+    padding-top: calc(8px * var(--viewer-sidebar-scale, 1));
+    padding-bottom: calc(8px * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .time-step-buttons {
+    top: calc(3px * var(--viewer-sidebar-scale, 1));
+    right: calc(3px * var(--viewer-sidebar-scale, 1));
+    bottom: calc(3px * var(--viewer-sidebar-scale, 1));
+    width: calc(12px * var(--viewer-sidebar-scale, 1));
+    gap: calc(1px * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .sidebar-panel .time-step-buttons .btn.btn-stepper-mini {
+    min-width: 0;
+    width: 100%;
+    min-height: 0;
+    height: 100%;
+    padding: 0;
+    gap: 0;
+    border-radius: calc(4px * var(--viewer-sidebar-scale, 1));
+    font-size: calc(7px * var(--viewer-sidebar-scale, 1));
+    line-height: 1;
+    box-shadow: none;
+  }
+  .viewer-grid .autoscroll-time-sep {
+    height: calc(40px * var(--viewer-sidebar-scale, 1));
+    font-size: calc(1rem * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid.is-sidebar-tight .viewer-note-toolbar-row {
+    flex-direction: column;
+    align-items: stretch;
+    flex-wrap: nowrap;
+  }
+  .viewer-grid.is-sidebar-tight .viewer-note-toolbar-btn {
+    flex: 0 0 auto;
+    width: 100%;
+    min-height: 22px;
+    padding: 4px 5px;
+    font-size: 0.62rem;
+    line-height: 1.1;
+    white-space: normal;
+  }
+  .viewer-grid.is-sidebar-tight .toggle-list-compact-grid {
+    grid-template-columns: 1fr;
+  }
+  .viewer-grid.is-sidebar-compact .toggle-item-text {
+    font-size: 0.68rem;
+    line-height: 1.16;
+  }
+  .viewer-grid.is-sidebar-tight .toggle-item-text {
+    font-size: 0.64rem;
+    line-height: 1.16;
+  }
+  .viewer-grid.is-sidebar-compact .youtube-save-btn,
+  .viewer-grid.is-sidebar-compact .youtube-next-btn {
+    min-height: 20px;
+    padding: 2px 6px;
+    font-size: 0.64rem;
+    line-height: 1;
+  }
+  .viewer-grid.is-sidebar-tight .youtube-save-btn,
+  .viewer-grid.is-sidebar-tight .youtube-next-btn {
+    min-height: 18px;
+    padding: 2px 5px;
+    font-size: 0.58rem;
+    line-height: 1;
+  }
+  .viewer-grid.is-sidebar-tight .time-step-buttons {
+    width: calc(10px * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid.is-sidebar-tight .sidebar-panel .time-step-buttons .btn.btn-stepper-mini {
+    border-radius: calc(3px * var(--viewer-sidebar-scale, 1));
+    font-size: calc(6px * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid.is-sidebar-ultra .sidebar-panel .btn,
+  .viewer-grid.is-sidebar-ultra .sidebar-panel .btn-segment,
+  .viewer-grid.is-sidebar-ultra .toggle-item-text,
+  .viewer-grid.is-sidebar-ultra .youtube-empty-text,
+  .viewer-grid.is-sidebar-ultra .section-title-row,
+  .viewer-grid.is-sidebar-ultra .setting-label {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    word-break: break-word;
+  }
+  .viewer-grid.is-sidebar-ultra .sidebar-panel {
+    padding: 8px;
+  }
+  .viewer-grid.is-sidebar-ultra .sidebar-stack {
+    gap: 8px;
+  }
+  .viewer-grid.is-sidebar-ultra .sidebar-panel .btn {
+    padding: 5px 7px;
+    min-height: 26px;
+    font-size: 0.66rem;
+    line-height: 1.15;
+  }
+  .viewer-grid.is-sidebar-ultra .sidebar-panel .field,
+  .viewer-grid.is-sidebar-ultra .sidebar-panel .select,
+  .viewer-grid.is-sidebar-ultra .sidebar-panel .stepper-value {
+    min-height: 28px;
+    padding: 5px 7px;
+    font-size: 0.72rem;
+  }
+  .viewer-grid.is-sidebar-ultra .sidebar-panel .stepper {
+    grid-template-columns: 26px minmax(0, 1fr) 26px;
+    gap: 4px;
+  }
+  .viewer-grid.is-sidebar-ultra .sidebar-panel .stepper-input,
+  .viewer-grid.is-sidebar-ultra .sidebar-panel .stepper-value,
+  .viewer-grid.is-sidebar-ultra .sidebar-panel .btn-icon {
+    min-height: 28px;
+    height: 28px;
+  }
+  .viewer-grid.is-sidebar-ultra .sidebar-panel .btn-icon {
+    width: 26px;
+    min-width: 26px;
+    font-size: 0.84rem;
+  }
+  .viewer-grid.is-sidebar-ultra .section-title {
+    margin-bottom: 7px;
+    font-size: 0.72rem;
+  }
+  .viewer-grid.is-sidebar-ultra .section-title-icon {
+    font-size: 14px;
+  }
+  .viewer-grid.is-sidebar-ultra .setting-row {
+    gap: 4px;
+  }
+  .viewer-grid.is-sidebar-ultra .setting-label {
+    font-size: 0.58rem;
+  }
+  .viewer-grid.is-sidebar-ultra .toggle-item-text {
+    font-size: 0.62rem;
+    line-height: 1.16;
+  }
+  .viewer-grid.is-sidebar-ultra .setting-label-plain {
+    padding-top: 0;
+  }
+  .viewer-grid.is-sidebar-ultra .compact-controls,
+  .viewer-grid.is-sidebar-ultra .control-group,
+  .viewer-grid.is-sidebar-ultra .toggle-list,
+  .viewer-grid.is-sidebar-ultra .toggle-list-compact-grid {
+    gap: 5px;
+  }
+  .viewer-grid.is-sidebar-ultra .viewer-note-toolbar-row,
+  .viewer-grid.is-sidebar-ultra .youtube-empty-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .viewer-grid.is-sidebar-ultra .viewer-note-toolbar-btn,
+  .viewer-grid.is-sidebar-ultra .youtube-save-btn,
+  .viewer-grid.is-sidebar-ultra .youtube-next-btn,
+  .viewer-grid.is-sidebar-ultra .btn-save-autoscroll,
+  .viewer-grid.is-sidebar-ultra .btn-chip {
+    width: 100%;
+    min-height: 20px;
+    padding: 3px 4px;
+    font-size: 0.58rem;
+    line-height: 1.05;
+  }
+  .viewer-grid.is-sidebar-ultra .preset-chip-row {
+    grid-template-columns: 1fr;
+  }
+  .viewer-grid.is-sidebar-ultra .autoscroll-time-row {
+    gap: 3px;
+  }
+  .viewer-grid.is-sidebar-ultra .field-compact,
+  .viewer-grid.is-sidebar-ultra .compact-select {
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+  .viewer-grid.is-sidebar-ultra .toggle-switch {
+    width: 28px;
+    height: 16px;
+  }
+  .viewer-grid.is-sidebar-ultra .toggle-slider::after {
+    top: 2px;
+    left: 2px;
+    width: 12px;
+    height: 12px;
+  }
+  .viewer-grid.is-sidebar-ultra .toggle-switch input:checked + .toggle-slider::after {
+    transform: translateX(12px);
+  }
+  .viewer-grid.is-sidebar-ultra .time-step-buttons {
+    top: 2px;
+    right: 2px;
+    bottom: 2px;
+    width: 8px;
+    gap: 1px;
+  }
+  .viewer-grid.is-sidebar-ultra .sidebar-panel .time-step-buttons .btn.btn-stepper-mini {
+    border-radius: 2px;
+    font-size: 5px;
+  }
+  .viewer-grid.is-sidebar-ultra .autoscroll-time-sep {
+    height: 28px;
+    font-size: 0.72rem;
+  }
+  .viewer-grid.is-sidebar-micro .sidebar-panel {
+    padding: 6px;
+  }
+  .viewer-grid.is-sidebar-micro .sidebar-stack {
+    gap: 6px;
+  }
+  .viewer-grid.is-sidebar-micro .section-title {
+    margin-bottom: 6px;
+    font-size: 0.66rem;
+  }
+  .viewer-grid.is-sidebar-micro .section-title-icon {
+    font-size: 12px;
+  }
+  .viewer-grid.is-sidebar-micro .sidebar-panel .btn {
+    padding: 4px 5px;
+    min-height: 22px;
+    font-size: 0.58rem;
+  }
+  .viewer-grid.is-sidebar-micro .sidebar-panel .field,
+  .viewer-grid.is-sidebar-micro .sidebar-panel .select,
+  .viewer-grid.is-sidebar-micro .sidebar-panel .stepper-value {
+    min-height: 24px;
+    padding: 4px 5px;
+    font-size: 0.64rem;
+  }
+  .viewer-grid.is-sidebar-micro .sidebar-panel .stepper {
+    grid-template-columns: 22px minmax(0, 1fr) 22px;
+    gap: 3px;
+  }
+  .viewer-grid.is-sidebar-micro .sidebar-panel .stepper-input,
+  .viewer-grid.is-sidebar-micro .sidebar-panel .stepper-value,
+  .viewer-grid.is-sidebar-micro .sidebar-panel .btn-icon {
+    min-height: 24px;
+    height: 24px;
+  }
+  .viewer-grid.is-sidebar-micro .sidebar-panel .btn-icon {
+    width: 22px;
+    min-width: 22px;
+    font-size: 0.74rem;
+  }
+  .viewer-grid.is-sidebar-micro .setting-label {
+    font-size: 0.54rem;
+  }
+  .viewer-grid.is-sidebar-micro .toggle-item-text {
+    font-size: 0.6rem;
+    line-height: 1.16;
+  }
+  .viewer-grid.is-sidebar-micro .viewer-note-toolbar-btn,
+  .viewer-grid.is-sidebar-micro .youtube-save-btn,
+  .viewer-grid.is-sidebar-micro .youtube-next-btn,
+  .viewer-grid.is-sidebar-micro .btn-save-autoscroll,
+  .viewer-grid.is-sidebar-micro .btn-chip {
+    min-height: 18px;
+    padding: 2px 3px;
+    font-size: 0.5rem;
+    line-height: 1.02;
+  }
+  .viewer-grid.is-sidebar-micro .toggle-switch {
+    width: 24px;
+    height: 14px;
+  }
+  .viewer-grid.is-sidebar-micro .toggle-slider::after {
+    top: 2px;
+    left: 2px;
+    width: 10px;
+    height: 10px;
+  }
+  .viewer-grid.is-sidebar-micro .toggle-switch input:checked + .toggle-slider::after {
+    transform: translateX(10px);
+  }
+  .viewer-grid.is-sidebar-micro .time-step-buttons {
+    width: 7px;
+  }
+  .viewer-grid.is-sidebar-micro .sidebar-panel .time-step-buttons .btn.btn-stepper-mini {
+    font-size: 4px;
+  }
+  .viewer-grid.is-sidebar-micro .autoscroll-time-sep {
+    height: 24px;
+    font-size: 0.66rem;
   }
   .section-title {
     margin: 0 0 12px;
@@ -688,10 +1228,35 @@
     gap: 6px;
   }
   .sidebar-panel-notes .viewer-note-toolbar-btn {
-    padding: 7px 8px;
-    font-size: 0.79rem;
-    line-height: 1.15;
+    padding: 5px 6px;
+    min-height: 26px;
+    font-size: 0.72rem;
+    line-height: 1.08;
     letter-spacing: -0.01em;
+  }
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-notes .viewer-note-toolbar-row {
+    gap: 6px;
+  }
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-notes .viewer-note-toolbar-btn {
+    flex: 1 1 0;
+    width: auto;
+    min-height: 24px;
+    padding: 5px 7px;
+    font-size: 0.76rem;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+  .viewer-grid:not(.is-sidebar-compact) .youtube-empty-row {
+    flex-wrap: nowrap;
+  }
+  .viewer-grid:not(.is-sidebar-compact) .youtube-save-btn {
+    width: auto;
+    min-height: 22px;
+    padding: 2px 7px;
+    font-size: 0.7rem;
+    line-height: 1;
+    white-space: nowrap;
+    flex: 0 0 auto;
   }
   .autoscroll-lane {
     position: absolute;
@@ -1785,6 +2350,9 @@
     .editor-grid {
       grid-template-columns: 1fr;
       height: auto;
+    }
+    .viewer-pane-resizer {
+      display: none;
     }
     .viewer-body,
     .sidebar-stack {
@@ -4832,7 +5400,7 @@ function loadCurrentSongNotes() {
 
       return [
         '<div class="shell">',
-          '<div class="viewer-grid">',
+          '<div class="viewer-grid" id="viewer-grid">',
             '<div class="panel viewer-body pane-scroll" id="viewer-scroll-pane">',
               '<div class="viewer-content" id="viewer-content">',
                 App.status.message ? '<div class="status-box viewer-status' + (App.status.type === 'error' ? ' error' : '') + '">' + escapeHtml(App.status.message) + '</div>' : '',
@@ -4871,6 +5439,7 @@ function loadCurrentSongNotes() {
                 '</div>',
               '</div>',
             '</div>',
+            '<div class="viewer-pane-resizer" id="viewer-pane-resizer" role="separator" aria-orientation="vertical" aria-label="Resize sidebar"></div>',
             '<div class="sidebar-stack sidebar-scroll-pane pane-scroll" id="viewer-sidebar-scroll">',
               '<div class="panel pad sidebar-panel sidebar-panel-controls">',
                 sectionTitleHtml('tune', 'Song Controls'),
@@ -5137,6 +5706,16 @@ function renderFloatingPlayer(song) {
       handleSheetPointerDown: handleSheetPointerDown,
       handleMarkerMouseDown: handleMarkerMouseDown,
       handleScrollBoundsChange: handleScrollBoundsChange,
+      isPaneResizeBlocked: function() {
+        return !!(
+          (App && App.state && App.state.scroll && App.state.scroll.isPlaying)
+          || noteCreateMode
+          || !!editingNoteId
+          || !!activeNoteDrag
+          || !!activeNoteResize
+          || isDraggingMarker
+        );
+      },
       getRenderScrollTop: function() {
         const scrollTarget = getScrollTarget();
         if (App && App.state && App.state.scroll && App.state.scroll.isPlaying) {
@@ -5294,7 +5873,8 @@ function renderFloatingPlayer(song) {
     chordSizeLevel: 'personal_chordpro_viewer_chordSizeLevel',
     formatOptions: 'personal_chordpro_viewer_chordFormatOptions',
     lyricsFont: 'personal_chordpro_viewer_lyricsFont',
-    chordFont: 'personal_chordpro_viewer_chordFont'
+    chordFont: 'personal_chordpro_viewer_chordFont',
+    viewerSidebarWidth: 'personal_chordpro_viewer_viewerSidebarWidth'
   };
 
   function normalizeFontToken(kind, storedValue) {
@@ -5386,6 +5966,24 @@ function renderFloatingPlayer(song) {
       return raw === null ? fallbackValue : String(raw);
     } catch (err) {
       return fallbackValue;
+    }
+  }
+
+  function loadStoredInteger(key, fallbackValue, minValue, maxValue) {
+    const fallback = parseInt(fallbackValue, 10);
+    const safeFallback = isNaN(fallback) ? 0 : fallback;
+    try {
+      const raw = localStorage.getItem(key);
+      const parsed = parseInt(raw == null ? String(safeFallback) : raw, 10);
+      let normalized = isNaN(parsed) ? safeFallback : parsed;
+      if (typeof minValue === 'number') normalized = Math.max(minValue, normalized);
+      if (typeof maxValue === 'number') normalized = Math.min(maxValue, normalized);
+      if (String(raw || '') !== String(normalized)) {
+        localStorage.setItem(key, String(normalized));
+      }
+      return normalized;
+    } catch (err) {
+      return safeFallback;
     }
   }
 
@@ -5498,6 +6096,7 @@ function renderFloatingPlayer(song) {
       formatOptions: loadStoredJson(STORAGE_KEYS.formatOptions, { symbols: true, tensions: true, slashChords: true, suffixes: true }),
       lyricsFont: normalizeFontToken('lyrics', loadStoredString(STORAGE_KEYS.lyricsFont, 'mplusrounded1c')),
       chordFont: normalizeFontToken('chord', loadStoredString(STORAGE_KEYS.chordFont, 'jetbrainsmono')),
+      viewerSidebarWidth: loadStoredInteger(STORAGE_KEYS.viewerSidebarWidth, 300, 160, 520),
       scroll: {
         isPlaying: false,
         durationSec: 240,
@@ -5516,6 +6115,212 @@ function renderFloatingPlayer(song) {
         : FONT_PRESETS;
     },
 
+    getViewerSidebarDefaultWidth: function() {
+      return 300;
+    },
+
+    getViewerSidebarMinWidth: function() {
+      return 160;
+    },
+
+    getViewerSidebarMicroThreshold: function() {
+      return 170;
+    },
+
+    getViewerSidebarUltraThreshold: function() {
+      return 190;
+    },
+
+    getViewerSidebarTightThreshold: function() {
+      return 240;
+    },
+
+    getViewerSidebarCompactThreshold: function() {
+      return 299;
+    },
+
+    getViewerPaneResizerWidth: function() {
+      return 8;
+    },
+
+    getViewerPaneMinMainWidth: function() {
+      return 460;
+    },
+
+    isViewerPaneResizeLandscape: function() {
+      return window.innerWidth > 980;
+    },
+
+    getViewerGridElement: function() {
+      return document.getElementById('viewer-grid');
+    },
+
+    getViewerPaneResizeHandleElement: function() {
+      return document.getElementById('viewer-pane-resizer');
+    },
+
+    getViewerSidebarBounds: function(gridEl) {
+      const grid = gridEl || this.getViewerGridElement();
+      const minSidebarWidth = this.getViewerSidebarMinWidth();
+      if (!grid) {
+        return {
+          minSidebarWidth: minSidebarWidth,
+          maxSidebarWidth: this.getViewerSidebarDefaultWidth()
+        };
+      }
+      const rect = grid.getBoundingClientRect();
+      const hardMaxSidebarWidth = Math.round(rect.width - this.getViewerPaneResizerWidth() - this.getViewerPaneMinMainWidth());
+      const preferredMaxSidebarWidth = Math.round(rect.width * 0.46);
+      const maxSidebarWidth = Math.max(minSidebarWidth, Math.min(preferredMaxSidebarWidth, hardMaxSidebarWidth));
+      return {
+        minSidebarWidth: minSidebarWidth,
+        maxSidebarWidth: maxSidebarWidth
+      };
+    },
+
+    clampViewerSidebarWidth: function(width, gridEl) {
+      const bounds = this.getViewerSidebarBounds(gridEl);
+      const numericWidth = parseInt(width, 10);
+      const fallbackWidth = parseInt(this.state.viewerSidebarWidth, 10) || this.getViewerSidebarDefaultWidth();
+      const nextWidth = isNaN(numericWidth) ? fallbackWidth : numericWidth;
+      return Math.max(bounds.minSidebarWidth, Math.min(bounds.maxSidebarWidth, nextWidth));
+    },
+
+    persistViewerSidebarWidth: function() {
+      if (!saveStoredString(STORAGE_KEYS.viewerSidebarWidth, String(this.state.viewerSidebarWidth))) {
+        this.notifyStorageUnavailable();
+      }
+    },
+
+    isViewerPaneResizeBlocked: function() {
+      if (this._busyCount > 0) return true;
+      if (this.state.page !== 'view' || !this.state.currentSong) return true;
+      if (!this.isViewerPaneResizeLandscape()) return true;
+      if (typeof Viewer !== 'undefined' && typeof Viewer.isPaneResizeBlocked === 'function') {
+        return !!Viewer.isPaneResizeBlocked();
+      }
+      return !!(this.state.scroll && this.state.scroll.isPlaying);
+    },
+
+    syncViewerPaneLayout: function() {
+      const grid = this.getViewerGridElement();
+      if (!grid) return;
+      const handle = this.getViewerPaneResizeHandleElement();
+      if (this.state.page !== 'view' || !this.state.currentSong || !this.isViewerPaneResizeLandscape()) {
+        grid.classList.remove('is-sidebar-compact', 'is-sidebar-tight', 'is-sidebar-ultra', 'is-sidebar-micro', 'is-pane-resize-disabled', 'is-viewer-pane-resizing');
+        grid.style.removeProperty('--viewer-sidebar-width');
+        if (handle) {
+          handle.setAttribute('aria-disabled', 'true');
+        }
+        return;
+      }
+      const sidebarWidth = this.clampViewerSidebarWidth(this.state.viewerSidebarWidth, grid);
+      if (sidebarWidth !== this.state.viewerSidebarWidth) {
+        this.state.viewerSidebarWidth = sidebarWidth;
+      }
+      grid.style.setProperty('--viewer-sidebar-width', sidebarWidth + 'px');
+      const isBlocked = this.isViewerPaneResizeBlocked();
+      grid.classList.toggle('is-sidebar-compact', sidebarWidth <= this.getViewerSidebarCompactThreshold());
+      grid.classList.toggle('is-sidebar-tight', sidebarWidth <= this.getViewerSidebarTightThreshold());
+      grid.classList.toggle('is-sidebar-ultra', sidebarWidth <= this.getViewerSidebarUltraThreshold());
+      grid.classList.toggle('is-sidebar-micro', sidebarWidth <= this.getViewerSidebarMicroThreshold());
+      grid.classList.toggle('is-pane-resize-disabled', isBlocked);
+      grid.classList.toggle('is-viewer-pane-resizing', !!this._viewerPaneResizeDrag);
+      if (handle) {
+        handle.setAttribute('aria-disabled', isBlocked ? 'true' : 'false');
+      }
+    },
+
+    cancelViewerPaneResize: function() {
+      const drag = this._viewerPaneResizeDrag;
+      if (!drag) return;
+      if (drag.handle && typeof drag.handle.releasePointerCapture === 'function' && typeof drag.pointerId === 'number') {
+        try {
+          drag.handle.releasePointerCapture(drag.pointerId);
+        } catch (err) {}
+      }
+      this._viewerPaneResizeDrag = null;
+      this.syncViewerPaneLayout();
+    },
+
+    beginViewerPaneResize: function(event, handle) {
+      if (!event || !handle || this.isViewerPaneResizeBlocked()) {
+        this.syncViewerPaneLayout();
+        return;
+      }
+      const grid = this.getViewerGridElement();
+      if (!grid) return;
+      const pointerId = typeof event.pointerId === 'number' ? event.pointerId : null;
+      if (typeof handle.setPointerCapture === 'function' && pointerId !== null) {
+        try {
+          handle.setPointerCapture(pointerId);
+        } catch (err) {}
+      }
+      this._viewerPaneResizeDrag = {
+        handle: handle,
+        pointerId: pointerId
+      };
+      this.syncViewerPaneLayout();
+      if (event.cancelable) event.preventDefault();
+    },
+
+    updateViewerPaneResize: function(event) {
+      const drag = this._viewerPaneResizeDrag;
+      if (!drag || !event) return;
+      if (typeof drag.pointerId === 'number' && typeof event.pointerId === 'number' && drag.pointerId !== event.pointerId) {
+        return;
+      }
+      const grid = this.getViewerGridElement();
+      if (!grid) {
+        this.cancelViewerPaneResize();
+        return;
+      }
+      const rect = grid.getBoundingClientRect();
+      const nextWidth = this.clampViewerSidebarWidth(rect.right - event.clientX, grid);
+      if (nextWidth !== this.state.viewerSidebarWidth) {
+        this.state.viewerSidebarWidth = nextWidth;
+        this.syncViewerPaneLayout();
+      }
+      if (event.cancelable) event.preventDefault();
+    },
+
+    endViewerPaneResize: function(event) {
+      const drag = this._viewerPaneResizeDrag;
+      if (!drag) return;
+      if (event && typeof drag.pointerId === 'number' && typeof event.pointerId === 'number' && drag.pointerId !== event.pointerId) {
+        return;
+      }
+      this.persistViewerSidebarWidth();
+      this.cancelViewerPaneResize();
+    },
+
+    bindViewerPaneResize: function() {
+      if (this._viewerPaneResizeBound) return;
+      this._viewerPaneResizeBound = true;
+      document.addEventListener('pointerdown', function(event) {
+        const target = event && event.target;
+        const handle = target && target.closest ? target.closest('#viewer-pane-resizer') : null;
+        if (!handle) return;
+        App.beginViewerPaneResize(event, handle);
+      }, true);
+      window.addEventListener('pointermove', function(event) {
+        App.updateViewerPaneResize(event);
+      }, { passive: false });
+      window.addEventListener('pointerup', function(event) {
+        App.endViewerPaneResize(event);
+      }, true);
+      window.addEventListener('pointercancel', function(event) {
+        App.endViewerPaneResize(event);
+      }, true);
+      window.addEventListener('resize', function() {
+        if (App._viewerPaneResizeDrag) {
+          App.endViewerPaneResize();
+          return;
+        }
+        App.syncViewerPaneLayout();
+      });
+    },
+
     notifyStorageUnavailable: function() {
       if (this._storageWarningShown) return;
       this._storageWarningShown = true;
@@ -5527,6 +6332,7 @@ function renderFloatingPlayer(song) {
       this.bindGlobalPointerDefocus();
       this.bindSongListInteractions();
       this.bindAppDelegatedInteractions();
+      this.bindViewerPaneResize();
       this.beginBusy('Loading app…');
       google.script.run
         .withSuccessHandler(function(config) {
@@ -6870,10 +7676,12 @@ function renderFloatingPlayer(song) {
               } catch (err) {
                 console.error('Viewer.afterRender failed:', err);
               }
+              App.syncViewerPaneLayout();
               App._viewerRerenderInProgress = false;
               App.restoreViewerInputFocusIfNeeded();
             });
           } else {
+            this.syncViewerPaneLayout();
             this._viewerRerenderInProgress = false;
             this.restoreViewerInputFocusIfNeeded();
           }
@@ -6882,6 +7690,7 @@ function renderFloatingPlayer(song) {
 
         this._viewerRerenderInProgress = false;
         app.innerHTML = this.renderListPage();
+        this.syncViewerPaneLayout();
         if (typeof applyPersonalChordProViewerTypography === 'function') applyPersonalChordProViewerTypography(app);
         this.restoreListSearchFocusIfNeeded();
       } catch (err) {
