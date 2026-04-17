@@ -1427,7 +1427,7 @@
     caret-color: auto;
   }
   .list-mode-body .song-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     align-items: start;
   }
   .list-mode-body .topbar {
@@ -2412,6 +2412,12 @@
   .cw-slash-bass {
     position: relative;
     top: 0.15em;
+  }
+
+  @media (max-width: 1080px) {
+    .list-mode-body .song-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
   @media (max-width: 980px) {
@@ -7068,10 +7074,13 @@ function renderFloatingPlayer(song) {
     endSearchComposition: function(input) {
       this._isSearchComposing = false;
       this.state.searchDraft = input ? input.value : String(this.state.searchDraft || '');
+      this.changeSearch(this.state.searchDraft, { partialListUpdate: true });
     },
 
     handleSearchInput: function(event, input) {
       this.state.searchDraft = input ? input.value : '';
+      if (this._isSearchComposing || (event && (event.isComposing || event.inputType === 'insertCompositionText'))) return;
+      this.changeSearch(this.state.searchDraft, { partialListUpdate: true });
     },
 
     handleSearchKeyDown: function(event, input) {
@@ -7848,7 +7857,7 @@ function renderFloatingPlayer(song) {
           this.status.message ? '<div class="status-box' + (this.status.type === 'error' ? ' error' : '') + '">' + escapeHtml(this.status.message) + '</div>' : '',
           '<div class="panel pad">',
             '<div class="search-row">',
-              '<input id="list-search-input" class="field" placeholder="Search title / artist / tags (Press Enter)" value="' + escapeHtml(this.state.searchDraft) + '" data-app-input="search" data-app-keydown="search" data-app-composition="search">',
+              '<input id="list-search-input" class="field" placeholder="Search title / artist / tags" value="' + escapeHtml(this.state.searchDraft) + '" data-app-input="search" data-app-keydown="search" data-app-composition="search">',
               '<button class="btn" data-app-action="clear-search">Clear</button>',
             '</div>',
             '<div class="song-list">' + listHtml + '</div>',
