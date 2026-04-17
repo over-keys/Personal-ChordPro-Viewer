@@ -1530,21 +1530,18 @@
     user-select: none;
   }
   .view-mode-body .viewer-content,
-  .view-mode-body .song-header,
-  .view-mode-body h1,
-  .view-mode-body h2,
-  .view-mode-body h3,
-  .view-mode-body p,
-  .view-mode-body span,
-  .view-mode-body div {
+  .view-mode-body .viewer-content h1,
+  .view-mode-body .viewer-content h2,
+  .view-mode-body .viewer-content h3,
+  .view-mode-body .viewer-content p,
+  .view-mode-body .viewer-content span,
+  .view-mode-body .viewer-content div {
     -webkit-user-select: text;
     user-select: text;
     caret-color: transparent;
   }
   .view-mode-body .sidebar-scroll-pane,
   .view-mode-body .sidebar-scroll-pane *,
-  .view-mode-body .sidebar-panel,
-  .view-mode-body .sidebar-panel *,
   .view-mode-body .autoscroll-marker,
   .view-mode-body .autoscroll-marker * {
     -webkit-user-select: none;
@@ -2954,10 +2951,9 @@
         const song = normalizeSongPayload(payload);
         validateSong(song);
         const originalSlug = String(song.originalSlug || '').trim();
-        const tx = this._db.transaction(SONGS_STORE, 'readwrite');
-        const store = tx.objectStore(SONGS_STORE);
-        const existingByOriginal = originalSlug ? await this._requestToPromise(store.get(originalSlug)) : null;
-        const existingBySlug = await this._requestToPromise(store.get(song.slug));
+        const lookupStore = this._db.transaction(SONGS_STORE, 'readonly').objectStore(SONGS_STORE);
+        const existingByOriginal = originalSlug ? await this._requestToPromise(lookupStore.get(originalSlug)) : null;
+        const existingBySlug = await this._requestToPromise(lookupStore.get(song.slug));
         if (existingByOriginal && existingBySlug && existingByOriginal.slug !== existingBySlug.slug) {
           throw new Error('Slug already exists.');
         }
@@ -2976,6 +2972,8 @@
           scrollEndPercent: normalizeStoredPercent(song.scrollEndPercent, 1),
           scrollDurationSec: normalizeStoredDuration(song.scrollDurationSec, 240)
         };
+        const tx = this._db.transaction(SONGS_STORE, 'readwrite');
+        const store = tx.objectStore(SONGS_STORE);
         if (originalSlug && originalSlug !== song.slug && existingByOriginal) {
           store.delete(originalSlug);
         }
@@ -2992,13 +2990,12 @@
         await this.ready();
         const normalizedSlug = String(slug || '').trim();
         if (!normalizedSlug) return { ok: false, message: 'Song not found.' };
-        const tx = this._db.transaction(SONGS_STORE, 'readwrite');
-        const store = tx.objectStore(SONGS_STORE);
-        const existing = await this._requestToPromise(store.get(normalizedSlug));
+        const existing = await this._requestToPromise(this._db.transaction(SONGS_STORE, 'readonly').objectStore(SONGS_STORE).get(normalizedSlug));
         if (!existing) {
-          tx.abort();
           return { ok: false, message: 'Song not found.' };
         }
+        const tx = this._db.transaction(SONGS_STORE, 'readwrite');
+        const store = tx.objectStore(SONGS_STORE);
         store.delete(normalizedSlug);
         await new Promise(function(resolve, reject) {
           tx.oncomplete = function() { resolve(); };
@@ -3013,17 +3010,16 @@
         const source = payload || {};
         const slug = String(source.slug || '').trim();
         if (!slug) throw new Error('Slug is required.');
-        const tx = this._db.transaction(SONGS_STORE, 'readwrite');
-        const store = tx.objectStore(SONGS_STORE);
-        const song = await this._requestToPromise(store.get(slug));
+        const song = await this._requestToPromise(this._db.transaction(SONGS_STORE, 'readonly').objectStore(SONGS_STORE).get(slug));
         if (!song) {
-          tx.abort();
           return { ok: false, message: 'Song not found.' };
         }
         song.scrollStartPercent = normalizeStoredPercent(source.scrollStartPercent, song.scrollStartPercent);
         song.scrollEndPercent = normalizeStoredPercent(source.scrollEndPercent, song.scrollEndPercent);
         song.scrollDurationSec = normalizeStoredDuration(source.scrollDurationSec, song.scrollDurationSec);
         song.updatedAt = new Date().toISOString();
+        const tx = this._db.transaction(SONGS_STORE, 'readwrite');
+        const store = tx.objectStore(SONGS_STORE);
         store.put(song);
         await new Promise(function(resolve, reject) {
           tx.oncomplete = function() { resolve(); };
@@ -3040,15 +3036,14 @@
         if (!slug) throw new Error('Slug is required.');
         const youtube = normalizeYouTubeSelection(source.youtube);
         if (!youtube.length) throw new Error('YouTube selection is required.');
-        const tx = this._db.transaction(SONGS_STORE, 'readwrite');
-        const store = tx.objectStore(SONGS_STORE);
-        const song = await this._requestToPromise(store.get(slug));
+        const song = await this._requestToPromise(this._db.transaction(SONGS_STORE, 'readonly').objectStore(SONGS_STORE).get(slug));
         if (!song) {
-          tx.abort();
           return { ok: false, message: 'Song not found.' };
         }
         song.youtube = cloneValue(youtube);
         song.updatedAt = new Date().toISOString();
+        const tx = this._db.transaction(SONGS_STORE, 'readwrite');
+        const store = tx.objectStore(SONGS_STORE);
         store.put(song);
         await new Promise(function(resolve, reject) {
           tx.oncomplete = function() { resolve(); };
@@ -5071,7 +5066,35 @@ function loadCurrentSongNotes() {
     }
 
     function bindViewInteractions() {
-      return;
+      const els = cacheElements();
+      if (!els.sheetStage) return;
+      if (!els.sheetStage.dataset.viewBound) {
+        els.sheetStage.dataset.viewBound = '1';
+        els.sheetStage.addEventListener('pointerdown', function(event) {
+          handleSheetPointerDown(event);
+        });
+        els.sheetStage.addEventListener('click', function(event) {
+          toggleAutoScrollFromSheet(event);
+        });
+        els.sheetStage.addEventListener('contextmenu', function(event) {
+          handleSheetContextMenu(event);
+        });
+      }
+      [['start', els.startMarker], ['end', els.endMarker]].forEach(function(entry) {
+        const which = entry[0];
+        const marker = entry[1];
+        if (!marker || marker.dataset.viewBound) return;
+        marker.dataset.viewBound = '1';
+        marker.addEventListener('mousedown', function(event) {
+          handleMarkerMouseDown(which, event);
+        });
+        marker.addEventListener('touchstart', function(event) {
+          handleMarkerMouseDown(which, event);
+        }, { passive: false });
+        marker.addEventListener('focus', function() {
+          if (typeof marker.blur === 'function') marker.blur();
+        });
+      });
     }
 
     function afterRender(options) {
@@ -5486,7 +5509,7 @@ function loadCurrentSongNotes() {
                     tags ? '<div class="tag-row">' + tags + '</div>' : '',
                   '</div>',
                 '</div>',
-                '<div class="sheet-stage" id="sheet-stage" onpointerdown="Viewer.handleSheetPointerDown(event)" onclick="Viewer.toggleAutoScrollFromSheet(event)" oncontextmenu="return Viewer.handleSheetContextMenu(event)">',
+                '<div class="sheet-stage" id="sheet-stage">',
                   '<div class="autoscroll-lane" aria-hidden="true">',
                     '<div class="autoscroll-range" id="autoscroll-range"></div>',
                   '</div>',
@@ -5644,9 +5667,6 @@ function loadCurrentSongNotes() {
           ' class="autoscroll-marker"',
           ' data-marker="', which, '"',
           ' tabindex="-1"',
-          ' onfocus="this.blur()"',
-          ' onmousedown="Viewer.handleMarkerMouseDown(\'', which, '\', event)"',
-          ' ontouchstart="Viewer.handleMarkerMouseDown(\'', which, '\', event)"',
           ' title="', which === 'start' ? 'Start marker' : 'End marker', '"',
         '>',
           '<svg class="autoscroll-marker-pin" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">',
