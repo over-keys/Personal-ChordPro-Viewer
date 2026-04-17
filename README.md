@@ -6,26 +6,29 @@ A lightweight personal ChordPro viewer and manager for live performance use.
 
 https://over-keys.github.io/Personal-ChordPro-Viewer/
 
-## What it does
+## Features
 
-- Manage songs in ChordPro format
-- Search by title, artist, and tags
-- Adjust key, chord display, fonts, and layout
-- Use auto-scroll while playing
-- Attach sticky notes to charts
-- Export / import songs and notes as JSON
+- Add, edit, import, and export songs in ChordPro format
+- Search songs by title, artist, and tags
+- Auto-scroll with adjustable S / E markers and duration presets
+- Built-in YouTube support
+- Sticky notes on charts
+- Chord formatting and font settings
+- JSON backup and restore for songs and notes
 
 ## Files
 
 - `index.html` — main application
 - `manual.html` — user manual
 
-## How to use
+## Local use
 
 1. Download `index.html` and `manual.html`
 2. Put them in the same folder
 3. Open `index.html` in your browser
 
-## Note
+## Notes
 
-If you open the app locally, YouTube playback opens in a separate window.
+- This app is designed mainly for personal use
+- If opened locally, YouTube playback runs in a separate window
+- For a full backup, export both song data and notes
