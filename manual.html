@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Personal ChordPro Viewer 使い方</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --line: #d7dce5;
+      --text: #1f2937;
+      --muted: #667085;
+      --accent: #2563eb;
+      --accent-soft: #dbeafe;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: Inter, "Noto Sans JP", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.75;
+    }
+    .shell {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+    .hero, .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .hero {
+      padding: 24px;
+      margin-bottom: 18px;
+    }
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.4rem, 2vw, 2rem);
+      line-height: 1.3;
+    }
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+    }
+    .toc {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      margin-top: 18px;
+    }
+    .toc a {
+      display: block;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #fff;
+      border: 1px solid var(--line);
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .toc a:hover,
+    .toc a:focus-visible {
+      outline: none;
+      border-color: rgba(37, 99, 235, 0.42);
+      background: var(--accent-soft);
+    }
+    .panel {
+      padding: 22px;
+      margin-bottom: 16px;
+    }
+    h2 {
+      margin: 0 0 12px;
+      font-size: 1.22rem;
+      line-height: 1.35;
+    }
+    h3 {
+      margin: 18px 0 8px;
+      font-size: 1rem;
+      line-height: 1.4;
+    }
+    p { margin: 10px 0; }
+    ol, ul {
+      margin: 10px 0 10px 1.2em;
+      padding: 0;
+    }
+    li + li { margin-top: 6px; }
+    .tip, .warn, .shortcut {
+      margin: 14px 0;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+    .tip {
+      background: #f8fbff;
+      border-color: #cfe0ff;
+    }
+    .warn {
+      background: #fff8f1;
+      border-color: #f4d3a5;
+    }
+    .shortcut {
+      background: #f7f7fb;
+      border-color: #d7dce5;
+    }
+    .steps {
+      margin-top: 12px;
+      padding-left: 0;
+      list-style: none;
+      counter-reset: step;
+    }
+    .steps li {
+      counter-increment: step;
+      margin: 0 0 10px;
+      padding: 12px 14px 12px 48px;
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+    }
+    .steps li::before {
+      content: counter(step);
+      position: absolute;
+      left: 12px;
+      top: 12px;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 0.84rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    code, .kbd {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.95em;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 0.08em 0.38em;
+    }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .mini-card {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+    }
+    .sample-card {
+      display: grid;
+      gap: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+    .sample-box {
+      position: relative;
+    }
+    .sample-copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.94);
+      color: var(--accent);
+      padding: 0;
+      font: inherit;
+      font-size: 1rem;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .sample-copy-btn:hover,
+    .sample-copy-btn:focus-visible {
+      outline: none;
+      border-color: rgba(37, 99, 235, 0.42);
+      background: var(--accent-soft);
+    }
+    .sample-textarea {
+      width: 100%;
+      min-height: 0;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      padding-right: 48px;
+      background: #fff;
+      color: var(--text);
+      line-height: 1.6;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92rem;
+      white-space: pre;
+      overflow: auto;
+    }
+    .footer-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .footer-link:hover,
+    .footer-link:focus-visible {
+      outline: none;
+      text-decoration: underline;
+    }
+    @media (max-width: 720px) {
+      .shell { padding: 16px 12px 32px; }
+      .panel, .hero { padding: 18px; }
+      .two-col { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="hero">
+      <h1>Personal ChordPro Viewer の使い方</h1>
+      <p>Personal ChordPro Viewer は、ChordPro 形式の譜面を見やすく管理し、演奏時にも使いやすくするための個人用アプリです。</p>
+      <div class="toc">
+        <a href="#start">最初の準備</a>
+        <a href="#first-song">最初の1曲を入れる</a>
+        <a href="#list">トップページ</a>
+        <a href="#edit">Edit画面</a>
+        <a href="#view">閲覧画面</a>
+        <a href="#autoscroll">自動スクロール</a>
+        <a href="#notes">付箋</a>
+        <a href="#backup">バックアップ</a>
+        <a href="#related-files">他のバージョンと譜面共有</a>
+      </div>
+    </div>
+
+    <section class="panel" id="start">
+      <h2>1. 最初の準備</h2>
+      <p><code>index.html</code> と <code>manual.html</code> を自分のパソコンにダウンロードし、同じフォルダに入れた後、<code>index.html</code> をダブルクリックして直接ブラウザで開いてください。開いたページをブックマークしておくと便利です。</p>
+      <div class="warn">
+        途中で使うブラウザを変えると、保存済みの曲や付箋が見えなくなります。Export / Import 機能はありますが、できるだけ同じパソコンと同じブラウザを使ってください。
+      </div>
+    </section>
+
+    <section class="panel" id="first-song">
+      <h2>2. 最初の1曲を入れる</h2>
+      <p>初めてのときは、次の順番がいちばん簡単です。</p>
+      <ol class="steps">
+        <li>トップページ右上の <strong>Add Song</strong> を押します。</li>
+        <li><strong>Slug</strong> を入れます。短く、重複しにくい文字列にしてください。使えるのは英数字とハイフンのみです。例: <code>hot-chili-love-song</code></li>
+        <li><strong>ChordPro</strong> 欄に譜面を入力します。</li>
+        <li><strong>Title</strong> と <strong>Artist</strong> を確認します。</li>
+        <li>必要なら <strong>Tags</strong> と <strong>YouTube links</strong> を入れます。</li>
+        <li><strong>Save</strong> を押します。</li>
+      </ol>
+      <div class="tip">
+        いちばんのコツは、<strong>Title や Artist を先に手入力するより、まず ChordPro を入力する</strong>ことです。<br>
+        ChordPro に <code>{title: 曲名}</code> と <code>{subtitle: アーティスト名}</code> が入っていれば、Title と Artist は自動で反映されます。<strong>Slug が自動で候補入力されるのは、Title が英語・ローマ字など半角英数字ベースのときだけ</strong>です。日本語タイトルでは自動では入らないので、Slug は手動で入力してください。
+      </div>
+      <h3>入力例</h3>
+      <div class="sample-card">
+        <div class="sample-box">
+          <button type="button" class="sample-copy-btn" data-sample-copy="chordpro-sample" aria-label="全文をコピー" title="全文をコピー">⧉</button>
+          <textarea id="chordpro-sample" class="sample-textarea" rows="6" readonly spellcheck="false">{title: とうがらしのラブソング}
+{subtitle: ChatGTP}
+{key: F}
+{c: tempo: 118}
+{c: time: 4/4}
+
+{ci: Intro}
+[Fmaj9]---- ----|[Abmaj7(#11)/F]---- ----|[Gm11]---- ----|[C13sus4(b9)]----[C7alt]----|
+[A7(#5#9)]---- ----|[Dm9]---- ----|[Dbmaj7(#11)]---- ----|[C13sus4]---- ----|
+[F6/9]---- ----|[A13sus4]---- ----|[Bbmaj9(#11)]---- ----|[Bdim7]---- ----|
+[Gm9]---- ----|[Abmaj9]---- ----|[F/C]---- ----|[C7sus4(b9)]---- ----|
+
+{ci: Verse 1}
+[Fmaj9]赤でも 青でも [Abmaj7(#11)/F]香りで わかるよ [Gm11]きみの となりで [C13sus4(b9) C7alt]胸が また騒ぐ
+[A7(#5#9)]ひとくち かじれば [Dm9]世界が 目を覚まし [Dbmaj7(#11)]汗まで ごほうびさ [C13sus4]今日は 少し多めでいい
+[F6/9]舌が しびれても [A13sus4]なぜか 笑ってしまう [Bbmaj9(#11)]その熱こそが ぼくの [Bdim7]生きてる しるし
+[Gm9]辛いほど やさしい [Abmaj9]不思議な 恋だから [F/C]ラー油も 七味も [C7sus4(b9) C7alt]きみに 重ねて歌う
+
+{ci: Interlude}
+[Fmaj13]---- ----|[E7alt]---- ----|[Ebmaj9(#11)]---- ----|[Dm11]---- ----|
+[Dbmaj9]---- ----|[C13sus4]---- ----|[A7(#11)]---- ----|[Dm9]---- ----|
+[Bbmaj7(#11)]---- ----|[Bdim7]---- ----|[F/C]---- ----|[C7alt]---- ----|
+[Abmaj7(#11)]---- ----|[Gm11]---- ----|[F6/9/A]---- ----|[C13sus4]---- ----|
+
+{ci: Verse 2}
+[Fmaj9]青唐も ハバネロも [E7alt]顔色 変えずに [Ebmaj9(#11)]平気な ふりして [Dm11]ほんとは ちょっと泣いてる
+[Dbmaj9]だけど そのあとに [C13sus4]広がる 甘みまで [A7(#11)]ちゃんと 知ってるから [Dm9]やめられず 手が伸びる
+[Bbmaj7(#11)]火を吹く みたいでも [Bdim7]心は 軽くなるよ [F/C]からさの 向こうにある [C7alt]景色が 好きだから
+[Abmaj7(#11)]餃子に うどんにも [Gm11]味噌にも 合うなんて [F6/9/A]きみは 小さな 太陽 [C13sus4 C7alt]今日も 台所で燃える
+
+{ci: Verse 3}
+[Fmaj9]雨の日 だってほら [Abmaj7(#11)/F]ひとふり するだけで [Gm11]曇った 気分まで [C13sus4(b9) C7alt]ぱっと 赤く 染まるよ
+[A7(#5#9)]昨日の 失敗も [Dm9]明日の 不安さえも [Dbmaj7(#11)]辛みで 笑い飛ばす [C13sus4]そんな 強さを くれる
+[F6/9]きみと 出会ってから [A13sus4]ごはんが 輝きだした [Bbmaj9(#11)]ありふれた 毎日が [Bdim7]少しだけ 祝祭だよ
+[Gm9]からい、うまい、しあわせ [Abmaj9]それだけで 十分 [F/C]燃える この気持ちは [C7sus4(b9) C7alt]もう 止められないまま
+
+{ci: Ending}
+[Fmaj9]---- ----|[Abmaj7(#11)/F]---- ----|[Gm11]---- ----|[C13sus4]---- ----|
+[A7(#5#9)]---- ----|[Dm9]---- ----|[Dbmaj7(#11)]---- ----|[C7alt]---- ----|
+[Bbmaj9(#11)]---- ----|[Bdim7]---- ----|[F6/9/A]---- ----|[Abmaj9]---- ----|
+[Gm11]---- ----|[C13sus4(b9)]---- ----|[F6/9]---- ----|[Fmaj9]---- ----||</textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="list">
+      <h2>3. トップページの使い方</h2>
+      <p>トップページでは、曲の一覧を見たり、新しい曲を追加したり、全曲の Export / Import を行えます。検索欄では <strong>title / artist / tags</strong> をまとめて検索できます。入力後に <strong>Enter</strong> を押すと検索され、元に戻したいときは <strong>Clear</strong> を押します。曲カード本体を押すと閲覧画面に入り、<strong>Edit</strong> を押すと編集画面に入ります。</p>
+      <h3>Export all / Import all</h3>
+      <ul>
+        <li><strong>Export all</strong>: 曲ライブラリ全体を JSON に書き出します。</li>
+        <li><strong>Import all</strong>: JSON を読み込みます。<strong>同じ slug の曲は上書きされ、JSON に含まれていない既存曲はそのまま残ります。</strong></li>
+      </ul>
+    </section>
+
+    <section class="panel" id="edit">
+      <h2>4. Edit画面の使い方</h2>
+      <p>Edit画面では、曲の追加・修正・1曲単位の Export / Import を行います。上部には <strong>Cancel / Import / Export / Save</strong> があり、保存済みの曲では <strong>Delete</strong> も使えます。</p>
+      <h3>よく使うボタン</h3>
+      <ul>
+        <li><strong>Save</strong>: 入力内容を保存します。</li>
+        <li><strong>Delete</strong>: その曲を削除します。</li>
+        <li><strong>Export</strong>: 1曲分の JSON を書き出します。</li>
+        <li><strong>Import</strong>: 1曲分の JSON を読み込んで、編集フォームに載せます。</li>
+      </ul>
+      <div class="tip">
+        <strong>Import しただけでは、まだ保存は確定しません。</strong><br>
+        内容を確認して、必要なら直してから <strong>Save</strong> を押してください。別の曲をひな形にして新しい曲を作るときにも便利です。
+      </div>
+      <h3>YouTube links</h3>
+      <p>YouTube は <strong>1行に1件</strong> 入れるのが分かりやすいです。通常の URL、<code>youtu.be</code> 形式、動画 ID が使えます。開始位置付きリンクも使えます。たとえば <code>https://www.youtube.com/watch?v=XXXXXXXXXXX&amp;t=90</code> と書くと 90 秒から再生され、<code>https://youtu.be/XXXXXXXXXXX?t=90</code> の形でも使えます。</p>
+    </section>
+
+    <section class="panel" id="view">
+      <h2>5. 閲覧画面の使い方</h2>
+      <p>曲を開くと閲覧画面になります。中央に譜面、右側に設定パネルが出ます。右側では、フォントやコード表記、YouTube、付箋、自動スクロールをまとめて操作できます。</p>
+      <h3>基本操作</h3>
+      <ul>
+        <li><strong>Back</strong>: トップページへ戻ります。</li>
+        <li><strong>Edit</strong>: その曲の編集画面へ移動します。</li>
+      </ul>
+      <h3>表示調整</h3>
+      <p>閲覧画面の右側パネルでは、上から順に次の調整ができます。</p>
+      <ul>
+        <li><strong>Key</strong>: 譜面全体のキーを上下に移調します。</li>
+        <li><strong>Sign</strong>: シャープ系、フラット系など、音名の表記を切り替えます。</li>
+        <li><strong>Auto Scroll</strong>: 自動スクロールの開始・停止、時間設定、保存を行います。</li>
+        <li><strong>YouTube</strong>: 登録した動画を開いて再生できます。YouTube側の仕様上、ローカルに置かれた <code>index.html</code> を直接開いている場合は、動画は別ウィンドウで開かれます。サーバー上に <code>index.html</code> を置いて開いている場合は、右下にフロート表示で再生されます。登録されていない場合は、Title と Artist でYouTube検索することもできます。</li>
+        <li><strong>Notes</strong>: 付箋の書き出し・読み込みができます。</li>
+        <li><strong>Chord Formatting</strong>: テンション、スラッシュコード、add・sus など、コード表記の見た目を調整できます。</li>
+        <li><strong>Font Settings</strong>: 歌詞とコードのサイズ、フォントを調整できます。</li>
+      </ul>
+    </section>
+
+    <section class="panel" id="autoscroll">
+      <h2>6. 自動スクロールの使い方</h2>
+      <p>右側の <strong>Auto Scroll</strong> には、<strong>Start / Pause</strong>、<strong>Reset</strong>、<strong>Save</strong>、分・秒入力、<strong>3:00 / 4:00 / 5:00</strong> プリセットがあります。</p>
+      <h3>まずはこの順番がおすすめ</h3>
+      <ol class="steps">
+        <li>譜面左側の <strong>S / E</strong> マーカーを動かして、スクロールする範囲を決めます。</li>
+        <li>まずは <strong>3:00 / 4:00 / 5:00</strong> のどれか近いものを押します。</li>
+        <li><strong>Start</strong> を押します。</li>
+        <li>演奏しながら必要に応じて調整します。</li>
+        <li>演奏が最後まで終わったら、分・秒入力欄に戻って、実測値を確認します。</li>
+        <li>実測値が適切な長さであることが確認できたら（あるいは手動で調整後）<strong>Save</strong> を押します。</li>
+      </ol>
+      <h3>開始・停止のしかた</h3>
+      <ul>
+        <li>右側の <strong>Start / Pause</strong> ボタン</li>
+        <li><span class="kbd">Space</span> キー</li>
+        <li><strong>譜面の左クリック</strong></li>
+      </ul>
+      <p>このどれでも開始・停止を切り替えられます。ただし、付箋を操作しているときや S / E マーカーをつかんでいるときは、左クリックはスクロール切替には使われません。</p>
+      <div class="shortcut">
+        <strong>実用的な使い方</strong><br>
+        最初から完璧な時間を入れようとしなくて大丈夫です。まず近い時間で始めて、演奏しながら少しずつ合わせるのがいちばん楽です。
+      </div>
+      <h3>自動補正</h3>
+      <p>自動スクロール中に手でスクロールすると、その方向に応じて速度が補正されます。</p>
+      <ul>
+        <li><strong>上へ戻す</strong> → 少し遅くしたい</li>
+        <li><strong>下へ送る</strong> → 少し速くしたい</li>
+        <li><strong>一時停止する</strong> → 少し遅めにしたい</li>
+      </ul>
+      <p>つまり、演奏しながら「少し戻す」「少し送る」「必要に応じて一時停止する」を使うことで、だんだん合いやすくなります。</p>
+      <h3>自動測定</h3>
+      <p>スクロール範囲のかなり後ろまで進むと、アプリが実際にかかった時間を測定し、分・秒欄に候補として表示します（青くハイライトされます）。ただし、<strong>測定された時間は、その時点ではまだ曲の設定として保存されていません。</strong>その時間を今後も使いたい場合は、内容を確認したうえで <strong>Save</strong> を押してください。</p>
+    </section>
+
+    <section class="panel" id="notes">
+      <h2>7. 付箋の使い方</h2>
+      <p>付箋は、譜面の上に直接メモを置ける機能です。歌い出しの注意、転調ポイント、カポ、リズムのメモなどに向いています。</p>
+      <h3>付箋を置く</h3>
+      <p><strong>譜面の上で右クリック</strong>すると、その場所に新しい付箋を作れます。作成したら、そのまま入力してください。</p>
+      <h3>付箋を閉じる・最小化する</h3>
+      <ul>
+        <li><strong>✓</strong>: 編集を終えて閉じる</li>
+        <li><strong>_</strong>: 最小化する</li>
+        <li><strong>✎</strong>: 編集する</li>
+        <li><strong>×</strong>: 削除する</li>
+      </ul>
+      <h3>付箋を動かす・大きさを変える</h3>
+      <ul>
+        <li>ドラッグで移動できます。</li>
+        <li>右下のハンドルでサイズ変更できます。</li>
+        <li><strong>A− / A+</strong> で文字サイズを変えられます。</li>
+      </ul>
+      <h3>付箋のバックアップ</h3>
+      <p>右側の <strong>Notes</strong> 欄には、<strong>Export song</strong>、<strong>Export all</strong>、<strong>Import</strong> があります。</p>
+      <ul>
+        <li><strong>Export song</strong>: 今開いている曲の付箋だけ書き出します。</li>
+        <li><strong>Export all</strong>: 全曲分の付箋を書き出します。</li>
+        <li><strong>Import</strong>: 付箋 JSON を読み込みます。<strong>1曲分の JSON にも、全曲分の JSON にも対応しています。</strong></li>
+      </ul>
+      <div class="tip">
+        <strong>Notes の Import は、全曲分 JSON を選べば実質的に付箋の Import all として動作します。</strong><br>
+        そのとき、JSON 内に含まれる slug のうち、今の曲ライブラリに存在しないものは、<strong>インポート前に一覧表示され、実際の取り込みでは自動的にスキップ</strong>されます。存在する slug の付箋だけが読み込まれます。
+      </div>
+      <div class="warn">
+        曲データの Export / Import と、付箋の Export / Import は別です。完全なバックアップを取りたいときは、<strong>両方</strong>行ってください。
+      </div>
+    </section>
+
+    <section class="panel" id="backup">
+      <h2>8. バックアップと移行</h2>
+      <h3>普段のおすすめ</h3>
+      <p>曲を追加・修正した日は、最後に次の2つをやっておくと安心です。</p>
+      <ol>
+        <li>トップページで <strong>Export all</strong></li>
+        <li>どれかの曲を開いて、Notes の <strong>Export all</strong></li>
+      </ol>
+      <p>これで、<strong>曲データ</strong>と<strong>付箋データ</strong>の両方をバックアップできます。</p>
+      <h3>別のPCに移したいとき</h3>
+      <ol>
+        <li>新しいPCでも <code>index.html</code> と <code>manual.html</code> を同じフォルダに置き、<code>index.html</code> をブラウザで開く</li>
+        <li>トップページで <strong>Import all</strong> をして曲データを戻す</li>
+        <li>どれかの曲を開いて、Notes の <strong>Import</strong> で付箋を戻す</li>
+      </ol>
+      <div class="tip">
+        付箋の全曲分 JSON を読み込むときは、<strong>先に曲データを戻しておく</strong>のが安全です。まだ存在しない slug の付箋は、一覧表示されたうえでスキップされます。
+      </div>
+    </section>
+
+    <section class="panel" id="related-files">
+      <h2>9. 他のバージョンと譜面共有</h2>
+      <p>この静的HTML版に加えて、自分のパソコンで動かすローカル版（動作が軽快・個人用）と、Googleスプレッドシート版（表示や保存は遅め・譜面共有用）も用意しています。<strong>必要に応じて自由に活用してください。</strong><br><strong>ネットワーク不調などの影響を受けにくく、最も安全なのはローカル版</strong>です。ふだん自分だけで使う場合は、ローカル版をおすすめします。<strong>ただし、ローカル版では YouTube の再生は別ウィンドウで行われます。</strong><br>一方、<strong>譜面共有が必要な場合は、Googleスプレッドシート版</strong>を使ってください。Googleスプレッドシート版は、<strong>譜面の表示や保存に時間がかかりますが、共通リンクによって譜面を共有できます。付箋は個人ごとに管理されます。</strong><br>関連ファイルは下記のフォルダにまとめてあります。各バージョンの使い方や注意点は、それぞれのバージョン名のフォルダ内にある <strong>「最初に読んでください」</strong> を参照してください。</p>
+      <p><a class="footer-link" href="https://drive.google.com/drive/folders/1-D1YW4gn6J8t0B-E7ig09sJ9d04kmBq8" target="_blank" rel="noopener noreferrer">Google Driveのフォルダを開く</a></p>
+    </section>
+
+    <section class="panel">
+      <h2>10. 迷ったときの最短ルール</h2>
+      <ul>
+        <li><strong>新しい曲を入れる</strong> → Add Song</li>
+        <li><strong>Title / Artist を楽に入れたい</strong> → 先に ChordPro を入力する</li>
+        <li><strong>自動スクロールが合わない</strong> → まず範囲、次に時間、最後に演奏しながら微調整</li>
+        <li><strong>付箋を置きたい</strong> → 譜面上で右クリック</li>
+        <li><strong>1曲だけ持ち出す / 取り込む</strong> → Edit画面の Export / Import と、Notes の Export song / Import</li>
+        <li><strong>全部バックアップする</strong> → トップページの Export all と、Notes の Export all</li>
+      </ul>
+      <p><a class="footer-link" href="index.html">← トップページに戻る</a></p>
+    </section>
+  </div>
+  <script>
+    document.addEventListener('click', function(event) {
+      const button = event.target.closest('[data-sample-copy]');
+      if (!button) return;
+      const textarea = document.getElementById(button.getAttribute('data-sample-copy'));
+      if (!textarea) return;
+      textarea.focus();
+      textarea.select();
+      textarea.setSelectionRange(0, textarea.value.length);
+      const originalText = button.textContent;
+      const originalLabel = button.getAttribute('aria-label') || '';
+      const restore = function() {
+        button.textContent = originalText;
+        button.setAttribute('aria-label', originalLabel || '全文をコピー');
+        button.setAttribute('title', originalLabel || '全文をコピー');
+      };
+      const copied = function() {
+        button.textContent = '✓';
+        button.setAttribute('aria-label', 'コピーしました');
+        button.setAttribute('title', 'コピーしました');
+        window.setTimeout(restore, 1200);
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(textarea.value).then(copied).catch(function() {
+          try {
+            document.execCommand('copy');
+            copied();
+          } catch (error) {}
+        });
+        return;
+      }
+      try {
+        document.execCommand('copy');
+        copied();
+      } catch (error) {}
+    });
+  </script>
+</body>
+</html>
