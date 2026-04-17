@@ -4126,8 +4126,8 @@ function loadCurrentSongNotes() {
 
     function getSongNoteClampBounds(note, stage, options) {
       const metrics = getSheetStageMetrics(stage);
-      const isDot = !!(options && options.keepDotInside);
-      if (!isDot) {
+      const keepDotInside = !!(options && options.keepDotInside);
+      if (!keepDotInside) {
         return {
           minX: 0,
           maxX: 1,
@@ -4172,11 +4172,23 @@ function loadCurrentSongNotes() {
       if (!options.skipRender) renderSongNotes();
     }
 
+    function getSongNotePixelPosition(note, stage, options) {
+      const metrics = getSheetStageMetrics(stage);
+      const position = clampSongNotePosition(note, stage, note.xPercent, note.yPercent, options);
+      return {
+        metrics: metrics,
+        position: position,
+        leftPx: Math.round(position.xPercent * metrics.width),
+        topPx: Math.round(position.yPercent * metrics.height)
+      };
+    }
+
     function setSongNoteElementPosition(element, note, stage) {
       if (!element || !note || !stage) return;
       if (element.classList.contains('viewer-note-dot')) {
-        element.style.left = (note.xPercent * 100).toFixed(4) + '%';
-        element.style.top = (note.yPercent * 100).toFixed(4) + '%';
+        const pixelPosition = getSongNotePixelPosition(note, stage);
+        element.style.left = pixelPosition.leftPx + 'px';
+        element.style.top = pixelPosition.topPx + 'px';
         return;
       }
       element.style.cssText = getSongNoteInlineStyle(note, stage);
@@ -4363,13 +4375,12 @@ function loadCurrentSongNotes() {
         return true;
       }
       activeNoteDrag.moved = true;
-      const keepDotInside = activeNoteDrag.kind === 'dot';
       const nextPosition = clampSongNotePosition(
         note,
         activeNoteDrag.stage,
         (activeNoteDrag.originLeftPx + deltaX) / Math.max(metrics.width, 1),
         (activeNoteDrag.originTopPx + deltaY) / Math.max(metrics.height, 1),
-        { keepDotInside: keepDotInside }
+        { keepDotInside: true }
       );
       note.xPercent = nextPosition.xPercent;
       note.yPercent = nextPosition.yPercent;
@@ -4479,11 +4490,6 @@ function loadCurrentSongNotes() {
       const nextValue = !!isExpanded;
       if (note.isExpanded === nextValue) return;
       note.isExpanded = nextValue;
-      if (!nextValue && stage) {
-        const clamped = clampSongNotePosition(note, stage, note.xPercent, note.yPercent, { keepDotInside: true });
-        note.xPercent = clamped.xPercent;
-        note.yPercent = clamped.yPercent;
-      }
       saveCurrentSongNotes();
       if (!options.skipRender) renderSongNotes();
     }
@@ -4573,10 +4579,8 @@ function loadCurrentSongNotes() {
     }
 
     function getSongNoteInlineStyle(note, stage) {
-      const metrics = getSheetStageMetrics(stage);
-      const leftPx = Math.round(note.xPercent * metrics.width);
-      const topPx = Math.round(note.yPercent * metrics.height);
-      return 'left:' + leftPx + 'px;top:' + topPx + 'px;width:' + note.widthPx + 'px;height:' + note.heightPx + 'px;--viewer-note-font-size:calc(var(--viewer-note-base-size, 1.16rem) * ' + getSongNoteFontSizeFactor(note).toFixed(2) + ');';
+      const pixelPosition = getSongNotePixelPosition(note, stage);
+      return 'left:' + pixelPosition.leftPx + 'px;top:' + pixelPosition.topPx + 'px;width:' + note.widthPx + 'px;height:' + note.heightPx + 'px;--viewer-note-font-size:calc(var(--viewer-note-base-size, 1.16rem) * ' + getSongNoteFontSizeFactor(note).toFixed(2) + ');';
     }
 
     function renderSongNoteDisplayCard(note, stage) {
@@ -4632,7 +4636,8 @@ function loadCurrentSongNotes() {
         if (editingNoteId === note.id) {
           return '';
         }
-        return '<button type="button" class="viewer-note-dot viewer-note-ui" data-note-action="toggle" data-note-drag="dot" data-note-id="' + escapeHtml(note.id) + '" style="left:' + (note.xPercent * 100).toFixed(4) + '%;top:' + (note.yPercent * 100).toFixed(4) + '%;" title="' + escapeHtml(getNotePreviewText(note.text)) + '" aria-label="Open note"></button>';
+        const dotPosition = getSongNotePixelPosition(note, els.sheetStage);
+        return '<button type="button" class="viewer-note-dot viewer-note-ui" data-note-action="toggle" data-note-drag="dot" data-note-id="' + escapeHtml(note.id) + '" style="left:' + dotPosition.leftPx + 'px;top:' + dotPosition.topPx + 'px;" title="' + escapeHtml(getNotePreviewText(note.text)) + '" aria-label="Open note"></button>';
       }).join('');
       els.noteLayer.innerHTML = captureHtml + notesHtml + renderSongNotePopover(els.sheetStage);
       syncNoteCreateModeUi(els);
