@@ -1258,6 +1258,76 @@
     white-space: nowrap;
     flex: 0 0 auto;
   }
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-controls .btn,
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-fonts .btn,
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-controls .field,
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-fonts .select,
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-fonts .stepper-value {
+    min-height: 36px;
+    padding: 8px 12px;
+    font-size: 0.88rem;
+  }
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-controls .stepper,
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-fonts .stepper {
+    grid-template-columns: 36px minmax(0, 1fr) 36px;
+    gap: 7px;
+  }
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-controls .stepper-input,
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-fonts .stepper-input,
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-fonts .stepper-value,
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-controls .btn-icon,
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-fonts .btn-icon {
+    min-height: 36px;
+    height: 36px;
+  }
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-controls .btn-icon,
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-fonts .btn-icon {
+    width: 36px;
+    min-width: 36px;
+    padding: 0;
+    font-size: 0.96rem;
+  }
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-controls .btn-segment {
+    min-height: 34px;
+    padding: 7px 9px;
+    font-size: 0.76rem;
+  }
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-fonts .compact-select,
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-controls .field-compact {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-controls .btn-save-autoscroll,
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-controls .btn-chip {
+    min-height: 28px;
+    padding: 4px 7px;
+    font-size: 0.76rem;
+    line-height: 1.08;
+  }
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-controls .autoscroll-time-sep {
+    height: 36px;
+  }
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-controls .compact-controls,
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-fonts .compact-controls {
+    gap: 8px;
+  }
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-controls .control-group,
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-fonts .control-group {
+    gap: 6px;
+  }
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-controls .setting-row,
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-fonts .setting-row {
+    gap: 9px;
+  }
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-controls .autoscroll-compact {
+    gap: 8px;
+  }
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-controls .preset-chip-row {
+    gap: 6px;
+  }
+  .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-controls .setting-label-autoscroll {
+    gap: 6px;
+  }
   .autoscroll-lane {
     position: absolute;
     left: 0;
