@@ -17,6 +17,7 @@
     --muted: #667085;
     --accent: #2563eb;
     --accent-soft: #dbeafe;
+    --accent-rgb: 37, 99, 235;
     --danger: #dc2626;
     --btn-bg: #f8fafc;
     --btn-bg-hover: #ffffff;
@@ -128,24 +129,24 @@
   }
   .btn:focus-visible {
     outline: none;
-    border-color: rgba(37, 99, 235, 0.52);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+    border-color: rgba(var(--accent-rgb), 0.52);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.14);
   }
   .btn.primary {
     background: var(--accent);
     color: #fff;
     border-color: var(--accent);
     font-weight: 400;
-    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.18);
+    box-shadow: 0 8px 18px rgba(var(--accent-rgb), 0.18);
   }
   .btn.primary:hover:not(:disabled) {
-    background: #1d4ed8;
-    border-color: #1d4ed8;
-    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.22);
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 10px 22px rgba(var(--accent-rgb), 0.22);
   }
   .btn.primary:active:not(:disabled) {
-    background: #1e40af;
-    border-color: #1e40af;
+    background: var(--accent);
+    border-color: var(--accent);
     box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.14);
   }
   .btn.danger {
@@ -287,7 +288,7 @@
     max-width: 100%;
     font-size: 0.72rem;
     line-height: 1;
-    color: #1d4ed8;
+    color: var(--accent);
     background: var(--accent-soft);
     padding: 2px 7px;
     border-radius: 999px;
@@ -339,8 +340,8 @@
   }
   .viewer-pane-resizer:hover::before,
   .viewer-grid.is-viewer-pane-resizing .viewer-pane-resizer::before {
-    background: rgba(37, 99, 235, 0.82);
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    background: rgba(var(--accent-rgb), 0.82);
+    box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.12);
   }
   .viewer-grid.is-pane-resize-disabled .viewer-pane-resizer {
     cursor: default;
@@ -1332,6 +1333,122 @@
   .viewer-grid:not(.is-sidebar-compact) .sidebar-panel-controls .setting-label-autoscroll {
     gap: 6px;
   }
+  .color-format-row {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+    min-width: 0;
+  }
+  .color-format-label {
+    flex: 0 0 64px;
+    width: 64px;
+    min-width: 64px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    line-height: 1.2;
+  }
+  .color-chip-group {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+  .color-chip {
+    appearance: none;
+    border: 1px solid var(--btn-line);
+    border-radius: 999px;
+    background: #fff;
+    color: #475569;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    min-height: 24px;
+    padding: 0 8px;
+    cursor: pointer;
+    box-shadow: none;
+    transition: background-color 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease, transform 0.14s ease;
+  }
+  .color-chip:hover {
+    border-color: var(--btn-line-hover);
+    background: var(--btn-bg-hover);
+  }
+  .color-chip:focus-visible {
+    outline: none;
+    border-color: rgba(var(--accent-rgb), 0.52);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.14);
+  }
+  .color-chip.is-active {
+    border-color: rgba(var(--accent-rgb), 0.42);
+    background: rgba(var(--accent-rgb), 0.08);
+    box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0.1);
+  }
+  .color-chip-off {
+    font-size: 0.72rem;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .color-chip-swatch-btn {
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+  }
+  .color-chip-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(15, 23, 42, 0.16);
+    background: var(--color-chip-color, var(--accent));
+  }
+  .viewer-grid .color-format-row {
+    grid-template-columns: calc(64px * var(--viewer-sidebar-scale, 1)) minmax(0, 1fr);
+    gap: calc(12px * var(--viewer-sidebar-scale, 1));
+    margin-top: calc(10px * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .color-format-label {
+    flex-basis: calc(64px * var(--viewer-sidebar-scale, 1));
+    width: calc(64px * var(--viewer-sidebar-scale, 1));
+    min-width: calc(64px * var(--viewer-sidebar-scale, 1));
+    font-size: calc(0.75rem * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .color-chip-group {
+    gap: calc(8px * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .color-chip {
+    min-height: calc(24px * var(--viewer-sidebar-scale, 1));
+    padding: 0 calc(8px * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .color-chip-off {
+    font-size: calc(0.72rem * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid .color-chip-swatch-btn {
+    width: 100%;
+    min-width: 0;
+  }
+  .viewer-grid .color-chip-swatch {
+    width: calc(12px * var(--viewer-sidebar-scale, 1));
+    height: calc(12px * var(--viewer-sidebar-scale, 1));
+  }
+  .viewer-grid.is-sidebar-tight .color-format-row,
+  .viewer-grid.is-sidebar-ultra .color-format-row,
+  .viewer-grid.is-sidebar-micro .color-format-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+  .viewer-grid.is-sidebar-tight .color-chip-group,
+  .viewer-grid.is-sidebar-ultra .color-chip-group,
+  .viewer-grid.is-sidebar-micro .color-chip-group {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
   .autoscroll-lane {
     position: absolute;
     left: 0;
@@ -1345,8 +1462,8 @@
     left: 8px;
     width: 2px;
     border-radius: 999px;
-    background: #bfdbfe;
-    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.08);
+    background: rgba(var(--accent-rgb), 0.28);
+    box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.12);
   }
   .autoscroll-marker {
     position: absolute;
@@ -1365,8 +1482,8 @@
   .autoscroll-marker-pin {
     position: absolute;
     inset: 0;
-    color: #3b82f6;
-    filter: drop-shadow(0 2px 4px rgba(37, 99, 235, 0.18));
+    color: var(--accent);
+    filter: drop-shadow(0 2px 4px rgba(var(--accent-rgb), 0.18));
     transform: rotate(-90deg);
   }
   .autoscroll-marker-label {
@@ -1757,14 +1874,14 @@
     border-right: 0;
   }
   .btn-segment.is-active {
-    background: rgba(37, 99, 235, 0.08);
-    color: #1d4ed8;
-    box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.14);
+    background: rgba(var(--accent-rgb), 0.08);
+    color: var(--accent);
+    box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0.14);
   }
   .btn-segment.is-active:hover:not(:disabled),
   .btn-segment.is-active:focus-visible {
-    background: rgba(37, 99, 235, 0.12);
-    color: #1d4ed8;
+    background: rgba(var(--accent-rgb), 0.12);
+    color: var(--accent);
   }
   .segmented-control-sign .btn-segment {
     line-height: 1;
@@ -1859,7 +1976,7 @@
     transform: translateX(16px);
   }
   .toggle-switch input:focus-visible + .toggle-slider {
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.18);
   }
   .autoscroll-compact {
     display: grid;
@@ -1884,14 +2001,14 @@
   }
   .btn-toggle.is-active:hover:not(:disabled),
   .btn-toggle.is-active:focus-visible {
-    background: #1d4ed8;
-    border-color: #1d4ed8;
+    background: var(--accent);
+    border-color: var(--accent);
     color: #fff;
-    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.22);
+    box-shadow: 0 10px 22px rgba(var(--accent-rgb), 0.22);
   }
   .btn-toggle.is-active:active:not(:disabled) {
-    background: #1e40af;
-    border-color: #1e40af;
+    background: var(--accent);
+    border-color: var(--accent);
     color: #fff;
     box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.14);
   }
@@ -1939,19 +2056,19 @@
     padding-right: 18px;
   }
   .time-stepper-input.is-observed-pending {
-    border-color: rgba(37, 99, 235, 0.82);
-    background: rgba(59, 130, 246, 0.12);
-    color: #1d4ed8;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14), inset 0 0 0 1px rgba(37, 99, 235, 0.18);
+    border-color: rgba(var(--accent-rgb), 0.82);
+    background: rgba(var(--accent-rgb), 0.12);
+    color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.14), inset 0 0 0 1px rgba(var(--accent-rgb), 0.18);
   }
   .time-stepper-input.is-observed-pending + .time-step-buttons {
     opacity: 1;
     pointer-events: auto;
   }
   .time-stepper-input.is-observed-pending + .time-step-buttons .btn-stepper-mini {
-    border-color: rgba(37, 99, 235, 0.56);
-    background: rgba(59, 130, 246, 0.14);
-    color: #1d4ed8;
+    border-color: rgba(var(--accent-rgb), 0.56);
+    background: rgba(var(--accent-rgb), 0.14);
+    color: var(--accent);
   }
   .time-step-buttons {
     position: absolute;
@@ -2075,19 +2192,19 @@
     box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
   }
   .youtube-thumb:focus-visible {
-    outline: 2px solid rgba(37, 99, 235, 0.42);
+    outline: 2px solid rgba(var(--accent-rgb), 0.42);
     outline-offset: 2px;
   }
   .youtube-thumb.is-active {
-    border-color: rgba(37, 99, 235, 0.42);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    border-color: rgba(var(--accent-rgb), 0.42);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.12);
   }
   .youtube-embed-card {
-    border: 1px solid rgba(37, 99, 235, 0.42);
+    border: 1px solid rgba(var(--accent-rgb), 0.42);
     border-radius: 14px;
     overflow: hidden;
     background: #111827;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.12);
   }
   .youtube-thumb-media {
     position: relative;
@@ -2140,7 +2257,7 @@
   }
   .youtube-floating-player-inner {
     position: relative;
-    border: 1px solid rgba(37, 99, 235, 0.42);
+    border: 1px solid rgba(var(--accent-rgb), 0.42);
     border-radius: 18px;
     background: #111827;
     box-shadow: 0 20px 48px rgba(15, 23, 42, 0.28);
@@ -2179,7 +2296,7 @@
     cursor: pointer;
   }
   .song-item-clickable:focus-visible {
-    outline: 2px solid rgba(37, 99, 235, 0.45);
+    outline: 2px solid rgba(var(--accent-rgb), 0.45);
     outline-offset: 2px;
   }
   .busy-overlay {
@@ -2209,7 +2326,7 @@
     width: 28px;
     height: 28px;
     border-radius: 999px;
-    border: 3px solid rgba(37, 99, 235, 0.14);
+    border: 3px solid rgba(var(--accent-rgb), 0.14);
     border-top-color: var(--accent);
     animation: busy-spin 0.85s linear infinite;
   }
@@ -2272,8 +2389,8 @@
     margin: 0 0 14px;
     padding: 10px 12px;
     border-radius: 12px;
-    background: #eff6ff;
-    color: #1d4ed8;
+    background: var(--accent-soft);
+    color: var(--accent);
   }
   .status-box.error {
     background: #fef2f2;
@@ -2302,7 +2419,7 @@
   .list-help-link:hover,
   .list-help-link:focus-visible {
     color: var(--accent);
-    border-color: rgba(37, 99, 235, 0.35);
+    border-color: rgba(var(--accent-rgb), 0.35);
     outline: none;
   }
 
@@ -2340,7 +2457,6 @@
   }
   .cw-comment-italic {
     font-style: italic;
-    font-weight: 700;
   }
   .cw-directive {
     color: var(--muted);
@@ -2352,7 +2468,7 @@
   .cw-tempo-blink {
     display: inline-block;
     margin-left: 0.32em;
-    color: #dc2626;
+    color: var(--cw-tempo-on-color, #dc2626);
     font-size: 0.92em;
     line-height: 1;
     vertical-align: baseline;
@@ -2362,8 +2478,8 @@
     animation-iteration-count: infinite;
   }
   @keyframes cw-tempo-blink {
-    0%, 49% { opacity: 1; }
-    50%, 100% { opacity: 0.18; }
+    0%, 24% { opacity: 1; }
+    25%, 100% { opacity: 0.1; }
   }
   .cw-plain-line {
     white-space: pre-wrap;
@@ -2384,7 +2500,7 @@
     justify-content: flex-end;
   }
   .cw-chord {
-    color: #2563eb;
+    color: var(--accent);
     font-family: var(--cw-chord-font);
     font-size: var(--cw-chord-size);
     font-weight: 700;
@@ -2569,6 +2685,28 @@
     .search-row {
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 8px;
+    }
+    .list-mode-body .topbar {
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .list-mode-body .title-block {
+      flex: 1 1 100%;
+      width: 100%;
+    }
+    .list-mode-body .title-block h1 {
+      overflow: visible;
+      text-overflow: clip;
+      white-space: normal;
+      text-align: left;
+      line-height: 1.2;
+    }
+    .list-mode-body .topbar > .actions {
+      flex: 1 1 100%;
+      width: 100%;
+      overflow: visible;
+      justify-content: flex-end;
     }
     .list-mode-body .song-item {
       flex-direction: row;
@@ -3270,7 +3408,80 @@
     ].join('');
   }
 
-  function renderTempoAwareComment(text) {
+  function normalizeBpmBlinkColor(value) {
+    const normalized = String(value || '').trim().toLowerCase();
+    return ['off', 'red', 'amber', 'green', 'blue', 'purple', 'black'].indexOf(normalized) !== -1 ? normalized : 'red';
+  }
+
+  function normalizeFormatOptions(value) {
+    const source = value && typeof value === 'object' ? value : {};
+    return {
+      symbols: source.symbols !== false,
+      tensions: source.tensions !== false,
+      slashChords: source.slashChords !== false,
+      suffixes: source.suffixes !== false,
+      bpmBlinkColor: normalizeBpmBlinkColor(source.bpmBlinkColor)
+    };
+  }
+
+  function getBpmBlinkColorValue(name) {
+    switch (normalizeBpmBlinkColor(name)) {
+      case 'amber': return '#facc15';
+      case 'green': return '#15803d';
+      case 'blue': return '#2563eb';
+      case 'purple': return '#7c3aed';
+      case 'black': return '#111827';
+      case 'off': return '';
+      case 'red':
+      default: return '#dc2626';
+    }
+  }
+
+  function normalizeAccentColor(value) {
+    const normalized = String(value || '').trim().toLowerCase();
+    return ['blue', 'green', 'purple', 'red', 'black'].indexOf(normalized) !== -1 ? normalized : 'blue';
+  }
+
+  function getAccentPalette(name) {
+    switch (normalizeAccentColor(name)) {
+      case 'green': return { accent: '#15803d', soft: '#dcfce7', rgb: '21, 128, 61' };
+      case 'purple': return { accent: '#7c3aed', soft: '#ede9fe', rgb: '124, 58, 237' };
+      case 'red': return { accent: '#dc2626', soft: '#fee2e2', rgb: '220, 38, 38' };
+      case 'black': return { accent: '#111827', soft: '#e5e7eb', rgb: '17, 24, 39' };
+      case 'blue':
+      default: return { accent: '#2563eb', soft: '#dbeafe', rgb: '37, 99, 235' };
+    }
+  }
+
+  function renderColorChipHtml(actionName, value, label, currentValue) {
+    const normalizedValue = actionName === 'set-bpm-blink-color' ? normalizeBpmBlinkColor(value) : normalizeAccentColor(value);
+    const normalizedCurrent = actionName === 'set-bpm-blink-color' ? normalizeBpmBlinkColor(currentValue) : normalizeAccentColor(currentValue);
+    const isActive = normalizedCurrent === normalizedValue;
+    if (normalizedValue === 'off') {
+      return '<button class="color-chip color-chip-off' + (isActive ? ' is-active' : '') + '" type="button" data-app-action="' + escapeHtml(actionName) + '" data-app-value="off" aria-pressed="' + (isActive ? 'true' : 'false') + '">Off</button>';
+    }
+    const chipColor = actionName === 'set-bpm-blink-color' ? getBpmBlinkColorValue(normalizedValue) : getAccentPalette(normalizedValue).accent;
+    return [
+      '<button class="color-chip color-chip-swatch-btn', isActive ? ' is-active' : '', '" type="button" data-app-action="', escapeHtml(actionName), '" data-app-value="', escapeHtml(normalizedValue), '" aria-label="', escapeHtml(label), '" title="', escapeHtml(label), '" aria-pressed="', isActive ? 'true' : 'false', '">',
+        '<span class="color-chip-swatch" style="--color-chip-color:', escapeHtml(chipColor), ';"></span>',
+      '</button>'
+    ].join('');
+  }
+
+  function applyAccentColor(accentColor) {
+    const palette = getAccentPalette(accentColor);
+    const root = document.documentElement;
+    if (!root || !root.style) return;
+    root.style.setProperty('--accent', palette.accent);
+    root.style.setProperty('--accent-soft', palette.soft);
+    root.style.setProperty('--accent-rgb', palette.rgb);
+  }
+
+  function renderBpmColorChipHtml(value, label, state) {
+    return renderColorChipHtml('set-bpm-blink-color', value, label, state);
+  }
+
+  function renderTempoAwareComment(text, formatOptions) {
     const source = String(text || '');
     const match = source.match(/((?:(?:BPM|Tempo)|♩)\s*(?::|=|≈|≒)\s*(\d+(?:\.\d+)?))/i);
     if (!match || match.index == null) return escapeHtml(source);
@@ -3279,10 +3490,14 @@
     const start = match.index;
     const end = start + match[1].length;
     const periodSec = 60 / bpm;
+    const bpmBlinkColor = formatOptions ? normalizeBpmBlinkColor(formatOptions.bpmBlinkColor) : 'red';
+    const tempoDotHtml = bpmBlinkColor === 'off'
+      ? ''
+      : '<span class="cw-tempo-blink" aria-hidden="true" style="--cw-tempo-period:' + String(periodSec) + 's;--cw-tempo-on-color:' + escapeHtml(getBpmBlinkColorValue(bpmBlinkColor)) + ';">●</span>';
     return [
       escapeHtml(source.slice(0, start)),
       '<span class="cw-tempo-marker">', escapeHtml(match[1]), '</span>',
-      '<span class="cw-tempo-blink" aria-hidden="true" style="--cw-tempo-period:', String(periodSec), 's;">●</span>',
+      tempoDotHtml,
       escapeHtml(source.slice(end))
     ].join('');
   }
@@ -3294,12 +3509,7 @@
     const notation = options && options.notation ? options.notation : 'default';
     const lyricsFont = options && options.lyricsFont ? options.lyricsFont : '"M PLUS Rounded 1c", sans-serif';
     const chordFont = options && options.chordFont ? options.chordFont : '"JetBrains Mono", monospace';
-    const formatOptions = options && options.formatOptions ? options.formatOptions : {
-      symbols: true,
-      tensions: true,
-      slashChords: true,
-      suffixes: true
-    };
+    const formatOptions = normalizeFormatOptions(options && options.formatOptions);
 
     const fontSizeScale = { 1: '0.92rem', 2: '1rem', 3: '1.1rem', 4: '1.22rem', 5: '1.36rem' };
     const chordScale = { 1: '0.92rem', 2: '1.04rem', 3: '1.16rem', 4: '1.28rem', 5: '1.4rem' };
@@ -3314,8 +3524,8 @@
           const key = inner.slice(0, colonIdx).trim().toLowerCase();
           const val = inner.slice(colonIdx + 1).trim();
           if (key === 'title' || key === 't' || key === 'subtitle' || key === 'st') return '';
-          if (key === 'comment' || key === 'c') return '<div class="cw-comment cw-directive-line">' + renderTempoAwareComment(val) + '</div>';
-          if (key === 'comment_italic' || key === 'ci') return '<div class="cw-comment-italic cw-directive-line">' + renderTempoAwareComment(val) + '</div>';
+          if (key === 'comment' || key === 'c') return '<div class="cw-comment cw-directive-line">' + renderTempoAwareComment(val, formatOptions) + '</div>';
+          if (key === 'comment_italic' || key === 'ci') return '<div class="cw-comment-italic cw-directive-line">' + renderTempoAwareComment(val, formatOptions) + '</div>';
           if (key === 'key' || key === 'k') return '<div class="cw-directive cw-directive-line">Key: ' + renderTransposedChord(transposeChord(val, transpose, notation, formatOptions), formatOptions) + '</div>';
         }
         return '';
@@ -5675,6 +5885,30 @@ function loadCurrentSongNotes() {
                   toggleSwitchHtml('suffixes', 'add, sus...', state.formatOptions.suffixes),
                 '</div>',
               '</div>',
+              '<div class="panel pad sidebar-panel sidebar-panel-color">',
+                sectionTitleHtml('palette', 'Color'),
+                '<div class="color-format-row">',
+                  '<div class="color-format-label">Accent</div>',
+                  '<div class="color-chip-group">',
+                    renderColorChipHtml('set-accent-color', 'blue', 'Blue', state.accentColor),
+                    renderColorChipHtml('set-accent-color', 'green', 'Green', state.accentColor),
+                    renderColorChipHtml('set-accent-color', 'purple', 'Purple', state.accentColor),
+                    renderColorChipHtml('set-accent-color', 'red', 'Red', state.accentColor),
+                    renderColorChipHtml('set-accent-color', 'black', 'Black', state.accentColor),
+                  '</div>',
+                '</div>',
+                '<div class="color-format-row">',
+                  '<div class="color-format-label">BPM</div>',
+                  '<div class="color-chip-group">',
+                    renderBpmColorChipHtml('blue', 'Blue', state.formatOptions.bpmBlinkColor),
+                    renderBpmColorChipHtml('green', 'Green', state.formatOptions.bpmBlinkColor),
+                    renderBpmColorChipHtml('purple', 'Purple', state.formatOptions.bpmBlinkColor),
+                    renderBpmColorChipHtml('red', 'Red', state.formatOptions.bpmBlinkColor),
+                    renderBpmColorChipHtml('black', 'Black', state.formatOptions.bpmBlinkColor),
+                    renderBpmColorChipHtml('off', 'Off', state.formatOptions.bpmBlinkColor),
+                  '</div>',
+                '</div>',
+              '</div>',
               '<div class="panel pad sidebar-panel sidebar-panel-fonts">',
                 sectionTitleHtml('font_download', 'Font Settings'),
                 '<div class="control-group compact-controls">',
@@ -6024,6 +6258,7 @@ function renderFloatingPlayer(song) {
     formatOptions: 'personal_chordpro_viewer_chordFormatOptions',
     lyricsFont: 'personal_chordpro_viewer_lyricsFont',
     chordFont: 'personal_chordpro_viewer_chordFont',
+    accentColor: 'personal_chordpro_viewer_accentColor',
     viewerSidebarWidth: 'personal_chordpro_viewer_viewerSidebarWidth'
   };
 
@@ -6244,9 +6479,10 @@ function renderFloatingPlayer(song) {
       notation: 'default',
       fontSizeLevel: loadStoredLevel(STORAGE_KEYS.fontSizeLevel, 3),
       chordSizeLevel: loadStoredLevel(STORAGE_KEYS.chordSizeLevel, 3),
-      formatOptions: loadStoredJson(STORAGE_KEYS.formatOptions, { symbols: true, tensions: true, slashChords: true, suffixes: true }),
+      formatOptions: normalizeFormatOptions(loadStoredJson(STORAGE_KEYS.formatOptions, { symbols: true, tensions: true, slashChords: true, suffixes: true, bpmBlinkColor: 'red' })),
       lyricsFont: normalizeFontToken('lyrics', loadStoredString(STORAGE_KEYS.lyricsFont, 'mplusrounded1c')),
       chordFont: normalizeFontToken('chord', loadStoredString(STORAGE_KEYS.chordFont, 'jetbrainsmono')),
+      accentColor: normalizeAccentColor(loadStoredString(STORAGE_KEYS.accentColor, 'blue')),
       viewerSidebarWidth: loadStoredInteger(STORAGE_KEYS.viewerSidebarWidth, 300, 160, 520),
       scroll: {
         isPlaying: false,
@@ -6480,6 +6716,7 @@ function renderFloatingPlayer(song) {
 
     init: function() {
       this.config = resolveFontConfig({});
+      applyAccentColor(this.state.accentColor);
       this.bindGlobalPointerDefocus();
       this.bindSongListInteractions();
       this.bindAppDelegatedInteractions();
@@ -6616,6 +6853,8 @@ function renderFloatingPlayer(song) {
           case 'import-notes': Viewer.importSongNotes(); break;
           case 'change-font-size': App.changeFontSizeLevel(delta); break;
           case 'change-chord-size': App.changeChordSizeLevel(delta); break;
+          case 'set-accent-color': App.setAccentColor(value); break;
+          case 'set-bpm-blink-color': App.setBpmBlinkColor(value); break;
           case 'clear-search': App.clearSearch(); break;
           case 'play-youtube': if (!isNaN(index)) App.playYouTube(index); break;
           case 'stop-youtube': App.stopYouTubePlayback(); break;
@@ -7422,6 +7661,23 @@ function renderFloatingPlayer(song) {
 
     toggleFormatOption: function(key, checked) {
       this.state.formatOptions[key] = !!checked;
+      this.state.formatOptions = normalizeFormatOptions(this.state.formatOptions);
+      if (!saveStoredJson(STORAGE_KEYS.formatOptions, this.state.formatOptions)) this.notifyStorageUnavailable();
+      this.closeYouTubePlayback();
+      this.render();
+    },
+
+    setAccentColor: function(value) {
+      this.state.accentColor = normalizeAccentColor(value);
+      applyAccentColor(this.state.accentColor);
+      if (!saveStoredString(STORAGE_KEYS.accentColor, this.state.accentColor)) this.notifyStorageUnavailable();
+      this.closeYouTubePlayback();
+      this.render();
+    },
+
+    setBpmBlinkColor: function(value) {
+      this.state.formatOptions.bpmBlinkColor = normalizeBpmBlinkColor(value);
+      this.state.formatOptions = normalizeFormatOptions(this.state.formatOptions);
       if (!saveStoredJson(STORAGE_KEYS.formatOptions, this.state.formatOptions)) this.notifyStorageUnavailable();
       this.closeYouTubePlayback();
       this.render();
@@ -7797,6 +8053,7 @@ function renderFloatingPlayer(song) {
         preservedYouTubePanel.parentNode.removeChild(preservedYouTubePanel);
       }
 
+      applyAccentColor(this.state.accentColor);
       document.body.classList.toggle('view-mode-body', this.state.page === 'view');
       document.body.classList.toggle('edit-mode-body', this.state.page === 'edit');
       document.body.classList.toggle('list-mode-body', this.state.page === 'list');
