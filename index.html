@@ -2414,7 +2414,7 @@
     top: 0.15em;
   }
 
-  @media (max-width: 1080px) {
+  @media (max-width: 1180px) {
     .list-mode-body .song-list {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -7113,6 +7113,7 @@ function renderFloatingPlayer(song) {
       window.requestAnimationFrame(function() {
         const input = document.getElementById('list-search-input');
         if (!input) return;
+        input.value = '';
         try {
           input.focus({ preventScroll: true });
         } catch (err) {
