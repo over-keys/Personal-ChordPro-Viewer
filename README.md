@@ -1,30 +1,31 @@
 # Personal ChordPro Viewer
 
-Personal ChordPro Viewer is a personal app for managing ChordPro charts in an easy-to-read format and using them comfortably while performing. :contentReference[oaicite:0]{index=0}
+A lightweight personal ChordPro viewer and manager for live performance use.
 
 ## Demo
 
-- GitHub Pages: https://over-keys.github.io/Personal-ChordPro-Viewer/
+https://over-keys.github.io/Personal-ChordPro-Viewer/
 
-## Features
+## What it does
 
-- Add, edit, import, and export songs in ChordPro format. 
-- Search songs by title, artist, and tags. :contentReference[oaicite:2]{index=2}
-- Auto-scroll with adjustable S / E markers, duration settings, and 3:00 / 4:00 / 5:00 presets. 
-- Built-in YouTube support, sticky notes, chord formatting options, and font settings. 
-- Backup and restore both song data and notes with JSON export/import. 
+- Manage songs in ChordPro format
+- Search by title, artist, and tags
+- Adjust key, chord display, fonts, and layout
+- Use auto-scroll while playing
+- Attach sticky notes to charts
+- Export / import songs and notes as JSON
 
 ## Files
 
-- `index.html` — main app
+- `index.html` — main application
 - `manual.html` — user manual
 
-## Local use
+## How to use
 
-Download `index.html` and `manual.html`, place them in the same folder, and open `index.html` in your browser. :contentReference[oaicite:6]{index=6}
+1. Download `index.html` and `manual.html`
+2. Put them in the same folder
+3. Open `index.html` in your browser
 
-## Notes
+## Note
 
-- This app is designed for personal use. :contentReference[oaicite:7]{index=7}
-- When opened as a local file, YouTube playback opens in a separate window. When hosted on a server, it can play as a floating player. 
-- Song data and notes should both be backed up if you want a full backup. :contentReference[oaicite:9]{index=9}
+If you open the app locally, YouTube playback opens in a separate window.
