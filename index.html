@@ -419,10 +419,11 @@
     --viewer-sidebar-scale: 0.5;
   }
   .viewer-grid .sidebar-stack {
-    gap: calc(14px * var(--viewer-sidebar-scale, 1));
+    gap: var(--viewer-pane-resizer-size);
   }
   .viewer-grid .sidebar-panel {
     padding: calc(18px * var(--viewer-sidebar-scale, 1));
+    box-shadow: none;
   }
   .viewer-grid .section-title {
     margin: 0 0 calc(12px * var(--viewer-sidebar-scale, 1));
@@ -674,7 +675,7 @@
     padding: 8px;
   }
   .viewer-grid.is-sidebar-ultra .sidebar-stack {
-    gap: 8px;
+    gap: var(--viewer-pane-resizer-size);
   }
   .viewer-grid.is-sidebar-ultra .sidebar-panel .btn {
     padding: 5px 7px;
@@ -789,7 +790,7 @@
     padding: 6px;
   }
   .viewer-grid.is-sidebar-micro .sidebar-stack {
-    gap: 6px;
+    gap: var(--viewer-pane-resizer-size);
   }
   .viewer-grid.is-sidebar-micro .section-title {
     margin-bottom: 6px;
