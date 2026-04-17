@@ -2951,9 +2951,10 @@
         const song = normalizeSongPayload(payload);
         validateSong(song);
         const originalSlug = String(song.originalSlug || '').trim();
-        const lookupStore = this._db.transaction(SONGS_STORE, 'readonly').objectStore(SONGS_STORE);
-        const existingByOriginal = originalSlug ? await this._requestToPromise(lookupStore.get(originalSlug)) : null;
-        const existingBySlug = await this._requestToPromise(lookupStore.get(song.slug));
+        const tx = this._db.transaction(SONGS_STORE, 'readwrite');
+        const store = tx.objectStore(SONGS_STORE);
+        const existingByOriginal = originalSlug ? await this._requestToPromise(store.get(originalSlug)) : null;
+        const existingBySlug = await this._requestToPromise(store.get(song.slug));
         if (existingByOriginal && existingBySlug && existingByOriginal.slug !== existingBySlug.slug) {
           throw new Error('Slug already exists.');
         }
@@ -2972,8 +2973,6 @@
           scrollEndPercent: normalizeStoredPercent(song.scrollEndPercent, 1),
           scrollDurationSec: normalizeStoredDuration(song.scrollDurationSec, 240)
         };
-        const tx = this._db.transaction(SONGS_STORE, 'readwrite');
-        const store = tx.objectStore(SONGS_STORE);
         if (originalSlug && originalSlug !== song.slug && existingByOriginal) {
           store.delete(originalSlug);
         }
@@ -2990,12 +2989,13 @@
         await this.ready();
         const normalizedSlug = String(slug || '').trim();
         if (!normalizedSlug) return { ok: false, message: 'Song not found.' };
-        const existing = await this._requestToPromise(this._db.transaction(SONGS_STORE, 'readonly').objectStore(SONGS_STORE).get(normalizedSlug));
-        if (!existing) {
-          return { ok: false, message: 'Song not found.' };
-        }
         const tx = this._db.transaction(SONGS_STORE, 'readwrite');
         const store = tx.objectStore(SONGS_STORE);
+        const existing = await this._requestToPromise(store.get(normalizedSlug));
+        if (!existing) {
+          tx.abort();
+          return { ok: false, message: 'Song not found.' };
+        }
         store.delete(normalizedSlug);
         await new Promise(function(resolve, reject) {
           tx.oncomplete = function() { resolve(); };
@@ -3010,16 +3010,17 @@
         const source = payload || {};
         const slug = String(source.slug || '').trim();
         if (!slug) throw new Error('Slug is required.');
-        const song = await this._requestToPromise(this._db.transaction(SONGS_STORE, 'readonly').objectStore(SONGS_STORE).get(slug));
+        const tx = this._db.transaction(SONGS_STORE, 'readwrite');
+        const store = tx.objectStore(SONGS_STORE);
+        const song = await this._requestToPromise(store.get(slug));
         if (!song) {
+          tx.abort();
           return { ok: false, message: 'Song not found.' };
         }
         song.scrollStartPercent = normalizeStoredPercent(source.scrollStartPercent, song.scrollStartPercent);
         song.scrollEndPercent = normalizeStoredPercent(source.scrollEndPercent, song.scrollEndPercent);
         song.scrollDurationSec = normalizeStoredDuration(source.scrollDurationSec, song.scrollDurationSec);
         song.updatedAt = new Date().toISOString();
-        const tx = this._db.transaction(SONGS_STORE, 'readwrite');
-        const store = tx.objectStore(SONGS_STORE);
         store.put(song);
         await new Promise(function(resolve, reject) {
           tx.oncomplete = function() { resolve(); };
@@ -3036,14 +3037,15 @@
         if (!slug) throw new Error('Slug is required.');
         const youtube = normalizeYouTubeSelection(source.youtube);
         if (!youtube.length) throw new Error('YouTube selection is required.');
-        const song = await this._requestToPromise(this._db.transaction(SONGS_STORE, 'readonly').objectStore(SONGS_STORE).get(slug));
+        const tx = this._db.transaction(SONGS_STORE, 'readwrite');
+        const store = tx.objectStore(SONGS_STORE);
+        const song = await this._requestToPromise(store.get(slug));
         if (!song) {
+          tx.abort();
           return { ok: false, message: 'Song not found.' };
         }
         song.youtube = cloneValue(youtube);
         song.updatedAt = new Date().toISOString();
-        const tx = this._db.transaction(SONGS_STORE, 'readwrite');
-        const store = tx.objectStore(SONGS_STORE);
         store.put(song);
         await new Promise(function(resolve, reject) {
           tx.oncomplete = function() { resolve(); };
