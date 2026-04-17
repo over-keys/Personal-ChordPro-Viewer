@@ -6229,6 +6229,7 @@ function renderFloatingPlayer(song) {
     _pendingSearchFocus: null,
     _statusTimer: null,
     _viewerRerenderInProgress: false,
+    _resetViewerScrollOnNextRender: false,
     state: {
       page: 'list',
       songs: [],
@@ -6826,6 +6827,7 @@ function renderFloatingPlayer(song) {
           App.state.notation = requestedNotation;
           App.state.page = 'view';
           App.state.playingYtIdx = null;
+          App._resetViewerScrollOnNextRender = true;
           App.updateUrl({ page: 'view', slug: song.slug });
           App.render();
           if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
@@ -7759,7 +7761,8 @@ function renderFloatingPlayer(song) {
       const app = document.getElementById('app');
       if (!app) return;
 
-      const prevViewerScrollTop = this.state.page === 'view'
+      const shouldResetViewerScroll = !!this._resetViewerScrollOnNextRender;
+      const prevViewerScrollTop = this.state.page === 'view' && !shouldResetViewerScroll
         ? (function() {
             if (typeof Viewer !== 'undefined' && typeof Viewer.getRenderScrollTop === 'function') {
               const viewerScrollTop = Viewer.getRenderScrollTop();
@@ -7775,13 +7778,14 @@ function renderFloatingPlayer(song) {
             return scrollRoot ? (scrollRoot.scrollTop || 0) : 0;
           })()
         : 0;
-      const prevSidebarScrollTop = this.state.page === 'view'
+      const prevSidebarScrollTop = this.state.page === 'view' && !shouldResetViewerScroll
         ? ((document.getElementById('viewer-sidebar-scroll') || {}).scrollTop || 0)
         : 0;
       const prevSongSlug = this.state.page === 'view' && this.state.currentSong
         ? String(this.state.currentSong.slug || '')
         : '';
-      const shouldPreserveYouTubePanel = !this._forceYoutubeRefresh
+      const shouldPreserveYouTubePanel = !shouldResetViewerScroll
+        && !this._forceYoutubeRefresh
         && this.state.page === 'view'
         && !!this.state.currentSong
         && this.state.playingYtIdx !== null;
@@ -7799,6 +7803,7 @@ function renderFloatingPlayer(song) {
       try {
         if (this.state.page === 'edit') {
           this._viewerRerenderInProgress = false;
+          this._resetViewerScrollOnNextRender = false;
           app.innerHTML = Editor.render(this.state.editorSong);
           if (typeof applyPersonalChordProViewerTypography === 'function') applyPersonalChordProViewerTypography(app);
           this.syncEditorYouTubeSearchButton();
@@ -7831,17 +7836,20 @@ function renderFloatingPlayer(song) {
               }
               App.syncViewerPaneLayout();
               App._viewerRerenderInProgress = false;
+              App._resetViewerScrollOnNextRender = false;
               App.restoreViewerInputFocusIfNeeded();
             });
           } else {
             this.syncViewerPaneLayout();
             this._viewerRerenderInProgress = false;
+            this._resetViewerScrollOnNextRender = false;
             this.restoreViewerInputFocusIfNeeded();
           }
           return;
         }
 
         this._viewerRerenderInProgress = false;
+        this._resetViewerScrollOnNextRender = false;
         app.innerHTML = this.renderListPage();
         this.syncViewerPaneLayout();
         if (typeof applyPersonalChordProViewerTypography === 'function') applyPersonalChordProViewerTypography(app);
@@ -7910,7 +7918,12 @@ function renderFloatingPlayer(song) {
     }
   };
 
+  if (window.history && 'scrollRestoration' in window.history) {
+    window.history.scrollRestoration = 'manual';
+  }
+
   window.addEventListener('DOMContentLoaded', function() {
+    window.scrollTo(0, 0);
     App.init();
   });
 
