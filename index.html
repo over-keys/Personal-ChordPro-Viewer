@@ -3775,8 +3775,11 @@ function loadCurrentSongNotes() {
         .filter(function(note) {
           return note.text.length > 0 || note.id === editingNoteId || note.id === preserveNoteId;
         });
-      currentSongNotes = normalized;
-      return writeSongNotesForSlug(slug, currentSongNotes, { keepEmptyNoteIds: keepEmptyNoteIds }).then(function(result) {
+      currentSongNotes = currentSongNotes.filter(function(note) {
+        const normalizedNote = normalizeSongNote(note);
+        return !!normalizedNote && (normalizedNote.text.length > 0 || normalizedNote.id === editingNoteId || normalizedNote.id === preserveNoteId);
+      });
+      return writeSongNotesForSlug(slug, normalized, { keepEmptyNoteIds: keepEmptyNoteIds }).then(function(result) {
         if (!result.ok) {
           setSongNoteStatus('error', String(result.error && result.error.message || result.error || 'Failed to save notes.'));
         }
