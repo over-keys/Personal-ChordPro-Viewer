@@ -137,12 +137,12 @@
     color: #fff;
     border-color: var(--accent);
     font-weight: 400;
-    box-shadow: 0 8px 18px rgba(var(--accent-rgb), 0.18);
+    box-shadow: 0 3px 8px rgba(var(--accent-rgb), 0.1);
   }
   .btn.primary:hover:not(:disabled) {
     background: var(--accent);
     border-color: var(--accent);
-    box-shadow: 0 10px 22px rgba(var(--accent-rgb), 0.22);
+    box-shadow: 0 4px 10px rgba(var(--accent-rgb), 0.13);
   }
   .btn.primary:active:not(:disabled) {
     background: var(--accent);
@@ -753,6 +753,18 @@
   }
   .viewer-grid.is-sidebar-ultra .autoscroll-time-row {
     gap: 3px;
+  }
+  .viewer-grid.is-sidebar-compact .setting-label-autoscroll .btn-save-autoscroll,
+  .viewer-grid.is-sidebar-tight .setting-label-autoscroll .btn-save-autoscroll,
+  .viewer-grid.is-sidebar-ultra .setting-label-autoscroll .btn-save-autoscroll,
+  .viewer-grid.is-sidebar-micro .setting-label-autoscroll .btn-save-autoscroll {
+    display: none;
+  }
+  .viewer-grid.is-sidebar-compact .btn-save-autoscroll-bottom,
+  .viewer-grid.is-sidebar-tight .btn-save-autoscroll-bottom,
+  .viewer-grid.is-sidebar-ultra .btn-save-autoscroll-bottom,
+  .viewer-grid.is-sidebar-micro .btn-save-autoscroll-bottom {
+    display: inline-flex;
   }
   .viewer-grid.is-sidebar-ultra .field-compact,
   .viewer-grid.is-sidebar-ultra .compact-select {
@@ -1440,7 +1452,7 @@
   .viewer-grid.is-sidebar-tight .color-format-row,
   .viewer-grid.is-sidebar-ultra .color-format-row,
   .viewer-grid.is-sidebar-micro .color-format-row {
-    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
     gap: 6px;
   }
@@ -2019,6 +2031,26 @@
     font-weight: 500;
     white-space: nowrap;
     align-self: flex-start;
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 3px 8px rgba(var(--accent-rgb), 0.1);
+  }
+  .btn-save-autoscroll:hover:not(:disabled),
+  .btn-save-autoscroll:focus-visible {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(var(--accent-rgb), 0.13);
+  }
+  .btn-save-autoscroll:active:not(:disabled) {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.16);
+  }
+  .btn-save-autoscroll-bottom {
+    display: none;
   }
   .btn-reset-icon svg {
     width: 18px;
@@ -2788,6 +2820,21 @@
       return num;
     }
 
+    function normalizeStoredTranspose(value, fallback) {
+      var num = parseInt(value, 10);
+      if (!isFinite(num)) num = parseInt(fallback, 10);
+      if (!isFinite(num)) num = 0;
+      return Math.max(-11, Math.min(11, num));
+    }
+
+    function normalizeStoredNotation(value, fallback) {
+      var text = String(value || '').trim();
+      if (text === 'sharp' || text === 'flat' || text === 'default') return text;
+      text = String(fallback || '').trim();
+      if (text === 'sharp' || text === 'flat' || text === 'default') return text;
+      return 'default';
+    }
+
     function buildSlug(value) {
       return String(value || '')
         .trim()
@@ -2891,7 +2938,9 @@
         updatedAt: String(source.updatedAt || ''),
         scrollStartPercent: Math.max(0, Math.min(1, parseFloat(source.scrollStartPercent))),
         scrollEndPercent: Math.max(0, Math.min(1, parseFloat(source.scrollEndPercent))),
-        scrollDurationSec: Math.max(1, parseInt(source.scrollDurationSec, 10) || 240)
+        scrollDurationSec: Math.max(1, parseInt(source.scrollDurationSec, 10) || 240),
+        transpose: normalizeStoredTranspose(source.transpose, 0),
+        notation: normalizeStoredNotation(source.notation, 'default')
       };
     }
 
@@ -3175,7 +3224,7 @@
         return { ok: true };
       },
 
-      updateSongScrollSettings: async function(payload) {
+      updateSongControlSettings: async function(payload) {
         await this.ready();
         const source = payload || {};
         const slug = String(source.slug || '').trim();
@@ -3190,14 +3239,20 @@
         song.scrollStartPercent = normalizeStoredPercent(source.scrollStartPercent, song.scrollStartPercent);
         song.scrollEndPercent = normalizeStoredPercent(source.scrollEndPercent, song.scrollEndPercent);
         song.scrollDurationSec = normalizeStoredDuration(source.scrollDurationSec, song.scrollDurationSec);
+        song.transpose = normalizeStoredTranspose(source.transpose, song.transpose);
+        song.notation = normalizeStoredNotation(source.notation, song.notation);
         song.updatedAt = new Date().toISOString();
         store.put(song);
         await new Promise(function(resolve, reject) {
           tx.oncomplete = function() { resolve(); };
-          tx.onerror = function() { reject(tx.error || new Error('Failed to save auto-scroll settings.')); };
-          tx.onabort = function() { reject(tx.error || new Error('Failed to save auto-scroll settings.')); };
+          tx.onerror = function() { reject(tx.error || new Error('Failed to save song controls.')); };
+          tx.onabort = function() { reject(tx.error || new Error('Failed to save song controls.')); };
         });
         return { ok: true, slug: song.slug };
+      },
+
+      updateSongScrollSettings: async function(payload) {
+        return this.updateSongControlSettings(payload);
       },
 
       updateSongYouTubeSelection: async function(payload) {
@@ -3245,7 +3300,6 @@
         const normalized = (Array.isArray(notes) ? cloneValue(notes) : []).filter(function(note) {
           return note && (String(note.text || '').length > 0 || !!keepEmptyNoteIds[String(note.id || '').trim()]);
         });
-        this._noteCache[normalizedSlug] = normalized;
         try {
           await this.ready();
           const tx = this._db.transaction(NOTES_STORE, 'readwrite');
@@ -3257,6 +3311,8 @@
             tx.onerror = function() { reject(tx.error || new Error('Failed to persist notes.')); };
             tx.onabort = function() { reject(tx.error || new Error('Failed to persist notes.')); };
           });
+          if (!normalized.length) delete this._noteCache[normalizedSlug];
+          else this._noteCache[normalizedSlug] = normalized;
           return { ok: true, count: normalized.length };
         } catch (error) {
           console.error('Failed to persist notes:', error);
@@ -3296,6 +3352,7 @@
       attach('replaceAllSongs', ChordProStorage.replaceAllSongs);
       attach('saveSong', ChordProStorage.saveSong);
       attach('deleteSong', ChordProStorage.deleteSong);
+      attach('updateSongControlSettings', ChordProStorage.updateSongControlSettings);
       attach('updateSongScrollSettings', ChordProStorage.updateSongScrollSettings);
       attach('updateSongYouTubeSelection', ChordProStorage.updateSongYouTubeSelection);
       return runner;
@@ -3320,6 +3377,21 @@
     'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3, 'E': 4, 'F': 5, 'F#': 6, 'Gb': 6,
     'G': 7, 'G#': 8, 'Ab': 8, 'A': 9, 'A#': 10, 'Bb': 10, 'B': 11, 'Cb': 11, 'E#': 5, 'B#': 0, 'Fb': 4
   };
+
+  function normalizeStoredTranspose(value, fallback) {
+    var num = parseInt(value, 10);
+    if (!isFinite(num)) num = parseInt(fallback, 10);
+    if (!isFinite(num)) num = 0;
+    return Math.max(-11, Math.min(11, num));
+  }
+
+  function normalizeStoredNotation(value, fallback) {
+    var text = String(value || '').trim();
+    if (text === 'sharp' || text === 'flat' || text === 'default') return text;
+    text = String(fallback || '').trim();
+    if (text === 'sharp' || text === 'flat' || text === 'default') return text;
+    return 'default';
+  }
 
   function escapeHtml(value) {
     return String(value || '')
@@ -3410,7 +3482,7 @@
 
   function normalizeBpmBlinkColor(value) {
     const normalized = String(value || '').trim().toLowerCase();
-    return ['off', 'red', 'amber', 'green', 'blue', 'purple', 'black'].indexOf(normalized) !== -1 ? normalized : 'red';
+    return ['off', 'red', 'green', 'blue', 'purple', 'black'].indexOf(normalized) !== -1 ? normalized : 'red';
   }
 
   function normalizeFormatOptions(value) {
@@ -3426,8 +3498,7 @@
 
   function getBpmBlinkColorValue(name) {
     switch (normalizeBpmBlinkColor(name)) {
-      case 'amber': return '#facc15';
-      case 'green': return '#15803d';
+      case 'green': return '#008000';
       case 'blue': return '#2563eb';
       case 'purple': return '#7c3aed';
       case 'black': return '#111827';
@@ -3444,7 +3515,7 @@
 
   function getAccentPalette(name) {
     switch (normalizeAccentColor(name)) {
-      case 'green': return { accent: '#15803d', soft: '#dcfce7', rgb: '21, 128, 61' };
+      case 'green': return { accent: '#008000', soft: '#e6f4e6', rgb: '0, 128, 0' };
       case 'purple': return { accent: '#7c3aed', soft: '#ede9fe', rgb: '124, 58, 237' };
       case 'red': return { accent: '#dc2626', soft: '#fee2e2', rgb: '220, 38, 38' };
       case 'black': return { accent: '#111827', soft: '#e5e7eb', rgb: '17, 24, 39' };
@@ -5857,6 +5928,7 @@ function loadCurrentSongNotes() {
                         '<button class="btn btn-chip" type="button" data-app-action="apply-scroll-preset" data-app-value="240">4:00</button>',
                         '<button class="btn btn-chip" type="button" data-app-action="apply-scroll-preset" data-app-value="300">5:00</button>',
                       '</div>',
+                      '<button class="btn btn-save-autoscroll btn-save-autoscroll-bottom" type="button" data-app-action="save-scroll-settings">Save</button>',
                     '</div>',
                   '</div>',
                 '</div>',
@@ -6221,6 +6293,8 @@ function renderFloatingPlayer(song) {
         scrollStartPercent: safeScrollStartPercent,
         scrollEndPercent: safeScrollEndPercent,
         scrollDurationSec: scrollDurationSec,
+        transpose: normalizeStoredTranspose(raw.transpose, 0),
+        notation: normalizeStoredNotation(raw.notation, 'default'),
         scrollStartPercentDisplay: Math.round(safeScrollStartPercent * 100),
         scrollEndPercentDisplay: Math.round(safeScrollEndPercent * 100)
       };
@@ -6427,7 +6501,9 @@ function renderFloatingPlayer(song) {
       updatedAt: String(record.updatedAt || ''),
       scrollStartPercent: record.scrollStartPercent,
       scrollEndPercent: record.scrollEndPercent,
-      scrollDurationSec: record.scrollDurationSec
+      scrollDurationSec: record.scrollDurationSec,
+      transpose: record.transpose,
+      notation: record.notation
     };
   }
 
@@ -7052,9 +7128,12 @@ function renderFloatingPlayer(song) {
             App.showList();
             return;
           }
+          var hasUrlTranspose = String(options.urlTranspose || '').trim() !== '';
           var requestedTranspose = App.normalizeTransposeNumber(options.urlTranspose);
-          var requestedNotation = String(options.urlNotation || '').trim();
-          if (requestedNotation !== 'sharp' && requestedNotation !== 'flat') requestedNotation = 'default';
+          var savedTranspose = normalizeStoredTranspose(song.transpose, 0);
+          var hasUrlNotation = String(options.urlNotation || '').trim() !== '';
+          var requestedNotation = normalizeStoredNotation(options.urlNotation, '');
+          var savedNotation = normalizeStoredNotation(song.notation, 'default');
           App.state.currentSong = song;
           App.state.scroll.startPercent = Math.max(0, Math.min(1, parseFloat(song.scrollStartPercent)));
           if (!isFinite(App.state.scroll.startPercent)) App.state.scroll.startPercent = 0;
@@ -7062,9 +7141,9 @@ function renderFloatingPlayer(song) {
           if (!isFinite(App.state.scroll.endPercent)) App.state.scroll.endPercent = 1;
           App.state.scroll.durationSec = Math.max(1, parseInt(song.scrollDurationSec, 10) || 240);
           App.clearPendingObservedScrollDuration();
-          App.state.transpose = requestedTranspose === null ? 0 : requestedTranspose;
+          App.state.transpose = hasUrlTranspose && requestedTranspose !== null ? requestedTranspose : savedTranspose;
           App.state.transposeStr = String(App.state.transpose);
-          App.state.notation = requestedNotation;
+          App.state.notation = hasUrlNotation ? requestedNotation : savedNotation;
           App.state.page = 'view';
           App.state.playingYtIdx = null;
           App._resetViewerScrollOnNextRender = true;
@@ -7130,7 +7209,9 @@ function renderFloatingPlayer(song) {
           artist: '',
           tags: [],
           youtube: [],
-          chordPro: '{title: }\n{subtitle: }\n'
+          chordPro: '{title: }\n{subtitle: }\n',
+          transpose: 0,
+          notation: 'default'
         };
         this.state.page = 'edit';
         this.updateUrl({ page: 'edit' });
@@ -7143,7 +7224,7 @@ function renderFloatingPlayer(song) {
       google.script.run
         .withSuccessHandler(function(song) {
           App.state.editorSong = Object.assign({ originalSlug: '' }, song || {
-            slug: '', title: '', artist: '', tags: [], youtube: [], chordPro: '{title: }\n{subtitle: }\n'
+            slug: '', title: '', artist: '', tags: [], youtube: [], chordPro: '{title: }\n{subtitle: }\n', transpose: 0, notation: 'default'
           }, { originalSlug: song && song.slug ? song.slug : '' });
           App.state.page = 'edit';
           App.updateUrl({ page: 'edit', slug: App.state.editorSong.slug || slug });
@@ -7267,6 +7348,7 @@ function renderFloatingPlayer(song) {
       const scrollStartPercent = Number.isFinite(scrollStartRaw) ? Math.max(0, Math.min(100, scrollStartRaw)) / 100 : 0;
       const scrollEndPercent = Number.isFinite(scrollEndRaw) ? Math.max(0, Math.min(100, scrollEndRaw)) / 100 : 1;
       const scrollDurationSec = scrollDurationEl ? Math.max(1, parseInt(scrollDurationEl.value, 10) || 240) : 240;
+      const existing = this.state && this.state.editorSong ? this.state.editorSong : {};
       return {
         title: titleEl ? titleEl.value : '',
         artist: artistEl ? artistEl.value : '',
@@ -7277,7 +7359,9 @@ function renderFloatingPlayer(song) {
         chordPro: chordProEl ? chordProEl.value : '',
         scrollStartPercent: scrollStartPercent,
         scrollEndPercent: scrollEndPercent,
-        scrollDurationSec: scrollDurationSec
+        scrollDurationSec: scrollDurationSec,
+        transpose: normalizeStoredTranspose(existing.transpose, 0),
+        notation: normalizeStoredNotation(existing.notation, 'default')
       };
     },
 
@@ -7603,7 +7687,7 @@ function renderFloatingPlayer(song) {
     },
 
     setNotation: function(value) {
-      this.state.notation = value;
+      this.state.notation = normalizeStoredNotation(value, 'default');
       if (this.state.page === 'view' && this.state.currentSong && this.state.currentSong.slug) {
         this.updateUrl({ page: 'view', slug: this.state.currentSong.slug });
       }
@@ -7808,7 +7892,7 @@ function renderFloatingPlayer(song) {
         if (pending) savedDurationSec = pending;
       }
       savedDurationSec = Math.max(1, parseInt(savedDurationSec, 10) || 240);
-      this.beginBusy('Saving auto-scroll settings…');
+      this.beginBusy('Saving song controls…');
       google.script.run
         .withSuccessHandler(function() {
           App.state.scroll.durationSec = savedDurationSec;
@@ -7817,21 +7901,25 @@ function renderFloatingPlayer(song) {
             App.state.currentSong.scrollStartPercent = App.state.scroll.startPercent;
             App.state.currentSong.scrollEndPercent = App.state.scroll.endPercent;
             App.state.currentSong.scrollDurationSec = savedDurationSec;
+            App.state.currentSong.transpose = App.state.transpose;
+            App.state.currentSong.notation = App.state.notation;
           }
           App.endBusy();
-          App.setStatus('info', 'Auto-scroll settings saved.');
+          App.setStatus('info', 'Song controls saved.');
           App.render();
         })
         .withFailureHandler(function(err) {
           App.endBusy();
-          App.setStatus('error', String(err && err.message || err || 'Failed to save auto-scroll settings.'));
+          App.setStatus('error', String(err && err.message || err || 'Failed to save song controls.'));
           App.render();
         })
-        .updateSongScrollSettings({
+        .updateSongControlSettings({
           slug: song.slug,
           scrollStartPercent: App.state.scroll.startPercent,
           scrollEndPercent: App.state.scroll.endPercent,
-          scrollDurationSec: savedDurationSec
+          scrollDurationSec: savedDurationSec,
+          transpose: App.state.transpose,
+          notation: App.state.notation
         });
     },
 
@@ -7997,9 +8085,7 @@ function renderFloatingPlayer(song) {
           if (!window.confirm('Replace the current edit form with the imported song?')) {
             return;
           }
-          App.state.editorSong = Object.assign({ originalSlug: '' }, record, {
-            originalSlug: String(record.originalSlug || record.slug || '').trim()
-          });
+          App.state.editorSong = Object.assign({}, record, { originalSlug: '' });
           App.clearStatus();
           App.render();
           App.flashStatus('info', 'Song loaded into the editor.', 2200);
