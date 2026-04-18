@@ -96,6 +96,13 @@
   .song-header .inline-actions {
     margin-bottom: 10px;
   }
+  .song-header .song-header-actions {
+    justify-content: flex-end;
+    align-self: flex-start;
+    margin-left: auto;
+    margin-bottom: 0;
+    flex: 0 0 auto;
+  }
   #viewer-note-import-input {
     display: none;
   }
@@ -164,6 +171,16 @@
     background: #fecdd3;
     border-color: #f2a5ae;
     box-shadow: inset 0 1px 2px rgba(127, 29, 29, 0.12);
+  }
+  .btn.soft-accent {
+    color: var(--accent);
+    border-color: rgba(var(--accent-rgb), 0.28);
+    background: rgba(var(--accent-rgb), 0.08);
+  }
+  .btn.soft-accent:hover:not(:disabled),
+  .btn.soft-accent:focus-visible {
+    background: rgba(var(--accent-rgb), 0.13);
+    border-color: rgba(var(--accent-rgb), 0.36);
   }
   .panel {
     background: var(--panel);
@@ -368,25 +385,36 @@
     padding-right: 2px;
   }
   .viewer-grid.is-sidebar-compact .setting-row {
-    grid-template-columns: 1fr;
-    gap: 6px;
+    grid-template-columns: calc(76px * var(--viewer-sidebar-scale, 1)) minmax(0, 1fr);
+    gap: calc(10px * var(--viewer-sidebar-scale, 1));
   }
   .viewer-grid.is-sidebar-compact .setting-label-plain {
-    padding-top: 0;
+    padding-top: calc(8px * var(--viewer-sidebar-scale, 1));
   }
   .viewer-grid.is-sidebar-compact .viewer-note-toolbar-row {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    align-items: center;
     flex-wrap: nowrap;
   }
   .viewer-grid.is-sidebar-compact .viewer-note-toolbar-btn {
-    flex: 0 0 auto;
-    width: 100%;
+    flex: 1 1 0;
+    width: auto;
     min-height: 24px;
     padding: 4px 6px;
     font-size: 0.68rem;
     line-height: 1.1;
-    white-space: normal;
+    white-space: nowrap;
+  }
+  .viewer-grid.is-sidebar-compact .sidebar-panel.sidebar-panel-notes .viewer-note-toolbar-btn,
+  .viewer-grid.is-sidebar-tight .sidebar-panel.sidebar-panel-notes .viewer-note-toolbar-btn,
+  .viewer-grid.is-sidebar-ultra .sidebar-panel.sidebar-panel-notes .viewer-note-toolbar-btn,
+  .viewer-grid.is-sidebar-micro .sidebar-panel.sidebar-panel-notes .viewer-note-toolbar-btn,
+  .viewer-grid.is-sidebar-compact .sidebar-panel.sidebar-panel-controls .btn-chip,
+  .viewer-grid.is-sidebar-tight .sidebar-panel.sidebar-panel-controls .btn-chip,
+  .viewer-grid.is-sidebar-ultra .sidebar-panel.sidebar-panel-controls .btn-chip,
+  .viewer-grid.is-sidebar-micro .sidebar-panel.sidebar-panel-controls .btn-chip {
+    white-space: nowrap;
+    word-break: keep-all;
   }
   .viewer-grid.is-sidebar-compact .youtube-empty-row {
     flex-wrap: wrap;
@@ -629,7 +657,8 @@
     line-height: 1.1;
     white-space: normal;
   }
-  .viewer-grid.is-sidebar-tight .toggle-list-compact-grid {
+  .viewer-grid.is-sidebar-ultra .toggle-list-compact-grid,
+  .viewer-grid.is-sidebar-micro .toggle-list-compact-grid {
     grid-template-columns: 1fr;
   }
   .viewer-grid.is-sidebar-compact .toggle-item-text {
@@ -714,6 +743,8 @@
     font-size: 14px;
   }
   .viewer-grid.is-sidebar-ultra .setting-row {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
     gap: 4px;
   }
   .viewer-grid.is-sidebar-ultra .setting-label {
@@ -749,6 +780,9 @@
     line-height: 1.05;
   }
   .viewer-grid.is-sidebar-ultra .preset-chip-row {
+    grid-template-columns: 1fr;
+  }
+  .viewer-grid.is-sidebar-tight .preset-chip-row {
     grid-template-columns: 1fr;
   }
   .viewer-grid.is-sidebar-ultra .autoscroll-time-row {
@@ -1449,7 +1483,6 @@
     width: calc(12px * var(--viewer-sidebar-scale, 1));
     height: calc(12px * var(--viewer-sidebar-scale, 1));
   }
-  .viewer-grid.is-sidebar-tight .color-format-row,
   .viewer-grid.is-sidebar-ultra .color-format-row,
   .viewer-grid.is-sidebar-micro .color-format-row {
     grid-template-columns: minmax(0, 1fr);
@@ -1556,7 +1589,7 @@
     caret-color: auto;
   }
   .list-mode-body .song-list {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     align-items: start;
   }
   .list-mode-body .topbar {
@@ -2031,23 +2064,23 @@
     font-weight: 500;
     white-space: nowrap;
     align-self: flex-start;
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-    box-shadow: 0 3px 8px rgba(var(--accent-rgb), 0.1);
+    background: rgba(var(--accent-rgb), 0.08);
+    border-color: rgba(var(--accent-rgb), 0.28);
+    color: var(--accent);
+    box-shadow: var(--btn-shadow);
   }
   .btn-save-autoscroll:hover:not(:disabled),
   .btn-save-autoscroll:focus-visible {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-    box-shadow: 0 4px 10px rgba(var(--accent-rgb), 0.13);
+    background: rgba(var(--accent-rgb), 0.13);
+    border-color: rgba(var(--accent-rgb), 0.36);
+    color: var(--accent);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
   }
   .btn-save-autoscroll:active:not(:disabled) {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.16);
+    background: rgba(var(--accent-rgb), 0.16);
+    border-color: rgba(var(--accent-rgb), 0.38);
+    color: var(--accent);
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
   }
   .btn-save-autoscroll-bottom {
     display: none;
@@ -2331,6 +2364,115 @@
     outline: 2px solid rgba(var(--accent-rgb), 0.45);
     outline-offset: 2px;
   }
+  .setlist-meta-line {
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+  .setlist-editor-list {
+    gap: 8px;
+  }
+  .setlist-editor-item {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    align-items: center;
+  }
+  .setlist-songs-item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+  }
+  .setlist-row-number {
+    min-width: 2.2em;
+    color: var(--muted);
+    font-weight: 700;
+    text-align: right;
+  }
+  .setlist-drag-handle {
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: 1.15rem;
+    line-height: 1;
+    user-select: none;
+    cursor: default;
+  }
+  .setlist-editor-item {
+    cursor: default;
+  }
+  body.is-setlist-pointer-dragging,
+  body.is-setlist-pointer-dragging * {
+    cursor: default !important;
+  }
+  .setlist-song-click {
+    cursor: pointer;
+    border-radius: 8px;
+    padding: 4px 6px;
+  }
+  .setlist-song-click:hover,
+  .setlist-song-click:focus-visible {
+    background: rgba(var(--accent-rgb), 0.08);
+    outline: none;
+  }
+  .setlist-add-panel {
+    margin-top: 12px;
+  }
+  .setlist-add-results {
+    margin-top: 10px;
+  }
+  .list-mode-body .song-list.setlist-editor-list {
+    grid-template-columns: 1fr;
+  }
+  .setlist-editor-item.is-dragging {
+    opacity: 0.55;
+  }
+  .setlist-summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .setlist-summary-row > div:first-child {
+    min-width: 0;
+  }
+  .setlist-summary-actions {
+    flex: 0 0 auto;
+  }
+  .setlist-start-btn {
+    min-height: 44px;
+    padding: 10px 18px;
+    font-weight: 800;
+  }
+  .setlist-playbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(var(--accent-rgb), 0.24);
+    border-radius: 8px;
+    background: rgba(var(--accent-rgb), 0.07);
+  }
+  .setlist-playbar-title {
+    min-width: 0;
+    flex: 1 1 auto;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .setlist-playbar-count {
+    color: var(--muted);
+    font-weight: 700;
+    white-space: nowrap;
+  }
   .busy-overlay {
     position: fixed;
     inset: 0;
@@ -2584,6 +2726,12 @@
 
   @media (max-width: 1180px) {
     .list-mode-body .song-list {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 860px) {
+    .list-mode-body .song-list {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
@@ -2786,9 +2934,10 @@
     <script>
   (function() {
     const DB_NAME = 'personal_chordpro_viewer_static_v1';
-    const DB_VERSION = 1;
+    const DB_VERSION = 2;
     const SONGS_STORE = 'songs';
     const NOTES_STORE = 'notes';
+    const SETLISTS_STORE = 'setlists';
 
     const DEFAULT_FONTS = [
       { label: 'BIZ UDGothic', value: 'bizudgothic', stack: '"BIZ UDGothic", sans-serif' },
@@ -2944,6 +3093,42 @@
       };
     }
 
+    function generateSetlistId() {
+      return 'setlist-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+    }
+
+    function normalizeSetlistItems(items) {
+      const source = Array.isArray(items) ? items : [];
+      return source.map(function(item) {
+        const slug = typeof item === 'string'
+          ? String(item || '').trim()
+          : String(item && item.slug || '').trim();
+        if (!slug) return null;
+        const itemId = typeof item === 'object' && item
+          ? String(item.itemId || '').trim()
+          : '';
+        return {
+          itemId: itemId || ('item-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8)),
+          slug: slug
+        };
+      }).filter(Boolean);
+    }
+
+    function normalizeSetlistPayload(payload) {
+      const source = payload || {};
+      return {
+        id: String(source.id || '').trim(),
+        title: String(source.title || '').trim(),
+        items: normalizeSetlistItems(source.items),
+        createdAt: String(source.createdAt || ''),
+        updatedAt: String(source.updatedAt || '')
+      };
+    }
+
+    function validateSetlist(setlist) {
+      if (!setlist.title) throw new Error('Setlist title is required.');
+    }
+
     function validateSong(song) {
       if (!song.slug) {
         if (song.title) {
@@ -3044,6 +3229,11 @@
             if (!db.objectStoreNames.contains(NOTES_STORE)) {
               db.createObjectStore(NOTES_STORE, { keyPath: 'slug' });
             }
+            if (!db.objectStoreNames.contains(SETLISTS_STORE)) {
+              const setlists = db.createObjectStore(SETLISTS_STORE, { keyPath: 'id' });
+              setlists.createIndex('updatedAt', 'updatedAt', { unique: false });
+              setlists.createIndex('title', 'title', { unique: false });
+            }
           };
           request.onsuccess = function() { resolve(request.result); };
           request.onerror = function() { reject(request.error || new Error('Failed to open IndexedDB.')); };
@@ -3119,7 +3309,15 @@
         const rows = await this._requestToPromise(store.getAll());
         return (Array.isArray(rows) ? rows : [])
           .filter(function(song) { return !!(song && song.slug); })
-          .map(function(song) { return cloneValue(song); })
+          .map(function(song) {
+            const record = cloneValue(song);
+            record.scrollStartPercent = normalizeStoredPercent(record.scrollStartPercent, 0);
+            record.scrollEndPercent = normalizeStoredPercent(record.scrollEndPercent, 1);
+            record.scrollDurationSec = normalizeStoredDuration(record.scrollDurationSec, 240);
+            record.transpose = normalizeStoredTranspose(record.transpose, 0);
+            record.notation = normalizeStoredNotation(record.notation, 'default');
+            return record;
+          })
           .sort(function(a, b) {
             return String(a.slug || '').localeCompare(String(b.slug || ''));
           });
@@ -3128,6 +3326,11 @@
       replaceAllSongs: async function(records) {
         await this.ready();
         const source = Array.isArray(records) ? records : [];
+        const existingRows = await this.getAllSongsFull();
+        const existingBySlug = Object.create(null);
+        existingRows.forEach(function(record) {
+          if (record && record.slug) existingBySlug[record.slug] = record;
+        });
         const seen = Object.create(null);
         const normalizedRecords = source.map(function(item) {
           const normalized = normalizeSongPayload(item || {});
@@ -3136,7 +3339,8 @@
             throw new Error('Duplicate slug in import file: ' + normalized.slug);
           }
           seen[normalized.slug] = true;
-          const createdAt = String(item && item.createdAt || normalized.createdAt || new Date().toISOString());
+          const existing = existingBySlug[normalized.slug] || null;
+          const createdAt = String(item && item.createdAt || (existing && existing.createdAt) || normalized.createdAt || new Date().toISOString());
           const updatedAt = String(item && item.updatedAt || normalized.updatedAt || createdAt || new Date().toISOString());
           return {
             slug: normalized.slug,
@@ -3149,7 +3353,9 @@
             updatedAt: updatedAt,
             scrollStartPercent: normalizeStoredPercent(normalized.scrollStartPercent, 0),
             scrollEndPercent: normalizeStoredPercent(normalized.scrollEndPercent, 1),
-            scrollDurationSec: normalizeStoredDuration(normalized.scrollDurationSec, 240)
+            scrollDurationSec: normalizeStoredDuration(normalized.scrollDurationSec, 240),
+            transpose: normalizeStoredTranspose(normalized.transpose, 0),
+            notation: normalizeStoredNotation(normalized.notation, 'default')
           };
         });
         const tx = this._db.transaction(SONGS_STORE, 'readwrite');
@@ -3190,7 +3396,9 @@
           updatedAt: now,
           scrollStartPercent: normalizeStoredPercent(song.scrollStartPercent, 0),
           scrollEndPercent: normalizeStoredPercent(song.scrollEndPercent, 1),
-          scrollDurationSec: normalizeStoredDuration(song.scrollDurationSec, 240)
+          scrollDurationSec: normalizeStoredDuration(song.scrollDurationSec, 240),
+          transpose: normalizeStoredTranspose(song.transpose, 0),
+          notation: normalizeStoredNotation(song.notation, 'default')
         };
         if (originalSlug && originalSlug !== song.slug && existingByOriginal) {
           store.delete(originalSlug);
@@ -3280,6 +3488,120 @@
         return { ok: true, slug: song.slug, youtube: cloneValue(song.youtube) };
       },
 
+      listSetlists: async function() {
+        await this.ready();
+        const store = this._txStore(SETLISTS_STORE, 'readonly');
+        const rows = await this._requestToPromise(store.getAll());
+        return (Array.isArray(rows) ? rows : [])
+          .filter(function(setlist) { return !!(setlist && setlist.id); })
+          .map(function(setlist) {
+            return {
+              id: setlist.id,
+              title: setlist.title,
+              items: normalizeSetlistItems(setlist.items),
+              createdAt: setlist.createdAt || '',
+              updatedAt: setlist.updatedAt || ''
+            };
+          })
+          .sort(function(a, b) {
+            return String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''));
+          });
+      },
+
+      getSetlist: async function(id) {
+        await this.ready();
+        const normalizedId = String(id || '').trim();
+        if (!normalizedId) return null;
+        const store = this._txStore(SETLISTS_STORE, 'readonly');
+        const found = await this._requestToPromise(store.get(normalizedId));
+        return found ? Object.assign({}, cloneValue(found), { items: normalizeSetlistItems(found.items) }) : null;
+      },
+
+      saveSetlist: async function(payload) {
+        await this.ready();
+        const setlist = normalizeSetlistPayload(payload);
+        validateSetlist(setlist);
+        const id = setlist.id || generateSetlistId();
+        const tx = this._db.transaction(SETLISTS_STORE, 'readwrite');
+        const store = tx.objectStore(SETLISTS_STORE);
+        const existing = await this._requestToPromise(store.get(id));
+        const now = new Date().toISOString();
+        const record = {
+          id: id,
+          title: setlist.title,
+          items: normalizeSetlistItems(setlist.items),
+          createdAt: existing && existing.createdAt ? existing.createdAt : (setlist.createdAt || now),
+          updatedAt: now
+        };
+        store.put(record);
+        await new Promise(function(resolve, reject) {
+          tx.oncomplete = function() { resolve(); };
+          tx.onerror = function() { reject(tx.error || new Error('Failed to save setlist.')); };
+          tx.onabort = function() { reject(tx.error || new Error('Failed to save setlist.')); };
+        });
+        return { ok: true, id: id };
+      },
+
+      replaceAllSetlists: async function(records) {
+        await this.ready();
+        const source = Array.isArray(records) ? records : [];
+        const existingRows = await this.listSetlists();
+        const existingById = Object.create(null);
+        existingRows.forEach(function(record) {
+          if (record && record.id) existingById[record.id] = record;
+        });
+        const seen = Object.create(null);
+        const now = new Date().toISOString();
+        const normalizedRecords = source.map(function(item) {
+          const normalized = normalizeSetlistPayload(item || {});
+          validateSetlist(normalized);
+          const id = String(normalized.id || '').trim() || generateSetlistId();
+          if (seen[id]) {
+            throw new Error('Duplicate setlist id in import file: ' + id);
+          }
+          seen[id] = true;
+          const existing = existingById[id] || null;
+          return {
+            id: id,
+            title: normalized.title,
+            items: normalizeSetlistItems(normalized.items),
+            createdAt: existing && existing.createdAt ? existing.createdAt : (normalized.createdAt || now),
+            updatedAt: now
+          };
+        });
+        const tx = this._db.transaction(SETLISTS_STORE, 'readwrite');
+        const store = tx.objectStore(SETLISTS_STORE);
+        normalizedRecords.forEach(function(record) {
+          store.put(record);
+        });
+        await new Promise(function(resolve, reject) {
+          tx.oncomplete = function() { resolve(); };
+          tx.onerror = function() { reject(tx.error || new Error('Failed to import setlists.')); };
+          tx.onabort = function() { reject(tx.error || new Error('Failed to import setlists.')); };
+        });
+        return { ok: true, count: normalizedRecords.length };
+      },
+
+      deleteSetlist: async function(id) {
+        await this.ready();
+        const normalizedId = String(id || '').trim();
+        if (!normalizedId) return { ok: false, message: 'Setlist not found.' };
+        const tx = this._db.transaction(SETLISTS_STORE, 'readwrite');
+        const store = tx.objectStore(SETLISTS_STORE);
+        const existing = await this._requestToPromise(store.get(normalizedId));
+        if (!existing) {
+          tx.abort();
+          return { ok: false, message: 'Setlist not found.' };
+        }
+        store.delete(normalizedId);
+        await new Promise(function(resolve, reject) {
+          tx.oncomplete = function() { resolve(); };
+          tx.onerror = function() { reject(tx.error || new Error('Failed to delete setlist.')); };
+          tx.onabort = function() { reject(tx.error || new Error('Failed to delete setlist.')); };
+        });
+        return { ok: true };
+      },
+
       loadNotesSync: function(slug) {
         const normalizedSlug = String(slug || '').trim();
         if (!normalizedSlug) return [];
@@ -3355,6 +3677,11 @@
       attach('updateSongControlSettings', ChordProStorage.updateSongControlSettings);
       attach('updateSongScrollSettings', ChordProStorage.updateSongScrollSettings);
       attach('updateSongYouTubeSelection', ChordProStorage.updateSongYouTubeSelection);
+      attach('listSetlists', ChordProStorage.listSetlists);
+      attach('getSetlist', ChordProStorage.getSetlist);
+      attach('saveSetlist', ChordProStorage.saveSetlist);
+      attach('replaceAllSetlists', ChordProStorage.replaceAllSetlists);
+      attach('deleteSetlist', ChordProStorage.deleteSetlist);
       return runner;
     }
 
@@ -3391,6 +3718,39 @@
     text = String(fallback || '').trim();
     if (text === 'sharp' || text === 'flat' || text === 'default') return text;
     return 'default';
+  }
+
+  function createSetlistItem(slug) {
+    return {
+      itemId: 'item-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8),
+      slug: String(slug || '').trim()
+    };
+  }
+
+  function normalizeSetlistItemsForApp(items) {
+    const source = Array.isArray(items) ? items : [];
+    return source.map(function(item) {
+      const slug = typeof item === 'string'
+        ? String(item || '').trim()
+        : String(item && item.slug || '').trim();
+      if (!slug) return null;
+      const itemId = item && typeof item === 'object' ? String(item.itemId || '').trim() : '';
+      return {
+        itemId: itemId || createSetlistItem(slug).itemId,
+        slug: slug
+      };
+    }).filter(Boolean);
+  }
+
+  function normalizeSetlistForApp(setlist) {
+    const source = setlist || {};
+    return {
+      id: String(source.id || '').trim(),
+      title: String(source.title || '').trim(),
+      items: normalizeSetlistItemsForApp(source.items),
+      createdAt: String(source.createdAt || ''),
+      updatedAt: String(source.updatedAt || '')
+    };
   }
 
   function escapeHtml(value) {
@@ -3773,9 +4133,17 @@
       return target ? target.scrollTop : 0;
     }
 
+    function clampScrollTop(target, value) {
+      const numeric = Number(value);
+      const safeValue = Number.isFinite(numeric) ? numeric : 0;
+      return Math.max(0, Math.min(getMaxScrollTop(target), safeValue));
+    }
+
     function setScrollTop(target, value) {
-      if (!target) return;
-      target.scrollTop = Math.max(0, value);
+      if (!target) return 0;
+      const nextTop = clampScrollTop(target, value);
+      target.scrollTop = nextTop;
+      return getScrollTop(target);
     }
 
     function markProgrammaticScroll(value) {
@@ -3784,10 +4152,9 @@
     }
 
     function setProgrammaticScrollTop(target, value) {
-      const nextTop = Math.max(0, value);
+      const nextTop = clampScrollTop(target, value);
       markProgrammaticScroll(nextTop);
-      setScrollTop(target, nextTop);
-      exactScrollTop = nextTop;
+      exactScrollTop = setScrollTop(target, nextTop);
     }
 
     function isProgrammaticScrollEvent(currentTop) {
@@ -3824,6 +4191,10 @@
       return performance.now() <= manualScrollOverrideUntil;
     }
 
+    function extendManualScrollOverride() {
+      manualScrollOverrideUntil = Math.max(manualScrollOverrideUntil, performance.now() + MANUAL_SCROLL_OVERRIDE_MS);
+    }
+
     function adjustAdaptiveSpeed(direction) {
       const now = performance.now();
       if (now - lastAdaptiveSpeedAdjustAt < ADAPTIVE_SPEED_ADJUST_COOLDOWN_MS) return;
@@ -3855,6 +4226,7 @@
       if (!App || !App.state || App.state.page !== 'view' || !App.state.scroll.isPlaying) return;
       if (Math.abs(delta) < MANUAL_SCROLL_DELTA_THRESHOLD_PX) return;
       if (!hasRecentManualScrollIntent()) return;
+      extendManualScrollOverride();
       adjustAdaptiveSpeed(delta < 0 ? 'slower' : 'faster');
       const observedGeometry = observedScrollGeometrySnapshot || createObservedGeometrySnapshot(getGeometry());
       if (observedGeometry) {
@@ -3954,7 +4326,7 @@
     function createObservedGeometrySnapshot(geometry) {
       if (!geometry || !geometry.scrollTarget) return null;
       const maxScrollTop = getMaxScrollTop(geometry.scrollTarget);
-      const startScrollTop = Math.max(0, exactScrollTop);
+      const startScrollTop = Math.max(0, Math.min(maxScrollTop, exactScrollTop));
       const targetEndScrollTop = Math.max(startScrollTop, Math.min(maxScrollTop, Math.max(0, geometry.endY - geometry.viewportHeight)));
       const travelDistance = Math.max(0, targetEndScrollTop - startScrollTop);
       return {
@@ -5837,16 +6209,17 @@ function loadCurrentSongNotes() {
           '<div class="viewer-grid" id="viewer-grid">',
             '<div class="panel viewer-body pane-scroll" id="viewer-scroll-pane">',
               '<div class="viewer-content" id="viewer-content">',
+                App.renderSetlistPlaybackBar(),
                 App.status.message ? '<div class="status-box viewer-status' + (App.status.type === 'error' ? ' error' : '') + '">' + escapeHtml(App.status.message) + '</div>' : '',
                 '<div class="song-header">',
                   '<div>',
-                    '<div class="inline-actions">',
-                      '<button class="btn" type="button" data-app-action="show-list">← Back</button>',
-                      '<button class="btn" type="button" data-app-action="open-editor" data-song-slug="' + escapeHtml(song.slug) + '">Edit</button>',
-                    '</div>',
                     '<h2>' + escapeHtml(song.title) + '</h2>',
                     '<p>' + escapeHtml(song.artist) + '</p>',
                     tags ? '<div class="tag-row">' + tags + '</div>' : '',
+                  '</div>',
+                  '<div class="inline-actions song-header-actions">',
+                    state.currentSetlist ? '' : '<button class="btn" type="button" data-app-action="show-list">← Back</button>',
+                    state.currentSetlist ? '' : '<button class="btn" type="button" data-app-action="open-editor" data-song-slug="' + escapeHtml(song.slug) + '">Edit</button>',
                   '</div>',
                 '</div>',
                 '<div class="sheet-stage" id="sheet-stage">',
@@ -6201,10 +6574,9 @@ function renderFloatingPlayer(song) {
             '</div>',
             '<div class="actions">',
               '<button class="btn" type="button" data-app-action="show-list">Cancel</button>',
-              '<button class="btn" type="button" data-app-action="import-current-song">Import</button>',
               '<button class="btn" type="button" data-app-action="export-current-song">Export</button>',
               current.slug ? '<button class="btn danger" type="button" data-app-action="delete-current-song">Delete</button>' : '',
-              '<button class="btn primary" type="button" data-app-action="save-current-song">Save</button>',
+              '<button class="btn soft-accent" type="button" data-app-action="save-current-song">Save</button>',
             '</div>',
           '</div>',
           '<input id="edit-song-import-input" type="file" accept="application/json,.json" data-app-change="song-single-import" hidden>',
@@ -6481,7 +6853,7 @@ function renderFloatingPlayer(song) {
   function normalizeImportedSongRecord(record) {
     if (!record || typeof record !== 'object') return null;
     return {
-      originalSlug: String(record.originalSlug || record.slug || '').trim(),
+      originalSlug: '',
       slug: String(record.slug || '').trim(),
       title: String(record.title || '').trim(),
       artist: String(record.artist || '').trim(),
@@ -6533,6 +6905,57 @@ function renderFloatingPlayer(song) {
     return [];
   }
 
+  function normalizeImportedSetlistRecord(record) {
+    if (!record || typeof record !== 'object') return null;
+    const setlist = normalizeSetlistForApp(record);
+    if (!setlist.title && !setlist.items.length) return null;
+    if (!setlist.title) setlist.title = 'Imported Setlist';
+    return setlist;
+  }
+
+  function extractSetlistImportRecords(payload) {
+    if (payload && payload.type === 'personal-chordpro-viewer-setlists' && payload.scope === 'setlist' && payload.setlist && typeof payload.setlist === 'object') {
+      const single = normalizeImportedSetlistRecord(payload.setlist);
+      return single ? [single] : [];
+    }
+    if (payload && payload.type === 'personal-chordpro-viewer-setlists' && payload.scope === 'all' && Array.isArray(payload.setlists)) {
+      return payload.setlists.map(normalizeImportedSetlistRecord).filter(Boolean);
+    }
+    if (payload && payload.setlist && typeof payload.setlist === 'object') {
+      const single = normalizeImportedSetlistRecord(payload.setlist);
+      return single ? [single] : [];
+    }
+    if (payload && Array.isArray(payload.setlists)) {
+      return payload.setlists.map(normalizeImportedSetlistRecord).filter(Boolean);
+    }
+    if (Array.isArray(payload)) {
+      return payload.map(normalizeImportedSetlistRecord).filter(Boolean);
+    }
+    if (payload && typeof payload === 'object' && !Array.isArray(payload) && (payload.title || payload.items)) {
+      const single = normalizeImportedSetlistRecord(payload);
+      return single ? [single] : [];
+    }
+    return [];
+  }
+
+  function isSingleSongImportPayload(payload) {
+    if (!payload || Array.isArray(payload)) return false;
+    if (payload.type === 'personal-chordpro-viewer-songs') {
+      return payload.scope === 'song';
+    }
+    return !!(payload.song && typeof payload.song === 'object')
+      || (!!(payload.slug || payload.title || payload.chordPro) && !Array.isArray(payload.songs));
+  }
+
+  function isSingleSetlistImportPayload(payload) {
+    if (!payload || Array.isArray(payload)) return false;
+    if (payload.type === 'personal-chordpro-viewer-setlists') {
+      return payload.scope === 'setlist';
+    }
+    return !!(payload.setlist && typeof payload.setlist === 'object')
+      || (!!(payload.title || payload.items) && !Array.isArray(payload.setlists));
+  }
+
   const App = {
     config: null,
     status: { type: '', message: '' },
@@ -6546,10 +6969,17 @@ function renderFloatingPlayer(song) {
       page: 'list',
       songs: [],
       filteredSongs: [],
+      setlists: [],
       currentSong: null,
+      currentSetlist: null,
       editorSong: null,
+      setlistEditor: null,
+      setlistEditorImportedDraft: false,
+      setlistEditMode: false,
       searchText: '',
       searchDraft: '',
+      setlistSongSearchText: '',
+      setlistSongSearchDraft: '',
       transpose: 0,
       transposeStr: '0',
       notation: 'default',
@@ -6801,7 +7231,7 @@ function renderFloatingPlayer(song) {
       google.script.run
         .withSuccessHandler(function(config) {
           App.config = resolveFontConfig(config || App.config || {});
-          App.loadSongs(true, null, { skipBusy: true });
+          App.loadSongs(true, null, { skipBusy: true, endBusyOnDone: true });
         })
         .withFailureHandler(function(err) {
           App.endBusy();
@@ -6862,6 +7292,20 @@ function renderFloatingPlayer(song) {
         var target = event && event.target;
         if (!target || !target.closest) return;
 
+        var setlistPlayItem = target.closest('[data-setlist-play-index]');
+        if (setlistPlayItem && !target.closest('.actions')) {
+          event.preventDefault();
+          App.openSetlistSongAt(parseInt(setlistPlayItem.getAttribute('data-setlist-play-index') || '0', 10), { returnPage: 'songs' });
+          return;
+        }
+
+        var setlistItem = target.closest('.setlist-item-clickable[data-setlist-id]');
+        if (setlistItem && !target.closest('.song-item .actions')) {
+          event.preventDefault();
+          App.openSetlistEditor(setlistItem.getAttribute('data-setlist-id') || '', { editMode: false });
+          return;
+        }
+
         var editButton = target.closest('[data-song-edit-slug]');
         if (editButton) {
           event.preventDefault();
@@ -6882,6 +7326,26 @@ function renderFloatingPlayer(song) {
       document.addEventListener('keydown', function(event) {
         var target = event && event.target;
         if (!target || !target.closest) return;
+        var setlistPlayItem = target.closest('[data-setlist-play-index]');
+        if (setlistPlayItem) {
+          if (target.closest('.actions')) return;
+          var setlistKey = event.key;
+          if (setlistKey === 'Enter' || setlistKey === ' ') {
+            event.preventDefault();
+            App.openSetlistSongAt(parseInt(setlistPlayItem.getAttribute('data-setlist-play-index') || '0', 10), { returnPage: 'songs' });
+          }
+          return;
+        }
+        var setlistItem = target.closest('.setlist-item-clickable[data-setlist-id]');
+        if (setlistItem) {
+          if (target.closest('.song-item .actions')) return;
+          var cardKey = event.key;
+          if (cardKey === 'Enter' || cardKey === ' ') {
+            event.preventDefault();
+            App.openSetlistEditor(setlistItem.getAttribute('data-setlist-id') || '', { editMode: false });
+          }
+          return;
+        }
         var songItem = target.closest('.song-item-clickable[data-song-slug]');
         if (!songItem) return;
         if (target.closest('[data-song-edit-slug]')) return;
@@ -6909,6 +7373,23 @@ function renderFloatingPlayer(song) {
         event.preventDefault();
         switch (action) {
           case 'show-list': App.showList(); break;
+          case 'show-setlists': App.showSetlists(); break;
+          case 'new-setlist': App.openSetlistEditor('', { editMode: true }); break;
+          case 'open-setlist': App.openSetlist(actionEl.getAttribute('data-setlist-id') || ''); break;
+          case 'edit-setlist': App.openSetlistEditor(actionEl.getAttribute('data-setlist-id') || '', { editMode: true }); break;
+          case 'delete-setlist': App.deleteSetlist(actionEl.getAttribute('data-setlist-id') || ''); break;
+          case 'export-all-setlists': App.exportAllSetlists(); break;
+          case 'export-current-setlist': App.exportCurrentSetlist(); break;
+          case 'import-setlists': App.openSetlistImportDialog(); break;
+          case 'start-setlist': App.startCurrentSetlist(); break;
+          case 'enter-setlist-edit': App.enterSetlistEditMode(); break;
+          case 'cancel-setlist-edit': App.cancelSetlistEditMode(); break;
+          case 'save-setlist': App.saveCurrentSetlist(); break;
+          case 'remove-setlist-item': App.removeSetlistItem(index); break;
+          case 'add-song-to-setlist': App.addSongToSetlistEditor(actionEl.getAttribute('data-song-slug') || ''); break;
+          case 'setlist-prev': App.openAdjacentSetlistSong(-1); break;
+          case 'setlist-next': App.openAdjacentSetlistSong(1); break;
+          case 'setlist-back': App.handleSetlistBack(); break;
           case 'delete-current-song': App.deleteCurrentSong(); break;
           case 'save-current-song': App.saveCurrentSong(); break;
           case 'export-all-songs': App.exportAllSongs(); break;
@@ -6964,6 +7445,8 @@ function renderFloatingPlayer(song) {
           case 'editor-generic': App.editorInputChanged(); break;
           case 'editor-chordpro': App.editorChordProChanged(); break;
           case 'search': App.handleSearchInput(event, target); break;
+          case 'setlist-title': App.handleSetlistTitleInput(target); break;
+          case 'setlist-song-search': App.handleSetlistSongSearchInput(event, target); break;
           case 'transpose': App.handleTransposeInput(target); break;
           case 'scroll-minutes': App.handleScrollMinutesInput(target); break;
           case 'scroll-seconds': App.handleScrollSecondsInput(target); break;
@@ -6982,6 +7465,7 @@ function renderFloatingPlayer(song) {
           case 'note-import': Viewer.handleNoteImportChange(event); break;
           case 'song-library-import': App.handleSongLibraryImportChange(event); break;
           case 'song-single-import': App.handleCurrentSongImportChange(event); break;
+          case 'setlist-import': App.handleSetlistImportChange(event); break;
           case 'lyrics-font': App.setLyricsFont(target.value); break;
           case 'chord-font': App.setChordFont(target.value); break;
           case 'format-option': App.toggleFormatOption(target.getAttribute('data-format-key') || '', target.checked); break;
@@ -7013,17 +7497,83 @@ function renderFloatingPlayer(song) {
       document.addEventListener('compositionstart', function(event) {
         const target = event && event.target;
         if (!target || !target.matches) return;
-        if ((target.getAttribute('data-app-composition') || '') === 'search') {
+        const compositionAction = target.getAttribute('data-app-composition') || '';
+        if (compositionAction === 'search') {
           App.startSearchComposition();
+        } else if (compositionAction === 'setlist-song-search') {
+          App.startSetlistSongSearchComposition();
         }
       });
 
       document.addEventListener('compositionend', function(event) {
         const target = event && event.target;
         if (!target || !target.matches) return;
-        if ((target.getAttribute('data-app-composition') || '') === 'search') {
+        const compositionAction = target.getAttribute('data-app-composition') || '';
+        if (compositionAction === 'search') {
           App.endSearchComposition(target);
+        } else if (compositionAction === 'setlist-song-search') {
+          App.endSetlistSongSearchComposition(target);
         }
+      });
+
+      document.addEventListener('pointerdown', function(event) {
+        const target = event && event.target;
+        const item = target && target.closest ? target.closest('.setlist-editor-item[data-setlist-editor-index]') : null;
+        if (!item) return;
+        if (target.closest('.actions')) return;
+        const index = parseInt(item.getAttribute('data-setlist-editor-index') || '', 10);
+        if (isNaN(index)) return;
+        App._setlistPointerDrag = {
+          pointerId: typeof event.pointerId === 'number' ? event.pointerId : null,
+          item: item,
+          fromIndex: index,
+          startX: typeof event.clientX === 'number' ? event.clientX : 0,
+          startY: typeof event.clientY === 'number' ? event.clientY : 0,
+          moved: false
+        };
+      });
+
+      document.addEventListener('pointermove', function(event) {
+        const drag = App._setlistPointerDrag;
+        if (!drag) return;
+        if (drag.pointerId !== null && typeof event.pointerId === 'number' && drag.pointerId !== event.pointerId) return;
+        const dx = Math.abs((typeof event.clientX === 'number' ? event.clientX : 0) - drag.startX);
+        const dy = Math.abs((typeof event.clientY === 'number' ? event.clientY : 0) - drag.startY);
+        if (!drag.moved && Math.max(dx, dy) < 4) return;
+        drag.moved = true;
+        if (drag.item) drag.item.classList.add('is-dragging');
+        document.body.classList.add('is-setlist-pointer-dragging');
+      });
+
+      document.addEventListener('pointerup', function(event) {
+        const drag = App._setlistPointerDrag;
+        if (!drag) return;
+        if (drag.pointerId !== null && typeof event.pointerId === 'number' && drag.pointerId !== event.pointerId) return;
+        App._setlistPointerDrag = null;
+        document.body.classList.remove('is-setlist-pointer-dragging');
+        document.querySelectorAll('.setlist-editor-item.is-dragging').forEach(function(item) {
+          item.classList.remove('is-dragging');
+        });
+        if (!drag.moved) return;
+        const dropTarget = document.elementFromPoint(
+          typeof event.clientX === 'number' ? event.clientX : 0,
+          typeof event.clientY === 'number' ? event.clientY : 0
+        );
+        const item = dropTarget && dropTarget.closest ? dropTarget.closest('.setlist-editor-item[data-setlist-editor-index]') : null;
+        if (!item) return;
+        const toIndex = parseInt(item.getAttribute('data-setlist-editor-index') || '', 10);
+        if (!isNaN(drag.fromIndex) && !isNaN(toIndex)) App.moveSetlistItem(drag.fromIndex, toIndex);
+      });
+
+      document.addEventListener('pointercancel', function(event) {
+        const drag = App._setlistPointerDrag;
+        if (!drag) return;
+        if (drag.pointerId !== null && typeof event.pointerId === 'number' && drag.pointerId !== event.pointerId) return;
+        App._setlistPointerDrag = null;
+        document.body.classList.remove('is-setlist-pointer-dragging');
+        document.querySelectorAll('.setlist-editor-item.is-dragging').forEach(function(item) {
+          item.classList.remove('is-dragging');
+        });
       });
     },
 
@@ -7042,18 +7592,28 @@ function renderFloatingPlayer(song) {
         .withSuccessHandler(function(items) {
           App.state.songs = items || [];
           App.filterSongs(false);
+          google.script.run
+            .withSuccessHandler(function(setlists) {
+              App.state.setlists = (Array.isArray(setlists) ? setlists : []).map(normalizeSetlistForApp);
 
-          if (shouldRoute) {
-            var initialQuery = App.parseQueryFromLocation();
-            if (!initialQuery.page && !initialQuery.slug) {
-              initialQuery = window.__INITIAL_QUERY__ || {};
-            }
-            App.routeFromQuery(initialQuery, { skipBusy: true, endBusyOnDone: true });
-            return;
-          }
+              if (shouldRoute) {
+                var initialQuery = App.parseQueryFromLocation();
+                if (!initialQuery.page && !initialQuery.slug && !initialQuery.id) {
+                  initialQuery = window.__INITIAL_QUERY__ || {};
+                }
+                App.routeFromQuery(initialQuery, { skipBusy: true, endBusyOnDone: true });
+                return;
+              }
 
-          if (!options.skipBusy) App.endBusy();
-          if (typeof callback === 'function') callback();
+              if (!options.skipBusy) App.endBusy();
+              if (typeof callback === 'function') callback();
+            })
+            .withFailureHandler(function(err) {
+              if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
+              App.setStatus('error', String(err && err.message || err || 'Failed to load setlists.'));
+              App.render();
+            })
+            .listSetlists();
         })
         .withFailureHandler(function(err) {
           if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
@@ -7065,6 +7625,22 @@ function renderFloatingPlayer(song) {
 
     routeFromQuery: function(query, options) {
       options = options || {};
+      if (query && query.page === 'setlists') {
+        this.showSetlists(options);
+        return;
+      }
+      if (query && query.page === 'setlist-edit') {
+        this.openSetlistEditor(query.id || '', options);
+        return;
+      }
+      if (query && query.page === 'setlist-view' && query.id) {
+        this.openSetlistSong(query.id, query.index || 0, Object.assign({}, options, {
+          returnPage: 'songs',
+          urlTranspose: query.key,
+          urlNotation: query.sign
+        }));
+        return;
+      }
       if (query && query.page === 'view' && query.slug) {
         this.openSong(query.slug, Object.assign({}, options, {
           urlTranspose: query.key,
@@ -7108,11 +7684,335 @@ function renderFloatingPlayer(song) {
       Viewer.stopAutoScroll({ skipRender: true, resetProgress: true });
       this.state.page = 'list';
       this.state.currentSong = null;
+      this.state.currentSetlist = null;
+      this.state.setlistEditMode = false;
       this.state.playingYtIdx = null;
       if (!options.keepStatus) this.clearStatus();
       this.updateUrl({ page: 'list' });
       this.render();
       if (options.endBusyOnDone) this.endBusy();
+    },
+
+    loadSetlists: function(callback, options) {
+      options = options || {};
+      if (!options.skipBusy) this.beginBusy(options.busyMessage || 'Loading setlists…');
+      google.script.run
+        .withSuccessHandler(function(setlists) {
+          App.state.setlists = (Array.isArray(setlists) ? setlists : []).map(normalizeSetlistForApp);
+          if (!options.skipBusy) App.endBusy();
+          if (typeof callback === 'function') callback(App.state.setlists);
+        })
+        .withFailureHandler(function(err) {
+          if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
+          App.setStatus('error', String(err && err.message || err || 'Failed to load setlists.'));
+          App.render();
+        })
+        .listSetlists();
+    },
+
+    showSetlists: function(options) {
+      options = options || {};
+      Viewer.stopAutoScroll({ skipRender: true, resetProgress: true });
+      this.state.page = 'setlists';
+      this.state.currentSong = null;
+      this.state.currentSetlist = null;
+      this.state.setlistEditMode = false;
+      this.state.playingYtIdx = null;
+      if (!options.keepStatus) this.clearStatus();
+      this.updateUrl({ page: 'setlists' });
+      this.loadSetlists(function() {
+        App.render();
+        if (options.endBusyOnDone) App.endBusy();
+      }, { skipBusy: true, endBusyOnDone: options.endBusyOnDone });
+    },
+
+    getSongSummaryBySlug: function(slug) {
+      const normalizedSlug = String(slug || '').trim();
+      return (this.state.songs || []).filter(function(song) {
+        return String(song && song.slug || '') === normalizedSlug;
+      })[0] || null;
+    },
+
+    getSetlistSummaryById: function(id) {
+      const normalizedId = String(id || '').trim();
+      return (this.state.setlists || []).filter(function(setlist) {
+        return String(setlist && setlist.id || '') === normalizedId;
+      })[0] || null;
+    },
+
+    openSetlist: function(id, options) {
+      this.openSetlistEditor(id, Object.assign({ editMode: false }, options || {}));
+    },
+
+    openSetlistSong: function(id, index, options) {
+      options = options || {};
+      const normalizedId = String(id || '').trim();
+      const requestedIndex = Math.max(0, parseInt(index, 10) || 0);
+      if (!normalizedId) {
+        this.flashStatus('error', 'Setlist not found.', 2200);
+        return;
+      }
+      if (!options.skipBusy) this.beginBusy(options.busyMessage || 'Opening setlist…');
+      google.script.run
+        .withSuccessHandler(function(record) {
+          const setlist = normalizeSetlistForApp(record);
+          if (!setlist || !setlist.id) {
+            if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
+            App.setStatus('error', 'Setlist not found.');
+            App.showSetlists({ keepStatus: true });
+            return;
+          }
+          if (!setlist.items.length) {
+            if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
+            App.setStatus('error', 'This setlist has no songs.');
+            App.showSetlists({ keepStatus: true });
+            return;
+          }
+          const nextIndex = Math.max(0, Math.min(setlist.items.length - 1, requestedIndex));
+          const item = setlist.items[nextIndex];
+          App.openSong(item.slug, {
+            skipBusy: true,
+            endBusyOnDone: !options.skipBusy || options.endBusyOnDone,
+            urlTranspose: options.urlTranspose,
+            urlNotation: options.urlNotation,
+            setlistContext: {
+              id: setlist.id,
+              title: setlist.title,
+              items: setlist.items,
+              index: nextIndex,
+              returnPage: options.returnPage || 'songs'
+            }
+          });
+        })
+        .withFailureHandler(function(err) {
+          if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
+          App.setStatus('error', String(err && err.message || err || 'Failed to open setlist.'));
+          App.render();
+        })
+        .getSetlist(normalizedId);
+    },
+
+    openSetlistSongAt: function(index, options) {
+      options = options || {};
+      const source = this.state.setlistEditor || this.state.currentSetlist;
+      const setlist = normalizeSetlistForApp(source);
+      if (!setlist.items.length) return;
+      const nextIndex = Math.max(0, Math.min(setlist.items.length - 1, parseInt(index, 10) || 0));
+      const item = setlist.items[nextIndex];
+      this.openSong(item.slug, {
+        setlistContext: {
+          id: setlist.id,
+          title: setlist.title || 'Untitled setlist',
+          items: setlist.items,
+          index: nextIndex,
+          returnPage: options.returnPage || 'songs'
+        }
+      });
+    },
+
+    openAdjacentSetlistSong: function(delta) {
+      const context = this.state.currentSetlist;
+      if (!context || !Array.isArray(context.items) || !context.items.length) return;
+      const nextIndex = Math.max(0, Math.min(context.items.length - 1, (parseInt(context.index, 10) || 0) + delta));
+      if (nextIndex === context.index) return;
+      const item = context.items[nextIndex];
+      this.openSong(item.slug, {
+        setlistContext: Object.assign({}, context, { index: nextIndex })
+      });
+    },
+
+    handleSetlistBack: function() {
+      const context = this.state.currentSetlist || {};
+      Viewer.stopAutoScroll({ skipRender: true, resetProgress: true });
+      if ((context.returnPage === 'songs' || context.returnPage === 'edit') && context.id) {
+        this.openSetlistEditor(context.id || '', { editMode: false });
+        return;
+      }
+      this.showSetlists();
+    },
+
+    openSetlistEditor: function(id, options) {
+      options = options || {};
+      Viewer.stopAutoScroll({ skipRender: true, resetProgress: true });
+      if (!options.keepStatus) this.clearStatus();
+      const normalizedId = String(id || '').trim();
+      this.state.setlistSongSearchText = '';
+      this.state.setlistSongSearchDraft = '';
+      this._isSetlistSongSearchComposing = false;
+      this.state.setlistEditorImportedDraft = false;
+      this.state.setlistEditMode = !!options.editMode;
+      if (!normalizedId) {
+        this.state.setlistEditor = normalizeSetlistForApp({ title: 'New Setlist', items: [] });
+        this.state.page = 'setlist-edit';
+        this.state.currentSong = null;
+        this.state.currentSetlist = null;
+        this.updateUrl({ page: 'setlist-edit' });
+        this.render();
+        return;
+      }
+      if (!options.skipBusy) this.beginBusy(options.busyMessage || 'Opening setlist…');
+      google.script.run
+        .withSuccessHandler(function(record) {
+          const setlist = normalizeSetlistForApp(record);
+          if (!setlist.id) {
+            if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
+            App.setStatus('error', 'Setlist not found.');
+            App.showSetlists({ keepStatus: true });
+            return;
+          }
+          App.state.setlistEditor = setlist;
+          App.state.setlistEditMode = !!options.editMode;
+          App.state.page = 'setlist-edit';
+          App.state.currentSong = null;
+          App.state.currentSetlist = null;
+          App.updateUrl({ page: 'setlist-edit', id: setlist.id });
+          App.render();
+          if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
+        })
+        .withFailureHandler(function(err) {
+          if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
+          App.setStatus('error', String(err && err.message || err || 'Failed to open setlist.'));
+          App.render();
+        })
+        .getSetlist(normalizedId);
+    },
+
+    handleSetlistTitleInput: function(input) {
+      if (this.state.page !== 'setlist-edit' || !this.state.setlistEditor) return;
+      this.state.setlistEditor.title = input ? input.value : '';
+    },
+
+    startSetlistSongSearchComposition: function() {
+      this._isSetlistSongSearchComposing = true;
+    },
+
+    endSetlistSongSearchComposition: function(input) {
+      this._isSetlistSongSearchComposing = false;
+      this.state.setlistSongSearchDraft = input ? input.value : String(this.state.setlistSongSearchDraft || '');
+      this.state.setlistSongSearchText = this.state.setlistSongSearchDraft;
+      this.updateSetlistAddSongResults();
+    },
+
+    handleSetlistSongSearchInput: function(event, input) {
+      this.state.setlistSongSearchDraft = input ? input.value : '';
+      if (this._isSetlistSongSearchComposing || (event && (event.isComposing || event.inputType === 'insertCompositionText'))) return;
+      this.state.setlistSongSearchText = this.state.setlistSongSearchDraft;
+      this.updateSetlistAddSongResults();
+    },
+
+    updateSetlistAddSongResults: function() {
+      const results = document.querySelector('.setlist-add-results');
+      if (!results || this.state.page !== 'setlist-edit' || !this.state.setlistEditMode) {
+        this.render();
+        return;
+      }
+      results.innerHTML = this.renderSetlistAddSongResultsHtml();
+    },
+
+    addSongToSetlistEditor: function(slug) {
+      if (this.state.page !== 'setlist-edit' || !this.state.setlistEditor || !this.state.setlistEditMode) return;
+      const normalizedSlug = String(slug || '').trim();
+      if (!normalizedSlug) return;
+      this.state.setlistEditor.items = normalizeSetlistItemsForApp(this.state.setlistEditor.items);
+      this.state.setlistEditor.items.push(createSetlistItem(normalizedSlug));
+      this.state.setlistSongSearchText = '';
+      this.state.setlistSongSearchDraft = '';
+      this.render();
+    },
+
+    removeSetlistItem: function(index) {
+      if (this.state.page !== 'setlist-edit' || !this.state.setlistEditor || !this.state.setlistEditMode) return;
+      const items = normalizeSetlistItemsForApp(this.state.setlistEditor.items);
+      const itemIndex = parseInt(index, 10);
+      if (isNaN(itemIndex) || itemIndex < 0 || itemIndex >= items.length) return;
+      items.splice(itemIndex, 1);
+      this.state.setlistEditor.items = items;
+      this.render();
+    },
+
+    moveSetlistItem: function(fromIndex, toIndex) {
+      if (this.state.page !== 'setlist-edit' || !this.state.setlistEditor || !this.state.setlistEditMode) return;
+      const items = normalizeSetlistItemsForApp(this.state.setlistEditor.items);
+      if (fromIndex < 0 || fromIndex >= items.length || toIndex < 0 || toIndex >= items.length || fromIndex === toIndex) return;
+      const moved = items.splice(fromIndex, 1)[0];
+      items.splice(toIndex, 0, moved);
+      this.state.setlistEditor.items = items;
+      this.render();
+    },
+
+    startCurrentSetlist: function() {
+      if (this.state.page !== 'setlist-edit' || !this.state.setlistEditor) return;
+      const setlist = normalizeSetlistForApp(this.state.setlistEditor);
+      if (!setlist.items.length) {
+        this.setStatus('error', 'This setlist has no songs.');
+        this.render();
+        return;
+      }
+      this.openSetlistSongAt(0, { returnPage: 'songs' });
+    },
+
+    enterSetlistEditMode: function() {
+      if (this.state.page !== 'setlist-edit' || !this.state.setlistEditor) return;
+      this.clearStatus();
+      this.state.setlistEditMode = true;
+      this.state.setlistSongSearchText = '';
+      this.state.setlistSongSearchDraft = '';
+      this._isSetlistSongSearchComposing = false;
+      this.render();
+    },
+
+    cancelSetlistEditMode: function() {
+      if (this.state.page !== 'setlist-edit' || !this.state.setlistEditor) return;
+      const id = String(this.state.setlistEditor.id || '').trim();
+      if (this.state.setlistEditorImportedDraft || !id) {
+        this.showSetlists();
+        return;
+      }
+      this.openSetlistEditor(id, { editMode: false });
+    },
+
+    saveCurrentSetlist: function() {
+      if (this.state.page !== 'setlist-edit' || !this.state.setlistEditor) return;
+      const payload = normalizeSetlistForApp(this.state.setlistEditor);
+      if (!payload.title) {
+        this.setStatus('error', 'Setlist title is required.');
+        this.render();
+        return;
+      }
+      this.beginBusy('Saving setlist…');
+      google.script.run
+        .withSuccessHandler(function(result) {
+          App.setStatus('info', 'Setlist saved.');
+          App.loadSetlists(function() {
+            App.openSetlistEditor(result && result.id ? result.id : payload.id, { skipBusy: true, endBusyOnDone: true, keepStatus: true, editMode: false });
+          }, { skipBusy: true, endBusyOnDone: true });
+        })
+        .withFailureHandler(function(err) {
+          App.endBusy();
+          App.setStatus('error', String(err && err.message || err || 'Failed to save setlist.'));
+          App.render();
+        })
+        .saveSetlist(payload);
+    },
+
+    deleteSetlist: function(id) {
+      const normalizedId = String(id || '').trim();
+      if (!normalizedId) return;
+      if (!window.confirm('Delete this setlist?')) return;
+      this.beginBusy('Deleting setlist…');
+      google.script.run
+        .withSuccessHandler(function() {
+          App.setStatus('info', 'Setlist deleted.');
+          App.loadSetlists(function() {
+            App.showSetlists({ skipBusy: true, endBusyOnDone: true, keepStatus: true });
+          }, { skipBusy: true, endBusyOnDone: true });
+        })
+        .withFailureHandler(function(err) {
+          App.endBusy();
+          App.setStatus('error', String(err && err.message || err || 'Failed to delete setlist.'));
+          App.render();
+        })
+        .deleteSetlist(normalizedId);
     },
 
     openSong: function(slug, options) {
@@ -7135,6 +8035,12 @@ function renderFloatingPlayer(song) {
           var requestedNotation = normalizeStoredNotation(options.urlNotation, '');
           var savedNotation = normalizeStoredNotation(song.notation, 'default');
           App.state.currentSong = song;
+          App.state.currentSetlist = options.setlistContext
+            ? Object.assign({}, options.setlistContext, {
+                items: normalizeSetlistItemsForApp(options.setlistContext.items),
+                index: Math.max(0, parseInt(options.setlistContext.index, 10) || 0)
+              })
+            : null;
           App.state.scroll.startPercent = Math.max(0, Math.min(1, parseFloat(song.scrollStartPercent)));
           if (!isFinite(App.state.scroll.startPercent)) App.state.scroll.startPercent = 0;
           App.state.scroll.endPercent = Math.max(App.state.scroll.startPercent, Math.min(1, parseFloat(song.scrollEndPercent)));
@@ -7147,7 +8053,7 @@ function renderFloatingPlayer(song) {
           App.state.page = 'view';
           App.state.playingYtIdx = null;
           App._resetViewerScrollOnNextRender = true;
-          App.updateUrl({ page: 'view', slug: song.slug });
+          App.updateCurrentViewUrl();
           App.render();
           if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
         })
@@ -7214,6 +8120,7 @@ function renderFloatingPlayer(song) {
           notation: 'default'
         };
         this.state.page = 'edit';
+        this.state.currentSetlist = null;
         this.updateUrl({ page: 'edit' });
         this.render();
         if (options.endBusyOnDone) this.endBusy();
@@ -7227,6 +8134,7 @@ function renderFloatingPlayer(song) {
             slug: '', title: '', artist: '', tags: [], youtube: [], chordPro: '{title: }\n{subtitle: }\n', transpose: 0, notation: 'default'
           }, { originalSlug: song && song.slug ? song.slug : '' });
           App.state.page = 'edit';
+          App.state.currentSetlist = null;
           App.updateUrl({ page: 'edit', slug: App.state.editorSong.slug || slug });
           App.render();
           if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
@@ -7241,6 +8149,12 @@ function renderFloatingPlayer(song) {
 
     saveCurrentSong: function() {
       const payload = this.collectEditorPayload();
+      const originalSlug = String(payload.originalSlug || '').trim();
+      const isNewSong = !originalSlug;
+      const existingSong = isNewSong ? this.getSongSummaryBySlug(payload.slug) : null;
+      if (existingSong && !window.confirm('A song with this slug already exists. Overwrite it?\n\nSlug: ' + payload.slug)) {
+        return;
+      }
       this.beginBusy('Saving song…');
       google.script.run
         .withSuccessHandler(function(result) {
@@ -7249,7 +8163,7 @@ function renderFloatingPlayer(song) {
           App.loadSongs(function() {
             App.setBusyMessage('Opening song…');
             App.openSong(result.slug, { skipBusy: true, endBusyOnDone: true });
-          }, { skipBusy: true });
+          }, { skipBusy: true, endBusyOnDone: true });
         })
         .withFailureHandler(function(err) {
           App.endBusy();
@@ -7281,7 +8195,7 @@ function renderFloatingPlayer(song) {
           App.setBusyMessage('Refreshing list…');
           App.loadSongs(function() {
             App.showList({ endBusyOnDone: true, keepStatus: true });
-          }, { skipBusy: true });
+          }, { skipBusy: true, endBusyOnDone: true });
         })
         .withFailureHandler(function(err) {
           App.endBusy();
@@ -7668,7 +8582,7 @@ function renderFloatingPlayer(song) {
       this.state.transpose = next;
       this.state.transposeStr = String(next);
       if (this.state.page === 'view' && this.state.currentSong && this.state.currentSong.slug) {
-        this.updateUrl({ page: 'view', slug: this.state.currentSong.slug });
+        this.updateCurrentViewUrl();
       }
       this.closeYouTubePlayback();
       this.render();
@@ -7680,7 +8594,7 @@ function renderFloatingPlayer(song) {
       this.state.transpose = num;
       this.state.transposeStr = String(num);
       if (this.state.page === 'view' && this.state.currentSong && this.state.currentSong.slug) {
-        this.updateUrl({ page: 'view', slug: this.state.currentSong.slug });
+        this.updateCurrentViewUrl();
       }
       this.closeYouTubePlayback();
       this.render();
@@ -7689,7 +8603,7 @@ function renderFloatingPlayer(song) {
     setNotation: function(value) {
       this.state.notation = normalizeStoredNotation(value, 'default');
       if (this.state.page === 'view' && this.state.currentSong && this.state.currentSong.slug) {
-        this.updateUrl({ page: 'view', slug: this.state.currentSong.slug });
+        this.updateCurrentViewUrl();
       }
       this.closeYouTubePlayback();
       this.render();
@@ -7935,7 +8849,13 @@ function renderFloatingPlayer(song) {
       const query = new URLSearchParams();
       if (params && params.page && params.page !== 'list') query.set('page', params.page);
       if (params && params.slug) query.set('slug', params.slug);
+      if (params && params.id) query.set('id', params.id);
+      if (params && typeof params.index !== 'undefined') query.set('index', String(params.index));
       if (params && params.page === 'view' && params.slug) {
+        query.set('key', String(this.state.transpose));
+        query.set('sign', this.state.notation || 'default');
+      }
+      if (params && params.page === 'setlist-view') {
         query.set('key', String(this.state.transpose));
         query.set('sign', this.state.notation || 'default');
       }
@@ -7945,11 +8865,27 @@ function renderFloatingPlayer(song) {
       }
     },
 
+    updateCurrentViewUrl: function() {
+      if (this.state.currentSetlist && this.state.currentSetlist.id) {
+        this.updateUrl({
+          page: 'setlist-view',
+          id: this.state.currentSetlist.id,
+          index: this.state.currentSetlist.index || 0
+        });
+        return;
+      }
+      if (this.state.currentSong && this.state.currentSong.slug) {
+        this.updateUrl({ page: 'view', slug: this.state.currentSong.slug });
+      }
+    },
+
     parseQueryFromLocation: function() {
       const params = new URLSearchParams(window.location.search);
       return {
         page: params.get('page') || '',
         slug: params.get('slug') || '',
+        id: params.get('id') || '',
+        index: params.get('index') || '',
         key: params.get('key') || '',
         sign: params.get('sign') || ''
       };
@@ -7997,9 +8933,26 @@ function renderFloatingPlayer(song) {
         try {
           const raw = loadEvent && loadEvent.target ? String(loadEvent.target.result || '') : '';
           const payload = JSON.parse(raw);
+          if (isSingleSongImportPayload(payload)) {
+            const record = extractSingleSongImportRecord(payload);
+            if (!record) {
+              App.flashStatus('error', 'Invalid song JSON file.', 2600);
+              return;
+            }
+            App.state.editorSong = Object.assign({}, record, { originalSlug: '' });
+            App.state.page = 'edit';
+            App.state.currentSong = null;
+            App.state.currentSetlist = null;
+            App.clearStatus();
+            App.setStatus('info', 'Song loaded into the editor. Save to import, or Cancel to discard.');
+            App.updateUrl({ page: 'edit' });
+            App.render();
+            return;
+          }
+
           const songs = extractAllSongImportRecords(payload);
           if (!songs.length) {
-            App.flashStatus('error', 'Invalid all-song JSON file.', 2600);
+            App.flashStatus('error', 'Invalid song JSON file.', 2600);
             return;
           }
           if (!window.confirm('Import ' + songs.length + ' song(s)? Songs with the same slug will be overwritten, and all other existing songs will be kept.')) {
@@ -8012,7 +8965,7 @@ function renderFloatingPlayer(song) {
               App.loadSongs(function() {
                 App.showList({ endBusyOnDone: true, keepStatus: true });
                 App.flashStatus('info', 'Imported ' + ((result && result.count) || songs.length) + ' song(s).', 2400);
-              }, { skipBusy: true });
+              }, { skipBusy: true, endBusyOnDone: true });
             })
             .catch(function(err) {
               App.endBusy();
@@ -8025,6 +8978,119 @@ function renderFloatingPlayer(song) {
       };
       reader.onerror = function() {
         App.flashStatus('error', 'Failed to read song JSON file.', 2600);
+      };
+      reader.readAsText(file);
+      return false;
+    },
+
+    exportAllSetlists: function() {
+      this.beginBusy('Exporting setlists…');
+      ChordProStorage.listSetlists()
+        .then(function(setlists) {
+          downloadJsonFile('personal-chordpro-viewer-setlists-all.json', {
+            type: 'personal-chordpro-viewer-setlists',
+            version: 1,
+            scope: 'all',
+            exportedAt: new Date().toISOString(),
+            setlists: (Array.isArray(setlists) ? setlists : []).map(normalizeSetlistForApp)
+          });
+          App.endBusy();
+          App.flashStatus('info', (setlists && setlists.length) ? ('Exported ' + setlists.length + ' setlist(s).') : 'Empty setlist library exported.', 2200);
+        })
+        .catch(function(err) {
+          App.endBusy();
+          App.setStatus('error', String(err && err.message || err || 'Failed to export setlists.'));
+          App.render();
+        });
+    },
+
+    exportCurrentSetlist: function() {
+      const setlist = normalizeSetlistForApp(this.state.setlistEditor || this.state.currentSetlist || {});
+      if (!setlist.id && !setlist.title && !setlist.items.length) {
+        this.flashStatus('error', 'No setlist to export.', 2200);
+        return false;
+      }
+      const fileSlug = this.slugify(setlist.title || setlist.id || 'setlist') || 'setlist';
+      downloadJsonFile('personal-chordpro-viewer-setlist-' + fileSlug + '.json', {
+        type: 'personal-chordpro-viewer-setlists',
+        version: 1,
+        scope: 'setlist',
+        exportedAt: new Date().toISOString(),
+        setlist: setlist
+      });
+      this.flashStatus('info', 'Setlist exported.', 2200);
+      return false;
+    },
+
+    openSetlistImportDialog: function() {
+      const input = document.getElementById('setlist-import-input');
+      if (!input) {
+        this.flashStatus('error', 'Setlist import input not found.', 2200);
+        return false;
+      }
+      input.value = '';
+      input.click();
+      return false;
+    },
+
+    handleSetlistImportChange: function(event) {
+      const input = event && event.target ? event.target : null;
+      const file = input && input.files && input.files[0] ? input.files[0] : null;
+      if (input) input.value = '';
+      if (!file) return false;
+      const reader = new FileReader();
+      reader.onload = function(loadEvent) {
+        try {
+          const raw = loadEvent && loadEvent.target ? String(loadEvent.target.result || '') : '';
+          const payload = JSON.parse(raw);
+          if (isSingleSetlistImportPayload(payload)) {
+            const setlists = extractSetlistImportRecords(payload);
+            const record = setlists.length ? setlists[0] : null;
+            if (!record) {
+              App.flashStatus('error', 'Invalid setlist JSON file.', 2600);
+              return;
+            }
+            App.state.setlistEditor = normalizeSetlistForApp(record);
+            App.state.setlistEditorImportedDraft = true;
+            App.state.setlistEditMode = true;
+            App.state.setlistSongSearchText = '';
+            App.state.setlistSongSearchDraft = '';
+            App._isSetlistSongSearchComposing = false;
+            App.state.page = 'setlist-edit';
+            App.state.currentSong = null;
+            App.state.currentSetlist = null;
+            App.clearStatus();
+            App.setStatus('info', 'Setlist loaded into the editor. Save to import, or Cancel to discard.');
+            App.updateUrl({ page: 'setlist-edit' });
+            App.render();
+            return;
+          }
+
+          const setlists = extractSetlistImportRecords(payload);
+          if (!setlists.length) {
+            App.flashStatus('error', 'Invalid setlist JSON file.', 2600);
+            return;
+          }
+          if (!window.confirm('Import ' + setlists.length + ' setlist(s)? Setlists with the same id will be overwritten, and all other existing setlists will be kept.')) {
+            return;
+          }
+          App.beginBusy('Importing setlists…');
+          ChordProStorage.replaceAllSetlists(setlists)
+            .then(function(result) {
+              App.setStatus('info', 'Imported ' + ((result && result.count) || setlists.length) + ' setlist(s).');
+              App.showSetlists({ endBusyOnDone: true, keepStatus: true });
+            })
+            .catch(function(err) {
+              App.endBusy();
+              App.setStatus('error', String(err && err.message || err || 'Failed to import setlists.'));
+              App.render();
+            });
+        } catch (err) {
+          App.flashStatus('error', String(err && err.message || err || 'Failed to read setlist JSON file.'), 2600);
+        }
+      };
+      reader.onerror = function() {
+        App.flashStatus('error', 'Failed to read setlist JSON file.', 2600);
       };
       reader.readAsText(file);
       return false;
@@ -8142,7 +9208,7 @@ function renderFloatingPlayer(song) {
       applyAccentColor(this.state.accentColor);
       document.body.classList.toggle('view-mode-body', this.state.page === 'view');
       document.body.classList.toggle('edit-mode-body', this.state.page === 'edit');
-      document.body.classList.toggle('list-mode-body', this.state.page === 'list');
+      document.body.classList.toggle('list-mode-body', this.state.page === 'list' || this.state.page === 'setlists' || this.state.page === 'setlist-edit');
 
       try {
         if (this.state.page === 'edit') {
@@ -8151,6 +9217,24 @@ function renderFloatingPlayer(song) {
           app.innerHTML = Editor.render(this.state.editorSong);
           if (typeof applyPersonalChordProViewerTypography === 'function') applyPersonalChordProViewerTypography(app);
           this.syncEditorYouTubeSearchButton();
+          return;
+        }
+
+        if (this.state.page === 'setlists') {
+          this._viewerRerenderInProgress = false;
+          this._resetViewerScrollOnNextRender = false;
+          app.innerHTML = this.renderSetlistsPage();
+          this.syncViewerPaneLayout();
+          if (typeof applyPersonalChordProViewerTypography === 'function') applyPersonalChordProViewerTypography(app);
+          return;
+        }
+
+        if (this.state.page === 'setlist-edit') {
+          this._viewerRerenderInProgress = false;
+          this._resetViewerScrollOnNextRender = false;
+          app.innerHTML = this.renderSetlistEditorPage();
+          this.syncViewerPaneLayout();
+          if (typeof applyPersonalChordProViewerTypography === 'function') applyPersonalChordProViewerTypography(app);
           return;
         }
 
@@ -8218,14 +9302,155 @@ function renderFloatingPlayer(song) {
                 '<h3>' + escapeHtml(song.title) + '</h3>',
               '</div>',
               '<p>' + escapeHtml(song.artist) + '</p>',
-            '</div>',
-            '<div class="actions">',
               (tags ? '<div class="tag-row tag-row-inline tag-row-inline-actions">' + tags + '</div>' : ''),
-              '<button class="btn" type="button" data-song-edit-slug="' + escapeHtml(song.slug) + '">Edit</button>',
             '</div>',
           '</div>'
         ].join('');
       }).join('') : '<div class="empty-state panel">No songs yet.</div>';
+    },
+
+    renderSetlistListHtml: function(setlists) {
+      setlists = Array.isArray(setlists) ? setlists : [];
+      return setlists.length ? setlists.map(function(setlist) {
+        const items = normalizeSetlistItemsForApp(setlist.items);
+        return [
+          '<div class="song-item setlist-item-clickable" role="button" tabindex="0" data-setlist-id="' + escapeHtml(setlist.id) + '">',
+            '<div class="song-meta">',
+              '<div class="song-title-row"><h3>' + escapeHtml(setlist.title || 'Untitled setlist') + '</h3></div>',
+              '<p class="setlist-meta-line">' + items.length + ' song' + (items.length === 1 ? '' : 's') + '</p>',
+            '</div>',
+          '</div>'
+        ].join('');
+      }).join('') : '<div class="empty-state panel">No setlists yet.</div>';
+    },
+
+    renderSetlistsPage: function() {
+      return [
+        '<div class="shell">',
+          '<div class="topbar">',
+            '<div class="title-block"><h1>Setlists</h1></div>',
+            '<div class="actions">',
+              '<button class="btn" data-app-action="show-list">← Songs</button>',
+              '<button class="btn" data-app-action="export-all-setlists">Export all</button>',
+              '<button class="btn" data-app-action="import-setlists">Import</button>',
+              '<button class="btn primary" data-app-action="new-setlist">Add Setlist</button>',
+            '</div>',
+          '</div>',
+          this.status.message ? '<div class="status-box' + (this.status.type === 'error' ? ' error' : '') + '">' + escapeHtml(this.status.message) + '</div>' : '',
+          '<div class="panel pad">',
+            '<div class="song-list">' + this.renderSetlistListHtml(this.state.setlists) + '</div>',
+            '<input id="setlist-import-input" type="file" accept="application/json,.json" data-app-change="setlist-import" hidden>',
+          '</div>',
+        '</div>'
+      ].join('');
+    },
+
+    renderSetlistEditorItemsHtml: function(setlist, options) {
+      options = options || {};
+      const isEditing = !!options.editMode;
+      const items = normalizeSetlistItemsForApp(setlist && setlist.items);
+      if (!items.length) return '<div class="empty-state panel">No songs in this setlist yet.</div>';
+      return items.map(function(item, index) {
+        const song = App.getSongSummaryBySlug(item.slug);
+        const title = song ? song.title : '(Missing song)';
+        const artist = song ? song.artist : item.slug;
+        if (!isEditing) {
+          return [
+            '<div class="song-item setlist-songs-item">',
+              '<div class="setlist-row-number">' + (index + 1) + '</div>',
+              '<div class="song-meta' + (song ? ' setlist-song-click" role="button" tabindex="0" data-setlist-play-index="' + index : '') + '">',
+                '<div class="song-title-row"><h3>' + escapeHtml(title) + '</h3></div>',
+                '<p>' + escapeHtml(artist) + '</p>',
+              '</div>',
+            '</div>'
+          ].join('');
+        }
+        return [
+          '<div class="song-item setlist-editor-item" data-setlist-editor-index="' + index + '">',
+            '<div class="setlist-row-number">' + (index + 1) + '</div>',
+            '<div class="setlist-drag-handle" aria-hidden="true">☰</div>',
+            '<div class="song-meta">',
+              '<div class="song-title-row"><h3>' + escapeHtml(title) + '</h3></div>',
+              '<p>' + escapeHtml(artist) + '</p>',
+            '</div>',
+            '<div class="actions">',
+              '<button class="btn danger" type="button" data-app-action="remove-setlist-item" data-app-index="' + index + '">Delete</button>',
+            '</div>',
+          '</div>'
+        ].join('');
+      }).join('');
+    },
+
+    renderSetlistAddSongResultsHtml: function() {
+      const query = String(this.state.setlistSongSearchText || '').trim().toLowerCase();
+      const songs = (this.state.songs || []).filter(function(song) {
+        if (!query) return true;
+        const haystack = [song.title, song.artist].concat(song.tags || []).join(' ').toLowerCase();
+        return haystack.indexOf(query) !== -1;
+      }).slice(0, 20);
+      return songs.length ? songs.map(function(song) {
+        return [
+          '<div class="song-item">',
+            '<div class="song-meta">',
+              '<div class="song-title-row"><h3>' + escapeHtml(song.title) + '</h3></div>',
+              '<p>' + escapeHtml(song.artist) + '</p>',
+            '</div>',
+            '<div class="actions">',
+              '<button class="btn" type="button" data-app-action="add-song-to-setlist" data-song-slug="' + escapeHtml(song.slug) + '">Add</button>',
+            '</div>',
+          '</div>'
+        ].join('');
+      }).join('') : '<div class="empty-state panel">No matching songs.</div>';
+    },
+
+    renderSetlistEditorPage: function() {
+      const setlist = normalizeSetlistForApp(this.state.setlistEditor || {});
+      const isEditing = !!this.state.setlistEditMode;
+      return [
+        '<div class="shell">',
+          '<div class="topbar">',
+            '<div class="title-block"><h1>Setlist Songs</h1></div>',
+            '<div class="actions">',
+              isEditing
+                ? '<button class="btn" data-app-action="cancel-setlist-edit">Cancel</button><button class="btn soft-accent" data-app-action="save-setlist">Save</button>'
+                : '<button class="btn" data-app-action="show-setlists">← Back</button><button class="btn" data-app-action="export-current-setlist">Export</button><button class="btn danger" data-app-action="delete-setlist" data-setlist-id="' + escapeHtml(setlist.id) + '"' + (setlist.id ? '' : ' disabled') + '>Delete</button><button class="btn" data-app-action="enter-setlist-edit">Edit</button>',
+            '</div>',
+          '</div>',
+          this.status.message ? '<div class="status-box' + (this.status.type === 'error' ? ' error' : '') + '">' + escapeHtml(this.status.message) + '</div>' : '',
+          '<div class="panel pad">',
+            '<div class="form-stack">',
+              isEditing
+                ? '<label class="field-wrap"><span>Title</span><input class="field" id="setlist-title-input" value="' + escapeHtml(setlist.title) + '" data-app-input="setlist-title"></label>'
+                : '<div class="song-header setlist-summary-row"><div><h2>' + escapeHtml(setlist.title || 'Untitled setlist') + '</h2><p>' + setlist.items.length + ' song' + (setlist.items.length === 1 ? '' : 's') + '</p></div><div class="actions setlist-summary-actions"><button class="btn primary setlist-start-btn" data-app-action="start-setlist">Start</button></div></div>',
+              '<div class="song-list setlist-editor-list">' + this.renderSetlistEditorItemsHtml(setlist, { editMode: isEditing }) + '</div>',
+            '</div>',
+          '</div>',
+          isEditing ? [
+            '<div class="panel pad setlist-add-panel">',
+              '<h3 class="section-title">Add Song</h3>',
+              '<div class="search-row">',
+                '<input id="setlist-song-search-input" class="field" placeholder="Search title / artist / tags" value="' + escapeHtml(this.state.setlistSongSearchDraft) + '" data-app-input="setlist-song-search" data-app-composition="setlist-song-search">',
+              '</div>',
+              '<div class="song-list setlist-add-results">' + this.renderSetlistAddSongResultsHtml() + '</div>',
+            '</div>'
+          ].join('') : '',
+        '</div>'
+      ].join('');
+    },
+
+    renderSetlistPlaybackBar: function() {
+      const context = this.state.currentSetlist;
+      if (!context || !Array.isArray(context.items) || !context.items.length) return '';
+      const index = Math.max(0, Math.min(context.items.length - 1, parseInt(context.index, 10) || 0));
+      return [
+        '<div class="setlist-playbar">',
+          '<button class="btn" type="button" data-app-action="setlist-back">← Back</button>',
+          '<div class="setlist-playbar-title">' + escapeHtml(context.title || 'Untitled setlist') + '</div>',
+          '<div class="setlist-playbar-count">' + (index + 1) + ' / ' + context.items.length + '</div>',
+          '<button class="btn" type="button" data-app-action="setlist-prev"' + (index <= 0 ? ' disabled' : '') + '>Prev</button>',
+          '<button class="btn" type="button" data-app-action="setlist-next"' + (index >= context.items.length - 1 ? ' disabled' : '') + '>Next</button>',
+        '</div>'
+      ].join('');
     },
 
     renderListPage: function() {
@@ -8238,8 +9463,9 @@ function renderFloatingPlayer(song) {
               '<h1>Personal ChordPro Viewer</h1>',
             '</div>',
             '<div class="actions">',
+              '<button class="btn primary" data-app-action="show-setlists">Setlists</button>',
               '<button class="btn" data-app-action="export-all-songs">Export all</button>',
-              '<button class="btn" data-app-action="import-all-songs">Import all</button>',
+              '<button class="btn" data-app-action="import-all-songs">Import</button>',
               '<button class="btn primary" data-app-action="open-editor">Add Song</button>',
             '</div>',
           '</div>',
