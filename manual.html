@@ -256,7 +256,7 @@
 
     <section class="panel" id="start">
       <h2>1. 最初の準備</h2>
-      <p><code>https://over-keys.github.io/Personal-ChordPro-Viewer/</code> をブラウザで開いてください。ブックマークしておくと便利です。<strong>このサイトで作成した譜面はすべて、自分が今使っているブラウザ内にのみ保存されます。</strong></p>
+      <p><a href="https://over-keys.github.io/Personal-ChordPro-Viewer/" target="_blank" rel="noopener"><code>https://over-keys.github.io/Personal-ChordPro-Viewer/</code></a> をブラウザで開いてください。ブックマークしておくと便利です。<strong>このサイトで作成した譜面はすべて、自分が今使っているブラウザ内にのみ保存されます。</strong></p>
       <div class="warn">
         途中で使うブラウザを変えると、保存済みの曲や付箋が見えなくなります。Export / Import 機能はありますが、できるだけ同じパソコンと同じブラウザを使ってください。
       </div>
@@ -365,19 +365,20 @@
       <h3>表示調整</h3>
       <p>閲覧画面の右側パネルでは、上から順に次の調整ができます。</p>
       <ul>
-        <li><strong>Key</strong>: 譜面全体のキーを上下に移調します。</li>
-        <li><strong>Sign</strong>: シャープ系、フラット系など、音名の表記を切り替えます。</li>
-        <li><strong>Auto Scroll</strong>: 自動スクロールの開始・停止、時間設定、保存を行います。</li>
+        <li><strong>Key</strong>: 譜面全体のキーを上下に移調します。Song Controls の <strong>Save</strong> で曲ごとに保存できます。</li>
+        <li><strong>Sign</strong>: シャープ系、フラット系など、音名の表記を切り替えます。Song Controls の <strong>Save</strong> で曲ごとに保存できます。</li>
+        <li><strong>Auto Scroll</strong>: 自動スクロールの開始・停止と時間の設定を行います。Song Controls の <strong>Save</strong> で曲ごとに保存できます。</li>
         <li><strong>YouTube</strong>: 登録した動画を開いて再生できます。このGitHub Pages版では、動画は右下にフロート表示で再生されます。登録されていない場合は、Title と Artist でYouTube検索することもできます。</li>
         <li><strong>Notes</strong>: 付箋の書き出し・読み込みができます。</li>
         <li><strong>Chord Formatting</strong>: テンション、スラッシュコード、add・sus など、コード表記の見た目を調整できます。</li>
+        <li><strong>Color</strong>: 画面全体のアクセント色と、BPM表示の色を切り替えできます。</li>
         <li><strong>Font Settings</strong>: 歌詞とコードのサイズ、フォントを調整できます。</li>
       </ul>
     </section>
 
     <section class="panel" id="autoscroll">
       <h2>6. 自動スクロールの使い方</h2>
-      <p>右側の <strong>Auto Scroll</strong> には、<strong>Start / Pause</strong>、<strong>Reset</strong>、<strong>Save</strong>、分・秒入力、<strong>3:00 / 4:00 / 5:00</strong> プリセットがあります。</p>
+      <p>自動スクロールでは、譜面上の [S]tart / [E]nd マーカーで範囲を決め、Auto Scrollパネルで時間を設定します。</p>
       <h3>まずはこの順番がおすすめ</h3>
       <ol class="steps">
         <li>譜面左側の <strong>S / E</strong> マーカーを動かして、スクロールする範囲を決めます。</li>
@@ -385,11 +386,11 @@
         <li><strong>Start</strong> を押します。</li>
         <li>演奏しながら必要に応じて調整します。</li>
         <li>演奏が最後まで終わったら、分・秒入力欄に戻って、実測値を確認します。</li>
-        <li>実測値が適切な長さであることが確認できたら（あるいは手動で調整後）<strong>Save</strong> を押します。</li>
+        <li>実測値が適切な長さであることが確認できたら（あるいは手動で調整後）<strong>Save</strong> を押します。現在の Key / Sign も一緒に保存されます。</li>
       </ol>
       <h3>開始・停止のしかた</h3>
       <ul>
-        <li>右側の <strong>Start / Pause</strong> ボタン</li>
+        <li>Auto Scrollパネルの <strong>Start / Pause</strong> ボタン</li>
         <li><span class="kbd">Space</span> キー</li>
         <li><strong>譜面の左クリック</strong></li>
       </ul>
@@ -407,7 +408,7 @@
       </ul>
       <p>つまり、演奏しながら「少し戻す」「少し送る」「必要に応じて一時停止する」を使うことで、だんだん合いやすくなります。</p>
       <h3>自動測定</h3>
-      <p>スクロール範囲のかなり後ろまで進むと、アプリが実際にかかった時間を測定し、分・秒欄に候補として表示します（青くハイライトされます）。ただし、<strong>測定された時間は、その時点ではまだ曲の設定として保存されていません。</strong>その時間を今後も使いたい場合は、内容を確認したうえで <strong>Save</strong> を押してください。</p>
+      <p>スクロール範囲のかなり後ろまで進むと、アプリが実際にかかった時間を測定し、分・秒欄に候補として表示します（ハイライトされます）。ただし、<strong>測定された時間は、その時点ではまだ曲の設定として保存されていません。</strong>その時間を今後も使いたい場合は、内容を確認したうえで <strong>Save</strong> を押してください。Save すると、現在の Key / Sign も同時に保存されます。</p>
     </section>
 
     <section class="panel" id="notes">
