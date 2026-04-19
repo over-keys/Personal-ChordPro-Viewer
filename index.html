@@ -3227,6 +3227,28 @@
       }).filter(Boolean);
     }
 
+    function mergeNoteLists(primary, secondary) {
+      const merged = [];
+      const seen = Object.create(null);
+      [primary, secondary].forEach(function(list) {
+        (Array.isArray(list) ? list : []).forEach(function(note) {
+          if (!note) return;
+          const copy = cloneValue(note);
+          const id = String(copy.id || '').trim();
+          if (id) {
+            if (seen[id]) return;
+            seen[id] = true;
+          }
+          merged.push(copy);
+        });
+      });
+      return merged;
+    }
+
+    function notesFromEntry(entry) {
+      return entry && Array.isArray(entry.notes) ? cloneValue(entry.notes) : [];
+    }
+
     function normalizeSetlistPayload(payload) {
       const source = payload || {};
       return {
@@ -3436,7 +3458,7 @@
           });
       },
 
-      replaceAllSongs: async function(records) {
+      importSongs: async function(records) {
         await this.ready();
         const source = Array.isArray(records) ? records : [];
         const existingRows = await this._requestToPromise(this._txStore(SONGS_STORE, 'readonly').getAll());
@@ -3489,10 +3511,12 @@
         const song = normalizeSongPayload(payload);
         validateSong(song);
         const originalSlug = String(song.originalSlug || '').trim();
-        const tx = this._db.transaction(SONGS_STORE, 'readwrite');
-        const store = tx.objectStore(SONGS_STORE);
-        const existingByOriginal = originalSlug ? await this._requestToPromise(store.get(originalSlug)) : null;
-        const existingBySlug = await this._requestToPromise(store.get(song.slug));
+        const tx = this._db.transaction([SONGS_STORE, SETLISTS_STORE, NOTES_STORE], 'readwrite');
+        const songStore = tx.objectStore(SONGS_STORE);
+        const setlistStore = tx.objectStore(SETLISTS_STORE);
+        const notesStore = tx.objectStore(NOTES_STORE);
+        const existingByOriginal = originalSlug ? await this._requestToPromise(songStore.get(originalSlug)) : null;
+        const existingBySlug = await this._requestToPromise(songStore.get(song.slug));
         if (existingByOriginal && existingBySlug && existingByOriginal.slug !== existingBySlug.slug) {
           throw new Error('Slug already exists.');
         }
@@ -3513,36 +3537,78 @@
           transpose: normalizeStoredTranspose(song.transpose, 0),
           notation: normalizeStoredNotation(song.notation, 'default')
         };
-        if (originalSlug && originalSlug !== song.slug && existingByOriginal) {
-          store.delete(originalSlug);
+        const slugChanged = !!(originalSlug && originalSlug !== song.slug && existingByOriginal);
+        let setlistRefsUpdated = 0;
+        let migratedNotes = null;
+        if (slugChanged) {
+          const setlists = await this._requestToPromise(setlistStore.getAll());
+          (Array.isArray(setlists) ? setlists : []).forEach(function(setlist) {
+            const items = normalizeSetlistItems(setlist && setlist.items);
+            let changed = false;
+            const nextItems = items.map(function(item) {
+              if (item.slug !== originalSlug) return item;
+              changed = true;
+              setlistRefsUpdated += 1;
+              return Object.assign({}, item, { slug: song.slug });
+            });
+            if (changed) {
+              setlistStore.put(Object.assign({}, setlist, { items: nextItems, updatedAt: now }));
+            }
+          });
+          const oldNotesEntry = await this._requestToPromise(notesStore.get(originalSlug));
+          if (oldNotesEntry) {
+            const newNotesEntry = await this._requestToPromise(notesStore.get(song.slug));
+            migratedNotes = mergeNoteLists(notesFromEntry(oldNotesEntry), notesFromEntry(newNotesEntry));
+            if (migratedNotes.length) notesStore.put({ slug: song.slug, notes: cloneValue(migratedNotes) });
+            else notesStore.delete(song.slug);
+            notesStore.delete(originalSlug);
+          }
         }
-        store.put(record);
+        if (originalSlug && originalSlug !== song.slug && existingByOriginal) {
+          songStore.delete(originalSlug);
+        }
+        songStore.put(record);
         await new Promise(function(resolve, reject) {
           tx.oncomplete = function() { resolve(); };
           tx.onerror = function() { reject(tx.error || new Error('Failed to save song.')); };
           tx.onabort = function() { reject(tx.error || new Error('Failed to save song.')); };
         });
-        return { ok: true, slug: song.slug };
+        if (slugChanged && migratedNotes) {
+          if (migratedNotes.length) this._noteCache[song.slug] = cloneValue(migratedNotes);
+          else delete this._noteCache[song.slug];
+          delete this._noteCache[originalSlug];
+        }
+        return {
+          ok: true,
+          slug: song.slug,
+          originalSlug: originalSlug,
+          slugChanged: slugChanged,
+          setlistRefsUpdated: setlistRefsUpdated,
+          notesMigratedInStorage: slugChanged
+        };
       },
 
       deleteSong: async function(slug) {
         await this.ready();
         const normalizedSlug = String(slug || '').trim();
         if (!normalizedSlug) return { ok: false, message: 'Song not found.' };
-        const tx = this._db.transaction(SONGS_STORE, 'readwrite');
-        const store = tx.objectStore(SONGS_STORE);
-        const existing = await this._requestToPromise(store.get(normalizedSlug));
+        const tx = this._db.transaction([SONGS_STORE, NOTES_STORE], 'readwrite');
+        const songStore = tx.objectStore(SONGS_STORE);
+        const notesStore = tx.objectStore(NOTES_STORE);
+        const existing = await this._requestToPromise(songStore.get(normalizedSlug));
         if (!existing) {
           tx.abort();
           return { ok: false, message: 'Song not found.' };
         }
-        store.delete(normalizedSlug);
+        notesStore.delete(normalizedSlug);
+        songStore.delete(normalizedSlug);
         await new Promise(function(resolve, reject) {
           tx.oncomplete = function() { resolve(); };
           tx.onerror = function() { reject(tx.error || new Error('Failed to delete song.')); };
           tx.onabort = function() { reject(tx.error || new Error('Failed to delete song.')); };
         });
-        return { ok: true };
+        delete this._noteCache[normalizedSlug];
+        return { ok: true, notesDeleted: true };
       },
 
       updateSongControlSettings: async function(payload) {
@@ -3655,7 +3721,7 @@
         return { ok: true, id: id };
       },
 
-      replaceAllSetlists: async function(records) {
+      importSetlists: async function(records) {
         await this.ready();
         const source = Array.isArray(records) ? records : [];
         const existingRows = await this._requestToPromise(this._txStore(SETLISTS_STORE, 'readonly').getAll());
@@ -3755,6 +3821,57 @@
         }
       },
 
+      moveNotesSync: async function(oldSlug, newSlug) {
+        const fromSlug = String(oldSlug || '').trim();
+        const toSlug = String(newSlug || '').trim();
+        if (!fromSlug || !toSlug || fromSlug === toSlug) return { ok: true, moved: false };
+        try {
+          await this.ready();
+          const tx = this._db.transaction(NOTES_STORE, 'readwrite');
+          const store = tx.objectStore(NOTES_STORE);
+          const oldEntry = await this._requestToPromise(store.get(fromSlug));
+          if (!oldEntry) return { ok: true, moved: false };
+          const newEntry = await this._requestToPromise(store.get(toSlug));
+          const merged = mergeNoteLists(notesFromEntry(oldEntry), notesFromEntry(newEntry));
+          if (merged.length) store.put({ slug: toSlug, notes: cloneValue(merged) });
+          else store.delete(toSlug);
+          store.delete(fromSlug);
+          await new Promise(function(resolve, reject) {
+            tx.oncomplete = function() { resolve(); };
+            tx.onerror = function() { reject(tx.error || new Error('Failed to move notes.')); };
+            tx.onabort = function() { reject(tx.error || new Error('Failed to move notes.')); };
+          });
+          if (merged.length) this._noteCache[toSlug] = cloneValue(merged);
+          else delete this._noteCache[toSlug];
+          delete this._noteCache[fromSlug];
+          return { ok: true, moved: true, count: merged.length };
+        } catch (error) {
+          console.error('Failed to move notes:', error);
+          return { ok: false, error: error };
+        }
+      },
+
+      deleteNotesSync: async function(slug) {
+        const normalizedSlug = String(slug || '').trim();
+        if (!normalizedSlug) return { ok: true, deleted: false };
+        try {
+          await this.ready();
+          const tx = this._db.transaction(NOTES_STORE, 'readwrite');
+          const store = tx.objectStore(NOTES_STORE);
+          store.delete(normalizedSlug);
+          await new Promise(function(resolve, reject) {
+            tx.oncomplete = function() { resolve(); };
+            tx.onerror = function() { reject(tx.error || new Error('Failed to delete notes.')); };
+            tx.onabort = function() { reject(tx.error || new Error('Failed to delete notes.')); };
+          });
+          delete this._noteCache[normalizedSlug];
+          return { ok: true, deleted: true };
+        } catch (error) {
+          console.error('Failed to delete notes:', error);
+          return { ok: false, error: error };
+        }
+      },
+
       getAllNoteEntriesSync: function() {
         return Object.keys(this._noteCache)
           .map((slug) => ({ slug: slug, notes: Array.isArray(this._noteCache[slug]) ? cloneValue(this._noteCache[slug]) : [] }))
@@ -3784,7 +3901,7 @@
       attach('listSongs', ChordProStorage.listSongs);
       attach('getSong', ChordProStorage.getSong);
       attach('getAllSongsFull', ChordProStorage.getAllSongsFull);
-      attach('replaceAllSongs', ChordProStorage.replaceAllSongs);
+      attach('importSongs', ChordProStorage.importSongs);
       attach('saveSong', ChordProStorage.saveSong);
       attach('deleteSong', ChordProStorage.deleteSong);
       attach('updateSongControlSettings', ChordProStorage.updateSongControlSettings);
@@ -3793,7 +3910,7 @@
       attach('listSetlists', ChordProStorage.listSetlists);
       attach('getSetlist', ChordProStorage.getSetlist);
       attach('saveSetlist', ChordProStorage.saveSetlist);
-      attach('replaceAllSetlists', ChordProStorage.replaceAllSetlists);
+      attach('importSetlists', ChordProStorage.importSetlists);
       attach('deleteSetlist', ChordProStorage.deleteSetlist);
       return runner;
     }
@@ -6790,7 +6907,7 @@ function renderFloatingPlayer(song) {
               '<h1>' + (current.slug ? 'Edit Song' : 'Add Song') + '</h1>',
             '</div>',
             '<div class="actions">',
-              '<button class="btn" type="button" data-app-action="show-list">Cancel</button>',
+              '<button class="btn" type="button" data-app-action="cancel-editor">Cancel</button>',
               '<button class="btn" type="button" data-app-action="export-current-song">Export</button>',
               current.slug ? '<button class="btn danger" type="button" data-app-action="delete-current-song">Delete</button>' : '',
               '<button class="btn soft-accent" type="button" data-app-action="save-current-song">Save</button>',
@@ -7173,6 +7290,7 @@ function renderFloatingPlayer(song) {
       currentSong: null,
       currentSetlist: null,
       editorSong: null,
+      editorReturn: null,
       setlistEditor: null,
       setlistEditMode: false,
       searchText: '',
@@ -7574,6 +7692,7 @@ function renderFloatingPlayer(song) {
         event.preventDefault();
         switch (action) {
           case 'show-list': App.showList(); break;
+          case 'cancel-editor': App.cancelEditor(); break;
           case 'show-setlists': App.showSetlists(); break;
           case 'new-setlist': App.openSetlistEditor('', { editMode: true }); break;
           case 'open-setlist': App.openSetlist(actionEl.getAttribute('data-setlist-id') || ''); break;
@@ -7596,7 +7715,19 @@ function renderFloatingPlayer(song) {
           case 'export-all-songs': App.exportAllSongs(); break;
           case 'import-all-songs': App.openSongLibraryImportDialog(); break;
           case 'export-current-song': App.exportCurrentEditorSong(); break;
-          case 'open-editor': App.openEditor(actionEl.getAttribute('data-song-slug') || ''); break;
+          case 'open-editor': {
+            const editSlug = actionEl.getAttribute('data-song-slug') || '';
+            const returnOptions = App.state.page === 'view' && App.state.currentSong && editSlug && editSlug === App.state.currentSong.slug
+              ? {
+                  returnTo: 'view',
+                  returnSlug: editSlug,
+                  returnTranspose: App.state.transpose,
+                  returnNotation: App.state.notation
+                }
+              : {};
+            App.openEditor(editSlug, returnOptions);
+            break;
+          }
           case 'change-transpose': App.changeTranspose(delta); break;
           case 'set-notation': App.setNotation(value); break;
           case 'save-scroll-settings': App.saveViewerScrollSettings(); break;
@@ -8093,6 +8224,7 @@ function renderFloatingPlayer(song) {
       this.state.page = 'list';
       this.state.currentSong = null;
       this.state.currentSetlist = null;
+      this.state.editorReturn = null;
       this.state.setlistEditMode = false;
       this.state.playingYtIdx = null;
       if (!options.keepStatus) this.clearStatus();
@@ -8516,11 +8648,33 @@ function renderFloatingPlayer(song) {
       this.animateViewerScrollTo(window, 0, 140);
     },
 
+    cancelEditor: function() {
+      const editorReturn = this.state.editorReturn || null;
+      this.state.editorReturn = null;
+      if (editorReturn && editorReturn.returnTo === 'view' && editorReturn.slug) {
+        this.openSong(editorReturn.slug, {
+          urlTranspose: editorReturn.transpose,
+          urlNotation: editorReturn.notation
+        });
+        return;
+      }
+      this.showList();
+    },
+
     openEditor: function(slug, options) {
       options = options || {};
       Viewer.stopAutoScroll({ skipRender: true, resetProgress: true });
       this.clearStatus();
+      const editorReturn = options.returnTo === 'view' && String(options.returnSlug || slug || '').trim()
+        ? {
+            returnTo: 'view',
+            slug: String(options.returnSlug || slug || '').trim(),
+            transpose: typeof options.returnTranspose === 'undefined' ? '' : options.returnTranspose,
+            notation: options.returnNotation || ''
+          }
+        : null;
       if (!slug) {
+        this.state.editorReturn = null;
         this.state.editorSong = {
           originalSlug: '',
           slug: '',
@@ -8548,6 +8702,7 @@ function renderFloatingPlayer(song) {
           }, { originalSlug: song && song.slug ? song.slug : '' });
           App.state.page = 'edit';
           App.state.currentSetlist = null;
+          App.state.editorReturn = editorReturn;
           App.updateUrl({ page: 'edit', slug: App.state.editorSong.slug || slug });
           App.render();
           if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
@@ -8570,8 +8725,18 @@ function renderFloatingPlayer(song) {
       }
       this.beginBusy('Saving song…');
       google.script.run
-        .withSuccessHandler(function(result) {
-          App.setStatus('info', 'Saved.');
+        .withSuccessHandler(async function(result) {
+          let cleanupWarning = '';
+          try {
+            if (result && result.slugChanged && !result.notesMigratedInStorage && result.originalSlug && result.slug && window.ChordProStorage && ChordProStorage.moveNotesSync) {
+              const cleanupResult = await ChordProStorage.moveNotesSync(result.originalSlug, result.slug);
+              if (cleanupResult && cleanupResult.ok === false) cleanupWarning = 'Saved, but failed to move sticky notes.';
+            }
+          } catch (error) {
+            cleanupWarning = 'Saved, but failed to move sticky notes: ' + String(error && error.message || error);
+          }
+          App.setStatus(cleanupWarning ? 'error' : 'info', cleanupWarning || 'Saved.');
+          App.state.editorReturn = null;
           App.setBusyMessage('Refreshing list…');
           App.loadSongs(function() {
             App.setBusyMessage('Opening song…');
@@ -8594,17 +8759,27 @@ function renderFloatingPlayer(song) {
         this.render();
         return;
       }
-      if (!window.confirm('Delete this song?')) return;
+      if (!window.confirm('Delete this song? Sticky notes for this song will also be deleted. Setlists will keep a Missing song placeholder.')) return;
       this.beginBusy('Deleting song…');
       google.script.run
-        .withSuccessHandler(function(result) {
+        .withSuccessHandler(async function(result) {
           if (!result || !result.ok) {
             App.endBusy();
             App.setStatus('error', result && result.message ? result.message : 'Failed to delete.');
             App.render();
             return;
           }
-          App.setStatus('info', 'Deleted.');
+          let cleanupWarning = '';
+          try {
+            if (window.ChordProStorage && ChordProStorage.deleteNotesSync) {
+              const cleanupResult = await ChordProStorage.deleteNotesSync(slug);
+              if (cleanupResult && cleanupResult.ok === false) cleanupWarning = 'Deleted song, but failed to delete sticky notes.';
+            }
+          } catch (error) {
+            cleanupWarning = 'Deleted song, but failed to delete sticky notes: ' + String(error && error.message || error);
+          }
+          App.setStatus(cleanupWarning ? 'error' : 'info', cleanupWarning || 'Deleted.');
+          App.state.editorReturn = null;
           App.setBusyMessage('Refreshing list…');
           App.loadSongs(function() {
             App.showList({ endBusyOnDone: true, keepStatus: true });
@@ -9375,7 +9550,7 @@ function renderFloatingPlayer(song) {
             return;
           }
           App.beginBusy('Importing songs…');
-          ChordProStorage.replaceAllSongs(songs)
+          ChordProStorage.importSongs(songs)
             .then(function(result) {
               App.clearStatus();
               App.loadSongs(function() {
@@ -9484,7 +9659,7 @@ function renderFloatingPlayer(song) {
             return;
           }
           App.beginBusy('Importing setlists…');
-          ChordProStorage.replaceAllSetlists(setlists)
+          ChordProStorage.importSetlists(setlists)
             .then(function(result) {
               App.setStatus('info', 'Imported ' + ((result && result.count) || setlists.length) + ' setlist(s).');
               App.showSetlists({ endBusyOnDone: true, keepStatus: true });
