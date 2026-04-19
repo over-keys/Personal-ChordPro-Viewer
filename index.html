@@ -8015,8 +8015,7 @@ function renderFloatingPlayer(song) {
         if (target.closest && target.closest('.actions, button, input, textarea, select, a')) return;
         const isMouse = event.pointerType === 'mouse' || event.pointerType === '' || event.pointerType == null;
         if (!isMouse) return;
-        const handle = target.closest && target.closest('.setlist-drag-handle') ? target.closest('.setlist-drag-handle') : null;
-        if (!handle) return;
+        const handle = target.closest && target.closest('.setlist-drag-handle') ? target.closest('.setlist-drag-handle') : item;
         if (!startSetlistTouchDrag(handle, item, event.pointerId, event.clientX, event.clientY, 'pointer')) return;
         event.preventDefault();
       }, { capture: true });
