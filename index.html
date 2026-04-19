@@ -2417,6 +2417,10 @@
     align-items: center;
     cursor: move;
   }
+  body.is-setlist-touch-dragging {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
   .setlist-songs-item {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
@@ -2906,22 +2910,42 @@
     .list-mode-body .topbar > .actions.setlists-topbar-actions {
       flex: 1 1 100%;
       width: 100%;
-      flex-wrap: wrap;
-      justify-content: flex-start;
+      display: grid;
+      grid-template-columns: repeat(3, max-content);
+      justify-content: end;
+      justify-items: end;
+      align-items: center;
       overflow: visible;
       gap: 8px;
     }
     .list-mode-body .topbar > .actions.list-topbar-actions .btn,
     .list-mode-body .topbar > .actions.setlists-topbar-actions .btn {
-      flex: 0 1 auto;
+      flex: 0 0 auto;
+      width: auto;
       min-width: 0;
       max-width: 100%;
     }
     .list-mode-body .topbar > .actions.list-topbar-actions .setlists-entry-btn,
     .list-mode-body .topbar > .actions.setlists-topbar-actions .setlists-back-btn {
-      flex: 0 0 100%;
+      grid-row: 1;
+      grid-column: 3;
       margin-right: 0;
-      justify-content: flex-start;
+      justify-content: center;
+    }
+    .list-mode-body .topbar > .actions.list-topbar-actions .btn:nth-child(2),
+    .list-mode-body .topbar > .actions.setlists-topbar-actions .btn:nth-child(2) {
+      grid-row: 2;
+      grid-column: 1;
+    }
+    .list-mode-body .topbar > .actions.list-topbar-actions .btn:nth-child(3),
+    .list-mode-body .topbar > .actions.setlists-topbar-actions .btn:nth-child(3) {
+      grid-row: 2;
+      grid-column: 2;
+    }
+    .list-mode-body .topbar > .actions.list-topbar-actions .btn:nth-child(4),
+    .list-mode-body .topbar > .actions.setlists-topbar-actions .btn:nth-child(4) {
+      grid-row: 2;
+      grid-column: 3;
     }
   }
   @media (max-width: 520px) {
@@ -7734,6 +7758,12 @@ function renderFloatingPlayer(song) {
       function findClosestSetlistEditorIndex(clientX, clientY) {
         const list = document.querySelector('.setlist-editor-list');
         if (!list) return NaN;
+        const pointTarget = typeof document.elementFromPoint === 'function' ? document.elementFromPoint(clientX, clientY) : null;
+        const directItem = pointTarget && pointTarget.closest ? pointTarget.closest('.setlist-editor-item[data-setlist-editor-index]') : null;
+        if (directItem) {
+          const directIndex = parseInt(directItem.getAttribute('data-setlist-editor-index') || '', 10);
+          if (!isNaN(directIndex)) return directIndex;
+        }
         const items = Array.prototype.slice.call(list.querySelectorAll('.setlist-editor-item[data-setlist-editor-index]'));
         if (!items.length) return NaN;
         let bestItem = null;
@@ -7754,6 +7784,7 @@ function renderFloatingPlayer(song) {
       function clearSetlistTouchDrag() {
         App._setlistTouchDrag = null;
         App._setlistDragIndex = null;
+        document.body.classList.remove('is-setlist-touch-dragging');
         document.querySelectorAll('.setlist-editor-item.is-dragging').forEach(function(item) {
           item.classList.remove('is-dragging');
         });
@@ -7774,6 +7805,7 @@ function renderFloatingPlayer(song) {
           lastClientY: clientY
         };
         App._setlistDragIndex = fromIndex;
+        document.body.classList.add('is-setlist-touch-dragging');
         item.classList.add('is-dragging');
         if ((inputType || 'pointer') === 'pointer' && typeof handle.setPointerCapture === 'function') {
           try { handle.setPointerCapture(pointerId); } catch (error) {}
@@ -7854,38 +7886,40 @@ function renderFloatingPlayer(song) {
         const item = handle.closest ? handle.closest('.setlist-editor-item[data-setlist-editor-index]') : null;
         if (!item) return;
         if (target.closest && target.closest('.actions')) return;
-        const touch = event.changedTouches && event.changedTouches[0];
+        const touch = event.changedTouches && event.changedTouches[0] ? event.changedTouches[0] : (event.touches && event.touches[0] ? event.touches[0] : null);
         if (!touch) return;
         if (!startSetlistTouchDrag(handle, item, touch.identifier, touch.clientX, touch.clientY, 'touch')) return;
         event.preventDefault();
-      }, { passive: false });
+      }, { passive: false, capture: true });
 
       document.addEventListener('touchmove', function(event) {
         const drag = App._setlistTouchDrag;
         if (!drag || drag.inputType !== 'touch') return;
-        const touch = findMatchingTouch(event.changedTouches, drag.pointerId) || findMatchingTouch(event.touches, drag.pointerId);
+        const touch = findMatchingTouch(event.changedTouches, drag.pointerId) || findMatchingTouch(event.touches, drag.pointerId) || (event.touches && event.touches.length === 1 ? event.touches[0] : null);
         if (!touch) return;
-        if (!updateSetlistTouchDrag(touch.identifier, touch.clientX, touch.clientY)) return;
+        if (!updateSetlistTouchDrag(drag.pointerId, touch.clientX, touch.clientY)) return;
         event.preventDefault();
-      }, { passive: false });
+      }, { passive: false, capture: true });
 
       document.addEventListener('touchend', function(event) {
         const drag = App._setlistTouchDrag;
         if (!drag || drag.inputType !== 'touch') return;
         const touch = findMatchingTouch(event.changedTouches, drag.pointerId);
-        if (!touch) return;
-        if (!finishSetlistTouchDrag(touch.identifier, touch.clientX, touch.clientY)) return;
+        const clientX = touch ? touch.clientX : drag.lastClientX;
+        const clientY = touch ? touch.clientY : drag.lastClientY;
+        if (!finishSetlistTouchDrag(drag.pointerId, clientX, clientY)) return;
         event.preventDefault();
-      }, { passive: false });
+      }, { passive: false, capture: true });
 
       document.addEventListener('touchcancel', function(event) {
         const drag = App._setlistTouchDrag;
         if (!drag || drag.inputType !== 'touch') return;
         const touch = findMatchingTouch(event.changedTouches, drag.pointerId);
-        if (!touch) return;
-        if (!finishSetlistTouchDrag(touch.identifier, touch.clientX, touch.clientY)) return;
+        const clientX = touch ? touch.clientX : drag.lastClientX;
+        const clientY = touch ? touch.clientY : drag.lastClientY;
+        if (!finishSetlistTouchDrag(drag.pointerId, clientX, clientY)) return;
         event.preventDefault();
-      }, { passive: false });
+      }, { passive: false, capture: true });
     },
 
     loadSongs: function(shouldRoute, callback, options) {
@@ -9602,8 +9636,8 @@ function renderFloatingPlayer(song) {
         '<div class="shell">',
           '<div class="topbar">',
             '<div class="title-block"><h1>Setlists</h1></div>',
-            '<div class="actions">',
-              '<button class="btn" data-app-action="show-list">← Songs</button>',
+            '<div class="actions setlists-topbar-actions">',
+              '<button class="btn setlists-back-btn" data-app-action="show-list">← Songs</button>',
               '<button class="btn" data-app-action="export-all-setlists">Export all</button>',
               '<button class="btn" data-app-action="import-setlists">Import</button>',
               '<button class="btn primary" data-app-action="new-setlist">Add Setlist</button>',
@@ -9735,7 +9769,7 @@ function renderFloatingPlayer(song) {
             '<div class="title-block">',
               '<h1>Personal ChordPro Viewer</h1>',
             '</div>',
-            '<div class="actions">',
+            '<div class="actions list-topbar-actions">',
               '<button class="btn primary setlists-entry-btn" data-app-action="show-setlists">Setlists</button>',
               '<button class="btn" data-app-action="export-all-songs">Export all</button>',
               '<button class="btn" data-app-action="import-all-songs">Import</button>',
