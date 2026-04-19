@@ -22,8 +22,12 @@ https://over-keys.github.io/Personal-ChordPro-Viewer/
 
 ## Files
 
-- index.html — main application
-- manual.html — user manual
+- `index.html` - main application
+- `manual.html` - user manual
+
+## License
+
+MIT License
 
 ## Notes
 
