@@ -2416,6 +2416,9 @@
     grid-template-columns: auto auto minmax(0, 1fr) auto;
     align-items: center;
     cursor: move;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
   body.is-setlist-touch-dragging {
     overflow: hidden;
@@ -7853,12 +7856,12 @@ function renderFloatingPlayer(song) {
 
       document.addEventListener('pointerdown', function(event) {
         if (!event || event.pointerType === 'mouse' || App._setlistTouchDrag) return;
-        const target = event.target;
-        const handle = target && target.closest ? target.closest('.setlist-drag-handle') : null;
-        if (!handle) return;
-        const item = handle.closest ? handle.closest('.setlist-editor-item[data-setlist-editor-index]') : null;
+        const rawTarget = event.target;
+        const target = rawTarget && rawTarget.nodeType === 3 ? rawTarget.parentElement : rawTarget;
+        const item = target && target.closest ? target.closest('.setlist-editor-item[data-setlist-editor-index]') : null;
         if (!item) return;
-        if (target.closest && target.closest('.actions')) return;
+        if (target.closest && target.closest('.actions, button, input, textarea, select, a')) return;
+        const handle = target.closest && target.closest('.setlist-drag-handle') ? target.closest('.setlist-drag-handle') : item;
         if (!startSetlistTouchDrag(handle, item, event.pointerId, event.clientX, event.clientY, 'pointer')) return;
         event.preventDefault();
       });
@@ -7880,12 +7883,12 @@ function renderFloatingPlayer(song) {
 
       document.addEventListener('touchstart', function(event) {
         if (!event || App._setlistTouchDrag) return;
-        const target = event.target;
-        const handle = target && target.closest ? target.closest('.setlist-drag-handle') : null;
-        if (!handle) return;
-        const item = handle.closest ? handle.closest('.setlist-editor-item[data-setlist-editor-index]') : null;
+        const rawTarget = event.target;
+        const target = rawTarget && rawTarget.nodeType === 3 ? rawTarget.parentElement : rawTarget;
+        const item = target && target.closest ? target.closest('.setlist-editor-item[data-setlist-editor-index]') : null;
         if (!item) return;
-        if (target.closest && target.closest('.actions')) return;
+        if (target.closest && target.closest('.actions, button, input, textarea, select, a')) return;
+        const handle = target.closest && target.closest('.setlist-drag-handle') ? target.closest('.setlist-drag-handle') : item;
         const touch = event.changedTouches && event.changedTouches[0] ? event.changedTouches[0] : (event.touches && event.touches[0] ? event.touches[0] : null);
         if (!touch) return;
         if (!startSetlistTouchDrag(handle, item, touch.identifier, touch.clientX, touch.clientY, 'touch')) return;
