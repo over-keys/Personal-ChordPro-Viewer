@@ -371,7 +371,7 @@
         <li><strong>YouTube</strong>: 登録した動画を開いて再生できます。このGitHub Pages版では、動画は右下にフロート表示で再生されます。登録されていない場合は、Title と Artist でYouTube検索することもできます。</li>
         <li><strong>Notes</strong>: 付箋の書き出し・読み込みができます。</li>
         <li><strong>Chord Formatting</strong>: テンション、スラッシュコード、add・sus など、コード表記の見た目を調整できます。</li>
-        <li><strong>Color</strong>: 画面全体のアクセント色と、BPM表示の色を切り替えできます。</li>
+        <li><strong>Colors</strong>: 画面全体のアクセント色、BPM表示の色、付箋の色を切り替えできます。</li>
         <li><strong>Font Settings</strong>: 歌詞とコードのサイズ、フォントを調整できます。</li>
       </ul>
     </section>
@@ -441,7 +441,7 @@
         1曲分の JSON は、現在開いている曲の付箋を置き換えます。全曲分の JSON は、存在する slug の付箋だけを曲ごとに置き換えます。JSON 内に含まれる slug のうち、今の曲ライブラリに存在しないものは、<strong>インポート前に一覧表示され、実際の取り込みでは自動的にスキップ</strong>されます。
       </div>
       <div class="warn">
-        曲データの Export / Import と、付箋の Export / Import は別です。完全なバックアップを取りたいときは、<strong>両方</strong>行ってください。
+        曲データ、セットリスト、付箋の Export / Import は別です。完全なバックアップを取りたいときは、<strong>3つとも</strong>行ってください。
       </div>
     </section>
 
@@ -485,16 +485,18 @@
     <section class="panel" id="backup">
       <h2>9. バックアップと移行</h2>
       <h3>普段のおすすめ</h3>
-      <p>曲を追加・修正した日は、最後に次の2つをやっておくと安心です。</p>
+      <p>曲やセットリストを追加・修正した日は、最後に次の3つをやっておくと安心です。</p>
       <ol>
         <li>トップページで <strong>Export all</strong></li>
+        <li>Setlists で <strong>Export all</strong></li>
         <li>どれかの曲を開いて、Notes の <strong>Export all</strong></li>
       </ol>
-      <p>これで、<strong>曲データ</strong>と<strong>付箋データ</strong>の両方をバックアップできます。</p>
+      <p>これで、<strong>曲データ</strong>、<strong>セットリスト</strong>、<strong>付箋データ</strong>をバックアップできます。</p>
       <h3>別のPCに移したいとき</h3>
       <ol>
         <li>新しいPCでも <code>https://over-keys.github.io/Personal-ChordPro-Viewer/</code> をブラウザで開く</li>
         <li>トップページで <strong>Import</strong> をして曲データを戻す</li>
+        <li>Setlists で <strong>Import</strong> をしてセットリストを戻す</li>
         <li>どれかの曲を開いて、Notes の <strong>Import</strong> で付箋を戻す</li>
       </ol>
       <div class="tip">
@@ -533,7 +535,7 @@
         <li><strong>自動スクロールが合わない</strong> → まず範囲、次に時間、最後に演奏しながら微調整</li>
         <li><strong>付箋を置きたい</strong> → 譜面上で右クリック</li>
         <li><strong>1曲だけ持ち出す / 取り込む</strong> → Edit画面の Export、トップページの Import、Notes の Export song / Import</li>
-        <li><strong>全部バックアップする</strong> → トップページの Export all と、Notes の Export all</li>
+        <li><strong>全部バックアップする</strong> → トップページの Export all、Setlists の Export all、Notes の Export all</li>
       </ul>
       <p><a class="footer-link" href="index.html">← トップページに戻る</a></p>
     </section>
