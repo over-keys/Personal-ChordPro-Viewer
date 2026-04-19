@@ -2933,19 +2933,23 @@
       flex: 1 1 100%;
       width: 100%;
       display: grid;
-      grid-template-columns: repeat(3, max-content);
-      justify-content: end;
-      justify-items: end;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      justify-content: stretch;
+      justify-items: stretch;
       align-items: center;
-      overflow: visible;
+      overflow: hidden;
       gap: 8px;
     }
     .list-mode-body .topbar > .actions.list-topbar-actions .btn,
     .list-mode-body .topbar > .actions.setlists-topbar-actions .btn {
       flex: 0 0 auto;
-      width: auto;
+      width: 100%;
       min-width: 0;
       max-width: 100%;
+      padding-inline: 6px;
+      font-size: 0.78rem;
+      line-height: 1.15;
+      white-space: normal;
     }
     .list-mode-body .topbar > .actions.list-topbar-actions .setlists-entry-btn,
     .list-mode-body .topbar > .actions.setlists-topbar-actions .setlists-back-btn {
@@ -7919,7 +7923,7 @@ function renderFloatingPlayer(song) {
           lastClientX: touch.clientX,
           lastClientY: touch.clientY
         };
-      }, { passive: true, capture: true });
+      }, { passive: false, capture: true });
 
       document.addEventListener('touchmove', function(event) {
         const drag = App._setlistTouchDrag;
@@ -7961,7 +7965,7 @@ function renderFloatingPlayer(song) {
         if (!pending) return;
         if (!findMatchingTouch(event.changedTouches, pending.pointerId)) return;
         clearSetlistTouchPending();
-      }, { passive: true, capture: true });
+      }, { passive: false, capture: true });
 
       document.addEventListener('touchcancel', function(event) {
         const drag = App._setlistTouchDrag;
@@ -7977,7 +7981,7 @@ function renderFloatingPlayer(song) {
         if (!pending) return;
         if (!findMatchingTouch(event.changedTouches, pending.pointerId)) return;
         clearSetlistTouchPending();
-      }, { passive: true, capture: true });
+      }, { passive: false, capture: true });
 
     },
 
