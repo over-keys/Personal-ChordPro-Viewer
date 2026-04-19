@@ -6,12 +6,6 @@ A lightweight personal ChordPro viewer, editor, and setlist manager for live per
 
 https://over-keys.github.io/Personal-ChordPro-Viewer/
 
-## Other Versions
-
-For the local version and the Google Spreadsheet version, see the Google Drive folder:
-
-https://drive.google.com/drive/folders/1-D1YW4gn6J8t0B-E7ig09sJ9d04kmBq8
-
 ## Features
 
 - Add, edit, import, and export songs in ChordPro format
@@ -30,6 +24,12 @@ https://drive.google.com/drive/folders/1-D1YW4gn6J8t0B-E7ig09sJ9d04kmBq8
 
 - `index.html` - main application
 - `manual.html` - user manual
+
+## Other Versions
+
+For the local version and the Google Spreadsheet version, see the Google Drive folder:
+
+https://drive.google.com/drive/folders/1-D1YW4gn6J8t0B-E7ig09sJ9d04kmBq8
 
 ## License
 
