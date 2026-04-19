@@ -328,27 +328,26 @@
 
     <section class="panel" id="list">
       <h2>3. トップページの使い方</h2>
-      <p>トップページでは、曲の一覧を見たり、新しい曲を追加したり、全曲の Export / Import を行えます。検索欄では <strong>title / artist / tags</strong> をまとめて検索でき、入力に応じてリアルタイムで絞り込まれます。元に戻したいときは <strong>Clear</strong> を押します。曲カード本体を押すと閲覧画面に入り、<strong>Edit</strong> を押すと編集画面に入ります。</p>
-      <h3>Export all / Import all</h3>
+      <p>トップページでは、曲の一覧を見たり、新しい曲を追加したり、曲データの Export / Import を行えます。検索欄では <strong>title / artist / tags</strong> をまとめて検索でき、入力に応じてリアルタイムで絞り込まれます。元に戻したいときは <strong>Clear</strong> を押します。曲カード本体を押すと閲覧画面に入ります。<strong>Setlists</strong> からセットリスト一覧へ移動できます。</p>
+      <h3>Export all / Import</h3>
       <ul>
         <li><strong>Export all</strong>: 曲ライブラリ全体を JSON に書き出します。</li>
-        <li><strong>Import all</strong>: JSON を読み込みます。<strong>同じ slug の曲は上書きされ、JSON に含まれていない既存曲はそのまま残ります。</strong></li>
+        <li><strong>Import</strong>: JSON を読み込みます。1曲分の JSON は編集画面に仮読み込みされ、<strong>Save</strong> で確定、<strong>Cancel</strong> で取り込みを中止できます。同じ slug の曲を保存する場合は確認が出ます。全曲分の JSON はまとめて取り込み、同じ slug の曲は上書き保存されます。</li>
       </ul>
     </section>
 
     <section class="panel" id="edit">
       <h2>4. Edit画面の使い方</h2>
-      <p>Edit画面では、曲の追加・修正・1曲単位の Export / Import を行います。上部には <strong>Cancel / Import / Export / Save</strong> があり、保存済みの曲では <strong>Delete</strong> も使えます。</p>
+      <p>Edit画面では、曲の追加・修正・1曲単位の Export を行います。上部には <strong>Cancel / Export / Save</strong> があり、保存済みの曲では <strong>Delete</strong> も使えます。</p>
       <h3>よく使うボタン</h3>
       <ul>
         <li><strong>Save</strong>: 入力内容を保存します。</li>
         <li><strong>Delete</strong>: その曲を削除します。</li>
         <li><strong>Export</strong>: 1曲分の JSON を書き出します。</li>
-        <li><strong>Import</strong>: 1曲分の JSON を読み込んで、編集フォームに載せます。</li>
       </ul>
       <div class="tip">
-        <strong>Import しただけでは、まだ保存は確定しません。</strong><br>
-        内容を確認して、必要なら直してから <strong>Save</strong> を押してください。別の曲をひな形にして新しい曲を作るときにも便利です。
+        <strong>1曲分の JSON を取り込みたい場合は、トップページの Import を使います。</strong><br>
+        読み込んだ内容は編集画面に仮表示され、<strong>Save</strong> で確定します。別の曲をひな形にして新しい曲を作るときにも便利です。
       </div>
       <h3>YouTube links</h3>
       <p>YouTube は <strong>1行に1件</strong> 入れるのが分かりやすいです。通常の URL、<code>youtu.be</code> 形式、動画 ID が使えます。開始位置付きリンクも使えます。たとえば <code>https://www.youtube.com/watch?v=XXXXXXXXXXX&amp;t=90</code> と書くと 90 秒から再生され、<code>https://youtu.be/XXXXXXXXXXX?t=90</code> の形でも使えます。</p>
@@ -434,11 +433,11 @@
       <ul>
         <li><strong>Export song</strong>: 今開いている曲の付箋だけ書き出します。</li>
         <li><strong>Export all</strong>: 全曲分の付箋を書き出します。</li>
-        <li><strong>Import</strong>: 付箋 JSON を読み込みます。<strong>1曲分の JSON にも、全曲分の JSON にも対応しています。</strong></li>
+        <li><strong>Import</strong>: 付箋 JSON を読み込みます。<strong>1曲分の JSON にも、全曲分の JSON にも対応しています。</strong>どちらの場合も、対象曲の既存付箋はインポートした内容で置き換えられます。</li>
       </ul>
       <div class="tip">
-        <strong>Notes の Import は、全曲分 JSON を選べば実質的に付箋の Import all として動作します。</strong><br>
-        そのとき、JSON 内に含まれる slug のうち、今の曲ライブラリに存在しないものは、<strong>インポート前に一覧表示され、実際の取り込みでは自動的にスキップ</strong>されます。存在する slug の付箋だけが読み込まれます。
+        <strong>Notes の Import は、取り込み前に確認が出ます。</strong><br>
+        1曲分の JSON は、現在開いている曲の付箋を置き換えます。全曲分の JSON は、存在する slug の付箋だけを曲ごとに置き換えます。JSON 内に含まれる slug のうち、今の曲ライブラリに存在しないものは、<strong>インポート前に一覧表示され、実際の取り込みでは自動的にスキップ</strong>されます。
       </div>
       <div class="warn">
         曲データの Export / Import と、付箋の Export / Import は別です。完全なバックアップを取りたいときは、<strong>両方</strong>行ってください。
@@ -457,7 +456,7 @@
       <h3>別のPCに移したいとき</h3>
       <ol>
         <li>新しいPCでも <code>https://over-keys.github.io/Personal-ChordPro-Viewer/</code> をブラウザで開く</li>
-        <li>トップページで <strong>Import all</strong> をして曲データを戻す</li>
+        <li>トップページで <strong>Import</strong> をして曲データを戻す</li>
         <li>どれかの曲を開いて、Notes の <strong>Import</strong> で付箋を戻す</li>
       </ol>
       <div class="tip">
@@ -494,7 +493,7 @@
         <li><strong>Title / Artist を楽に入れたい</strong> → 先に ChordPro を入力する</li>
         <li><strong>自動スクロールが合わない</strong> → まず範囲、次に時間、最後に演奏しながら微調整</li>
         <li><strong>付箋を置きたい</strong> → 譜面上で右クリック</li>
-        <li><strong>1曲だけ持ち出す / 取り込む</strong> → Edit画面の Export / Import と、Notes の Export song / Import</li>
+        <li><strong>1曲だけ持ち出す / 取り込む</strong> → Edit画面の Export、トップページの Import、Notes の Export song / Import</li>
         <li><strong>全部バックアップする</strong> → トップページの Export all と、Notes の Export all</li>
       </ul>
       <p><a class="footer-link" href="index.html">← トップページに戻る</a></p>
