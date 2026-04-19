@@ -7971,6 +7971,9 @@ function renderFloatingPlayer(song) {
       this.state.setlistSongSearchDraft = '';
       this._isSetlistSongSearchComposing = false;
       this.state.setlistEditMode = !!options.editMode;
+      if (!normalizedId && typeof options.editMode === 'undefined') {
+        this.state.setlistEditMode = true;
+      }
       if (!normalizedId) {
         this.state.setlistEditor = normalizeSetlistForApp({ title: '', items: [] });
         this.state.page = 'setlist-edit';
@@ -7978,6 +7981,7 @@ function renderFloatingPlayer(song) {
         this.state.currentSetlist = null;
         this.updateUrl({ page: 'setlist-edit' });
         this.render();
+        if (options.endBusyOnDone) this.endBusy();
         return;
       }
       if (!options.skipBusy) this.beginBusy(options.busyMessage || 'Opening setlist…');
@@ -9507,7 +9511,7 @@ function renderFloatingPlayer(song) {
           '<div class="panel pad">',
             '<div class="form-stack">',
               isEditing
-                ? '<label class="field-wrap"><span>Title</span><input class="field" id="setlist-title-input" value="' + escapeHtml(setlist.title) + '" data-app-input="setlist-title"></label>'
+                ? '<label class="field-wrap"><span>Title *</span><input class="field" id="setlist-title-input" value="' + escapeHtml(setlist.title) + '" data-app-input="setlist-title"></label>'
                 : '<div class="song-header setlist-summary-row"><div><h2>' + escapeHtml(setlist.title || 'Untitled setlist') + '</h2><p>' + setlist.items.length + ' song' + (setlist.items.length === 1 ? '' : 's') + '</p></div><div class="actions setlist-summary-actions"><button class="btn primary setlist-start-btn" data-app-action="start-setlist">Start</button></div></div>',
               '<div class="song-list setlist-editor-list">' + this.renderSetlistEditorItemsHtml(setlist, { editMode: isEditing }) + '</div>',
             '</div>',
