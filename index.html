@@ -2477,6 +2477,32 @@
     opacity: 0.55;
     cursor: move;
   }
+
+  body.is-setlist-touch-dragging {
+    overscroll-behavior: none;
+  }
+  .setlist-editor-item,
+  .setlist-drag-handle {
+    touch-action: none;
+  }
+  .setlist-editor-item.is-touch-source {
+    opacity: 0.42;
+  }
+  .setlist-editor-item.is-drop-target {
+    outline: 2px solid rgba(var(--accent-rgb), 0.28);
+    outline-offset: -2px;
+    background: rgba(var(--accent-rgb), 0.06);
+  }
+  .setlist-drag-ghost {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 10000;
+    margin: 0;
+    pointer-events: none;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+    transform: translate3d(0, 0, 0);
+  }
   .setlist-summary-row {
     display: flex;
     align-items: center;
@@ -7758,6 +7784,7 @@ function renderFloatingPlayer(song) {
         if (!isNaN(fromIndex) && !isNaN(toIndex)) App.moveSetlistItem(fromIndex, toIndex);
       });
 
+
       function findClosestSetlistEditorIndex(clientX, clientY) {
         const list = document.querySelector('.setlist-editor-list');
         if (!list) return NaN;
@@ -7784,13 +7811,59 @@ function renderFloatingPlayer(song) {
         return bestItem ? parseInt(bestItem.getAttribute('data-setlist-editor-index') || '', 10) : NaN;
       }
 
+      function clearSetlistDropTarget() {
+        document.querySelectorAll('.setlist-editor-item.is-drop-target').forEach(function(item) {
+          item.classList.remove('is-drop-target');
+        });
+      }
+
+      function setSetlistDropTarget(index) {
+        clearSetlistDropTarget();
+        if (typeof index !== 'number' || isNaN(index)) return;
+        const item = document.querySelector('.setlist-editor-item[data-setlist-editor-index="' + index + '"]');
+        if (item) item.classList.add('is-drop-target');
+      }
+
       function clearSetlistTouchDrag() {
+        const drag = App._setlistTouchDrag;
+        if (drag && drag.ghost && drag.ghost.parentNode) {
+          drag.ghost.parentNode.removeChild(drag.ghost);
+        }
+        if (drag && drag.sourceItem) {
+          drag.sourceItem.classList.remove('is-dragging');
+          drag.sourceItem.classList.remove('is-touch-source');
+        }
+        clearSetlistDropTarget();
         App._setlistTouchDrag = null;
         App._setlistDragIndex = null;
         document.body.classList.remove('is-setlist-touch-dragging');
         document.querySelectorAll('.setlist-editor-item.is-dragging').forEach(function(item) {
           item.classList.remove('is-dragging');
         });
+        document.querySelectorAll('.setlist-editor-item.is-touch-source').forEach(function(item) {
+          item.classList.remove('is-touch-source');
+        });
+      }
+
+      function createSetlistDragGhost(item, rect) {
+        const ghost = item.cloneNode(true);
+        ghost.classList.remove('is-dragging');
+        ghost.classList.remove('is-touch-source');
+        ghost.classList.remove('is-drop-target');
+        ghost.classList.add('setlist-drag-ghost');
+        ghost.style.width = rect.width + 'px';
+        ghost.style.height = rect.height + 'px';
+        ghost.style.left = rect.left + 'px';
+        ghost.style.top = rect.top + 'px';
+        ghost.style.pointerEvents = 'none';
+        return ghost;
+      }
+
+      function positionSetlistDragGhost(drag, clientX, clientY) {
+        if (!drag || !drag.ghost) return;
+        const dx = clientX - drag.startClientX;
+        const dy = clientY - drag.startClientY;
+        drag.ghost.style.transform = 'translate3d(' + dx + 'px, ' + dy + 'px, 0)';
       }
 
       function startSetlistTouchDrag(handle, item, pointerId, clientX, clientY, inputType) {
@@ -7798,18 +7871,28 @@ function renderFloatingPlayer(song) {
         if (App.state.page !== 'setlist-edit' || !App.state.setlistEditMode) return false;
         const fromIndex = parseInt(item.getAttribute('data-setlist-editor-index') || '', 10);
         if (isNaN(fromIndex)) return false;
+        const rect = item.getBoundingClientRect();
+        const ghost = createSetlistDragGhost(item, rect);
+        document.body.appendChild(ghost);
         App._setlistTouchDrag = {
           pointerId: pointerId,
           fromIndex: fromIndex,
           overIndex: fromIndex,
           handle: handle,
+          sourceItem: item,
           inputType: inputType || 'pointer',
+          startClientX: clientX,
+          startClientY: clientY,
           lastClientX: clientX,
-          lastClientY: clientY
+          lastClientY: clientY,
+          ghost: ghost
         };
         App._setlistDragIndex = fromIndex;
         document.body.classList.add('is-setlist-touch-dragging');
         item.classList.add('is-dragging');
+        item.classList.add('is-touch-source');
+        setSetlistDropTarget(fromIndex);
+        positionSetlistDragGhost(App._setlistTouchDrag, clientX, clientY);
         if ((inputType || 'pointer') === 'pointer' && typeof handle.setPointerCapture === 'function') {
           try { handle.setPointerCapture(pointerId); } catch (error) {}
         }
@@ -7821,8 +7904,12 @@ function renderFloatingPlayer(song) {
         if (!drag || pointerId !== drag.pointerId) return false;
         drag.lastClientX = clientX;
         drag.lastClientY = clientY;
+        positionSetlistDragGhost(drag, clientX, clientY);
         const overIndex = findClosestSetlistEditorIndex(clientX, clientY);
-        if (!isNaN(overIndex)) drag.overIndex = overIndex;
+        if (!isNaN(overIndex)) {
+          drag.overIndex = overIndex;
+          setSetlistDropTarget(overIndex);
+        }
         return true;
       }
 
@@ -7855,31 +7942,34 @@ function renderFloatingPlayer(song) {
       }
 
       document.addEventListener('pointerdown', function(event) {
-        if (!event || event.pointerType === 'mouse' || App._setlistTouchDrag) return;
+        if (!event || App._setlistTouchDrag) return;
         const rawTarget = event.target;
         const target = rawTarget && rawTarget.nodeType === 3 ? rawTarget.parentElement : rawTarget;
         const item = target && target.closest ? target.closest('.setlist-editor-item[data-setlist-editor-index]') : null;
         if (!item) return;
         if (target.closest && target.closest('.actions, button, input, textarea, select, a')) return;
-        const handle = target.closest && target.closest('.setlist-drag-handle') ? target.closest('.setlist-drag-handle') : item;
-        if (!startSetlistTouchDrag(handle, item, event.pointerId, event.clientX, event.clientY, 'pointer')) return;
+        const isMouse = event.pointerType === 'mouse' || event.pointerType === '' || event.pointerType == null;
+        const handle = target.closest && target.closest('.setlist-drag-handle') ? target.closest('.setlist-drag-handle') : null;
+        if (isMouse && !handle) return;
+        const dragHandle = handle || item;
+        if (!startSetlistTouchDrag(dragHandle, item, event.pointerId, event.clientX, event.clientY, 'pointer')) return;
         event.preventDefault();
-      });
+      }, { capture: true });
 
       document.addEventListener('pointermove', function(event) {
         if (!updateSetlistTouchDrag(event.pointerId, event.clientX, event.clientY)) return;
         event.preventDefault();
-      });
+      }, { passive: false, capture: true });
 
       document.addEventListener('pointerup', function(event) {
         if (!finishSetlistTouchDrag(event.pointerId, event.clientX, event.clientY)) return;
         event.preventDefault();
-      });
+      }, { passive: false, capture: true });
 
       document.addEventListener('pointercancel', function(event) {
         if (!finishSetlistTouchDrag(event.pointerId, event.clientX, event.clientY)) return;
         event.preventDefault();
-      });
+      }, { passive: false, capture: true });
 
       document.addEventListener('touchstart', function(event) {
         if (!event || App._setlistTouchDrag) return;
@@ -7888,10 +7978,9 @@ function renderFloatingPlayer(song) {
         const item = target && target.closest ? target.closest('.setlist-editor-item[data-setlist-editor-index]') : null;
         if (!item) return;
         if (target.closest && target.closest('.actions, button, input, textarea, select, a')) return;
-        const handle = target.closest && target.closest('.setlist-drag-handle') ? target.closest('.setlist-drag-handle') : item;
         const touch = event.changedTouches && event.changedTouches[0] ? event.changedTouches[0] : (event.touches && event.touches[0] ? event.touches[0] : null);
         if (!touch) return;
-        if (!startSetlistTouchDrag(handle, item, touch.identifier, touch.clientX, touch.clientY, 'touch')) return;
+        if (!startSetlistTouchDrag(item, item, touch.identifier, touch.clientX, touch.clientY, 'touch')) return;
         event.preventDefault();
       }, { passive: false, capture: true });
 
@@ -7923,6 +8012,7 @@ function renderFloatingPlayer(song) {
         if (!finishSetlistTouchDrag(drag.pointerId, clientX, clientY)) return;
         event.preventDefault();
       }, { passive: false, capture: true });
+
     },
 
     loadSongs: function(shouldRoute, callback, options) {
@@ -9676,7 +9766,7 @@ function renderFloatingPlayer(song) {
           ].join('');
         }
         return [
-          '<div class="song-item setlist-editor-item" draggable="true" data-setlist-editor-index="' + index + '">',
+          '<div class="song-item setlist-editor-item" data-setlist-editor-index="' + index + '">',
             '<div class="setlist-row-number">' + (index + 1) + '</div>',
             '<div class="setlist-drag-handle" aria-hidden="true">☰</div>',
             '<div class="song-meta">',
