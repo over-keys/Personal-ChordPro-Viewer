@@ -247,6 +247,7 @@
         <a href="#view">閲覧画面</a>
         <a href="#autoscroll">自動スクロール</a>
         <a href="#notes">付箋</a>
+        <a href="#setlists">セットリスト</a>
         <a href="#backup">バックアップ</a>
         <a href="#related-files">他のバージョンと譜面共有</a>
         <a href="#copyright">著作権と利用上の注意</a>
@@ -444,8 +445,45 @@
       </div>
     </section>
 
+
+
+    <section class="panel" id="setlists">
+      <h2>8. セットリストの使い方</h2>
+      <p>セットリストは、ライブや練習用に<strong>曲順をまとめておく</strong>ための機能です。トップページへ戻らず、決めた順番で次の曲へ進めます。<strong>同じ曲を1つのセットリストに複数回入れることもできます。</strong></p>
+      <div class="tip">
+        セットリストは曲データそのものを複製する機能ではありません。既存の曲を順番に並べて使うための機能です。したがって、セットリスト内で曲を外しても、元の曲データ自体は消えません。
+      </div>
+      <h3>基本の流れ</h3>
+      <ol class="steps">
+        <li>トップページの <strong>Setlists</strong> を押します。</li>
+        <li><strong>Add Setlist</strong> を押します。</li>
+        <li><strong>Title</strong> を入れます。</li>
+        <li><strong>Add Song</strong> 欄で曲名・アーティスト・タグを検索し、<strong>Add</strong> で入れます。</li>
+        <li>並び順を変えたいときは、行をドラッグして上下に入れ替えます。</li>
+        <li>そのセットリストから曲を外したいときは、行の <strong>Delete</strong> を押します。</li>
+        <li><strong>Save</strong> を押します。</li>
+      </ol>
+      <h3>保存後の使い方</h3>
+      <ul>
+        <li>Setlists 一覧では、セットリストのカード本体を押すと内容を開けます。</li>
+        <li>開いた画面の <strong>Start</strong> を押すと、1曲目から再生用の譜面表示に入ります。</li>
+        <li>セットリスト内の各曲名を押すと、その曲から直接開けます。</li>
+        <li>譜面表示の上部では <strong>Prev / Next</strong> で前後の曲へ進めます。</li>
+        <li><strong>Back</strong> を押すと、セットリスト一覧に戻ります。</li>
+        <li>セットリストの内容を直したいときは、開いた画面で <strong>Edit</strong> を押します。</li>
+      </ul>
+      <h3>補足</h3>
+      <ul>
+        <li>Setlists 一覧の <strong>Export all</strong> / <strong>Import</strong> で、セットリスト全体を書き出し・読み込みできます。</li>
+        <li>各セットリストの画面では <strong>Export</strong> でそのセットリストだけを書き出せます。</li>
+        <li>セットリスト自体を削除したいときは、セットリストを開いた画面の <strong>Delete</strong> を使います。</li>
+        <li>セットリストで管理するのは曲順です。表示中の <strong>Key / Sign / Auto Scroll</strong> の保存は、通常どおり譜面側の <strong>Song Controls の Save</strong> を使います。</li>
+        <li>同じ曲でも、キーやテンポ（自動スクロール速度）を変えて演奏したい場合は、別の曲として保存してからセットリストに追加してください。</li>
+      </ul>
+    </section>
+
     <section class="panel" id="backup">
-      <h2>8. バックアップと移行</h2>
+      <h2>9. バックアップと移行</h2>
       <h3>普段のおすすめ</h3>
       <p>曲を追加・修正した日は、最後に次の2つをやっておくと安心です。</p>
       <ol>
@@ -465,7 +503,7 @@
     </section>
 
     <section class="panel" id="related-files">
-      <h2>9. 他のバージョンと譜面共有</h2>
+      <h2>10. 他のバージョンと譜面共有</h2>
 
       <p>このGitHub Pages版に加えて、自分のパソコンで動かすローカル版（動作が軽快・個人用）と、Googleスプレッドシート版（表示や保存は遅め・譜面共有用）も用意しています。<strong>必要に応じて自由に活用してください。</strong></p>
 
@@ -480,17 +518,18 @@
 
     
     <section class="panel" id="copyright">
-      <h2>10. 著作権と利用上の注意</h2>
+      <h2>11. 著作権と利用上の注意</h2>
       <div class="warn">
         本ツールは、利用者が適法に利用できるデータのみを対象としています。外部サービスの利用規約や著作権法に反するデータの転記・保存・共有・公開には使用しないでください。
       </div>
     </section>
 
     <section class="panel" id="quick-rules">
-      <h2>11. 迷ったときの最短ルール</h2>
+      <h2>12. 迷ったときの最短ルール</h2>
       <ul>
         <li><strong>新しい曲を入れる</strong> → Add Song</li>
         <li><strong>Title / Artist を楽に入れたい</strong> → 先に ChordPro を入力する</li>
+        <li><strong>曲順どおりに続けて見たい</strong> → Setlists で並べて <strong>Start</strong></li>
         <li><strong>自動スクロールが合わない</strong> → まず範囲、次に時間、最後に演奏しながら微調整</li>
         <li><strong>付箋を置きたい</strong> → 譜面上で右クリック</li>
         <li><strong>1曲だけ持ち出す / 取り込む</strong> → Edit画面の Export、トップページの Import、Notes の Export song / Import</li>
