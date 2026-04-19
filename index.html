@@ -2902,7 +2902,8 @@
 
 
   @media (max-width: 420px) {
-    .list-mode-body .topbar > .actions {
+    .list-mode-body .topbar > .actions.list-topbar-actions,
+    .list-mode-body .topbar > .actions.setlists-topbar-actions {
       flex: 1 1 100%;
       width: 100%;
       flex-wrap: wrap;
@@ -2910,13 +2911,17 @@
       overflow: visible;
       gap: 8px;
     }
-    .list-mode-body .topbar > .actions .btn {
+    .list-mode-body .topbar > .actions.list-topbar-actions .btn,
+    .list-mode-body .topbar > .actions.setlists-topbar-actions .btn {
       flex: 0 1 auto;
       min-width: 0;
       max-width: 100%;
     }
-    .list-mode-body .topbar > .actions .setlists-entry-btn {
+    .list-mode-body .topbar > .actions.list-topbar-actions .setlists-entry-btn,
+    .list-mode-body .topbar > .actions.setlists-topbar-actions .setlists-back-btn {
+      flex: 0 0 100%;
       margin-right: 0;
+      justify-content: flex-start;
     }
   }
   @media (max-width: 520px) {
@@ -7754,57 +7759,133 @@ function renderFloatingPlayer(song) {
         });
       }
 
-      function finishSetlistTouchDrag(event) {
+      function startSetlistTouchDrag(handle, item, pointerId, clientX, clientY, inputType) {
+        if (!handle || !item) return false;
+        if (App.state.page !== 'setlist-edit' || !App.state.setlistEditMode) return false;
+        const fromIndex = parseInt(item.getAttribute('data-setlist-editor-index') || '', 10);
+        if (isNaN(fromIndex)) return false;
+        App._setlistTouchDrag = {
+          pointerId: pointerId,
+          fromIndex: fromIndex,
+          overIndex: fromIndex,
+          handle: handle,
+          inputType: inputType || 'pointer',
+          lastClientX: clientX,
+          lastClientY: clientY
+        };
+        App._setlistDragIndex = fromIndex;
+        item.classList.add('is-dragging');
+        if ((inputType || 'pointer') === 'pointer' && typeof handle.setPointerCapture === 'function') {
+          try { handle.setPointerCapture(pointerId); } catch (error) {}
+        }
+        return true;
+      }
+
+      function updateSetlistTouchDrag(pointerId, clientX, clientY) {
         const drag = App._setlistTouchDrag;
-        if (!drag || event.pointerId !== drag.pointerId) return;
+        if (!drag || pointerId !== drag.pointerId) return false;
+        drag.lastClientX = clientX;
+        drag.lastClientY = clientY;
+        const overIndex = findClosestSetlistEditorIndex(clientX, clientY);
+        if (!isNaN(overIndex)) drag.overIndex = overIndex;
+        return true;
+      }
+
+      function finishSetlistTouchDrag(pointerId, clientX, clientY) {
+        const drag = App._setlistTouchDrag;
+        if (!drag || pointerId !== drag.pointerId) return false;
         const fromIndex = parseInt(drag.fromIndex, 10);
-        const fallbackIndex = findClosestSetlistEditorIndex(event.clientX, event.clientY);
+        const finalClientX = typeof clientX === 'number' ? clientX : drag.lastClientX;
+        const finalClientY = typeof clientY === 'number' ? clientY : drag.lastClientY;
+        const fallbackIndex = findClosestSetlistEditorIndex(finalClientX, finalClientY);
         const toIndex = !isNaN(drag.overIndex) ? parseInt(drag.overIndex, 10) : fallbackIndex;
         const handle = drag.handle;
+        const inputType = drag.inputType || 'pointer';
         clearSetlistTouchDrag();
-        if (handle && typeof handle.releasePointerCapture === 'function') {
-          try { handle.releasePointerCapture(event.pointerId); } catch (error) {}
+        if (inputType === 'pointer' && handle && typeof handle.releasePointerCapture === 'function') {
+          try { handle.releasePointerCapture(pointerId); } catch (error) {}
         }
         if (!isNaN(fromIndex) && !isNaN(toIndex) && fromIndex !== toIndex) {
           App.moveSetlistItem(fromIndex, toIndex);
         }
+        return true;
+      }
+
+      function findMatchingTouch(touchList, identifier) {
+        if (!touchList || typeof identifier !== 'number') return null;
+        for (let i = 0; i < touchList.length; i += 1) {
+          if (touchList[i] && touchList[i].identifier === identifier) return touchList[i];
+        }
+        return null;
       }
 
       document.addEventListener('pointerdown', function(event) {
-        if (!event || event.pointerType === 'mouse') return;
+        if (!event || event.pointerType === 'mouse' || App._setlistTouchDrag) return;
         const target = event.target;
         const handle = target && target.closest ? target.closest('.setlist-drag-handle') : null;
         if (!handle) return;
         const item = handle.closest ? handle.closest('.setlist-editor-item[data-setlist-editor-index]') : null;
         if (!item) return;
         if (target.closest && target.closest('.actions')) return;
-        if (App.state.page !== 'setlist-edit' || !App.state.setlistEditMode) return;
-        const fromIndex = parseInt(item.getAttribute('data-setlist-editor-index') || '', 10);
-        if (isNaN(fromIndex)) return;
-        App._setlistTouchDrag = {
-          pointerId: event.pointerId,
-          fromIndex: fromIndex,
-          overIndex: fromIndex,
-          handle: handle
-        };
-        App._setlistDragIndex = fromIndex;
-        item.classList.add('is-dragging');
-        if (typeof handle.setPointerCapture === 'function') {
-          try { handle.setPointerCapture(event.pointerId); } catch (error) {}
-        }
+        if (!startSetlistTouchDrag(handle, item, event.pointerId, event.clientX, event.clientY, 'pointer')) return;
         event.preventDefault();
       });
 
       document.addEventListener('pointermove', function(event) {
-        const drag = App._setlistTouchDrag;
-        if (!drag || event.pointerId !== drag.pointerId) return;
-        const overIndex = findClosestSetlistEditorIndex(event.clientX, event.clientY);
-        if (!isNaN(overIndex)) drag.overIndex = overIndex;
+        if (!updateSetlistTouchDrag(event.pointerId, event.clientX, event.clientY)) return;
         event.preventDefault();
       });
 
-      document.addEventListener('pointerup', finishSetlistTouchDrag);
-      document.addEventListener('pointercancel', finishSetlistTouchDrag);
+      document.addEventListener('pointerup', function(event) {
+        if (!finishSetlistTouchDrag(event.pointerId, event.clientX, event.clientY)) return;
+        event.preventDefault();
+      });
+
+      document.addEventListener('pointercancel', function(event) {
+        if (!finishSetlistTouchDrag(event.pointerId, event.clientX, event.clientY)) return;
+        event.preventDefault();
+      });
+
+      document.addEventListener('touchstart', function(event) {
+        if (!event || App._setlistTouchDrag) return;
+        const target = event.target;
+        const handle = target && target.closest ? target.closest('.setlist-drag-handle') : null;
+        if (!handle) return;
+        const item = handle.closest ? handle.closest('.setlist-editor-item[data-setlist-editor-index]') : null;
+        if (!item) return;
+        if (target.closest && target.closest('.actions')) return;
+        const touch = event.changedTouches && event.changedTouches[0];
+        if (!touch) return;
+        if (!startSetlistTouchDrag(handle, item, touch.identifier, touch.clientX, touch.clientY, 'touch')) return;
+        event.preventDefault();
+      }, { passive: false });
+
+      document.addEventListener('touchmove', function(event) {
+        const drag = App._setlistTouchDrag;
+        if (!drag || drag.inputType !== 'touch') return;
+        const touch = findMatchingTouch(event.changedTouches, drag.pointerId) || findMatchingTouch(event.touches, drag.pointerId);
+        if (!touch) return;
+        if (!updateSetlistTouchDrag(touch.identifier, touch.clientX, touch.clientY)) return;
+        event.preventDefault();
+      }, { passive: false });
+
+      document.addEventListener('touchend', function(event) {
+        const drag = App._setlistTouchDrag;
+        if (!drag || drag.inputType !== 'touch') return;
+        const touch = findMatchingTouch(event.changedTouches, drag.pointerId);
+        if (!touch) return;
+        if (!finishSetlistTouchDrag(touch.identifier, touch.clientX, touch.clientY)) return;
+        event.preventDefault();
+      }, { passive: false });
+
+      document.addEventListener('touchcancel', function(event) {
+        const drag = App._setlistTouchDrag;
+        if (!drag || drag.inputType !== 'touch') return;
+        const touch = findMatchingTouch(event.changedTouches, drag.pointerId);
+        if (!touch) return;
+        if (!finishSetlistTouchDrag(touch.identifier, touch.clientX, touch.clientY)) return;
+        event.preventDefault();
+      }, { passive: false });
     },
 
     loadSongs: function(shouldRoute, callback, options) {
