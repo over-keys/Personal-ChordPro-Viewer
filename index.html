@@ -18,6 +18,12 @@
     --accent: #2563eb;
     --accent-soft: #dbeafe;
     --accent-rgb: 37, 99, 235;
+    --viewer-note-dot-bg: rgba(255, 248, 196, 0.88);
+    --viewer-note-dot-hover-bg: rgba(255, 244, 163, 0.96);
+    --viewer-note-bg: rgba(255, 250, 205, 0.82);
+    --viewer-note-editor-bg: rgba(255, 250, 205, 0.96);
+    --viewer-note-place-border: rgba(234, 179, 8, 0.75);
+    --viewer-note-place-bg: rgba(254, 249, 195, 0.22);
     --danger: #dc2626;
     --btn-bg: #f8fafc;
     --btn-bg-hover: #ffffff;
@@ -267,6 +273,23 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  .song-detail-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    margin-top: 2px;
+    overflow: hidden;
+  }
+  .song-detail-row p {
+    margin-top: 0;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .song-detail-row .tag-row-inline {
+    flex: 0 0 auto;
+    max-width: 55%;
   }
   .tag-row {
     display: flex;
@@ -1010,7 +1033,7 @@
     height: 22px;
     border: 0;
     border-radius: 0;
-    background: rgba(255, 248, 196, 0.88);
+    background: var(--viewer-note-dot-bg);
     box-shadow: none;
     padding: 0;
     cursor: move;
@@ -1023,7 +1046,7 @@
   .viewer-note-dot:hover,
   .viewer-note-dot:focus-visible {
     transform: none;
-    background: rgba(255, 244, 163, 0.96);
+    background: var(--viewer-note-dot-hover-bg);
   }
   .viewer-note-card,
   .viewer-note-popover {
@@ -1037,7 +1060,7 @@
     padding: 2px;
     border: 0;
     border-radius: 0;
-    background: rgba(255, 250, 205, 0.82);
+    background: var(--viewer-note-bg);
     box-shadow: none;
     transform: none;
     overflow: visible;
@@ -1077,7 +1100,7 @@
     min-height: 14px;
     margin: 0;
     padding: 1px 2px 0;
-    background: rgba(255, 250, 205, 0.82);
+    background: var(--viewer-note-bg);
     opacity: 0;
     pointer-events: none;
     z-index: 0;
@@ -1090,7 +1113,7 @@
     min-height: 14px;
     margin: 0;
     padding: 1px 2px 0;
-    background: rgba(255, 250, 205, 0.82);
+    background: var(--viewer-note-bg);
     z-index: 0;
   }
   .viewer-note-card:hover .viewer-note-card-actions,
@@ -1192,9 +1215,7 @@
     letter-spacing: -0.02em;
   }
   .viewer-note-action-btn:hover,
-  .viewer-note-action-btn:focus-visible,
-  .viewer-note-dot:hover,
-  .viewer-note-dot:focus-visible {
+  .viewer-note-action-btn:focus-visible {
     outline: none;
     background-color: rgba(15, 23, 42, 0.06);
   }
@@ -1218,7 +1239,7 @@
     border-radius: 0;
     margin: 0;
     padding: 0.16rem 0.28rem 0.78rem 0.28rem;
-    background: rgba(255, 250, 205, 0.96);
+    background: var(--viewer-note-editor-bg);
     resize: none;
     overflow: hidden;
     font-family: var(--viewer-note-font-family, inherit);
@@ -1236,10 +1257,11 @@
   }
   .sheet-stage.is-note-placing {
     cursor: crosshair;
+    background: var(--viewer-note-place-bg);
   }
   .btn-note-add.is-active {
-    background: rgba(254, 240, 138, 0.95);
-    border-color: rgba(234, 179, 8, 0.75);
+    background: var(--viewer-note-dot-hover-bg);
+    border-color: var(--viewer-note-place-border);
   }
   .btn-block {
     width: 100%;
@@ -1610,6 +1632,9 @@
     white-space: nowrap;
     flex-shrink: 0;
   }
+  .list-mode-body .topbar > .actions .setlists-entry-btn {
+    margin-right: 12px;
+  }
   .list-mode-body .song-item {
     align-items: center;
     flex-wrap: nowrap;
@@ -1773,6 +1798,10 @@
     padding-bottom: 14px;
     border-bottom: 1px solid var(--line);
   }
+  .song-header-main {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
   .song-header h2 {
     margin: 0;
     font-size: 1.5rem;
@@ -1780,6 +1809,17 @@
   .song-header p {
     margin: 6px 0 0;
     color: var(--muted);
+  }
+  .song-header-detail-row {
+    margin-top: 6px;
+  }
+  .song-header-detail-row p {
+    margin: 0;
+    flex: 1 1 auto;
+  }
+  .song-header-detail-row .tag-row-inline {
+    margin-left: auto;
+    justify-content: flex-end;
   }
   .control-group {
     display: grid;
@@ -2067,20 +2107,20 @@
     background: rgba(var(--accent-rgb), 0.08);
     border-color: rgba(var(--accent-rgb), 0.28);
     color: var(--accent);
-    box-shadow: var(--btn-shadow);
+    box-shadow: none;
   }
   .btn-save-autoscroll:hover:not(:disabled),
   .btn-save-autoscroll:focus-visible {
     background: rgba(var(--accent-rgb), 0.13);
     border-color: rgba(var(--accent-rgb), 0.36);
     color: var(--accent);
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+    box-shadow: none;
   }
   .btn-save-autoscroll:active:not(:disabled) {
     background: rgba(var(--accent-rgb), 0.16);
-    border-color: rgba(var(--accent-rgb), 0.38);
+    border-color: rgba(var(--accent-rgb), 0.42);
     color: var(--accent);
-    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.16);
   }
   .btn-save-autoscroll-bottom {
     display: none;
@@ -2375,6 +2415,7 @@
     display: grid;
     grid-template-columns: auto auto minmax(0, 1fr) auto;
     align-items: center;
+    cursor: move;
   }
   .setlist-songs-item {
     display: grid;
@@ -2383,31 +2424,27 @@
   }
   .setlist-row-number {
     min-width: 2.2em;
+    height: 28px;
+    display: grid;
+    align-items: center;
+    justify-items: end;
     color: var(--muted);
     font-weight: 700;
     text-align: right;
+    line-height: 1;
   }
   .setlist-drag-handle {
-    min-width: 44px;
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: var(--muted);
+    width: 28px;
+    min-width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
     font-size: 1.15rem;
     line-height: 1;
+    color: var(--muted);
+    text-align: center;
+    cursor: inherit;
     user-select: none;
-    cursor: default;
-  }
-  .setlist-editor-item {
-    cursor: default;
-  }
-  body.is-setlist-pointer-dragging,
-  body.is-setlist-pointer-dragging * {
-    cursor: default !important;
   }
   .setlist-song-click {
     cursor: pointer;
@@ -2430,6 +2467,7 @@
   }
   .setlist-editor-item.is-dragging {
     opacity: 0.55;
+    cursor: move;
   }
   .setlist-summary-row {
     display: flex;
@@ -3326,10 +3364,10 @@
       replaceAllSongs: async function(records) {
         await this.ready();
         const source = Array.isArray(records) ? records : [];
-        const existingRows = await this.getAllSongsFull();
+        const existingRows = await this._requestToPromise(this._txStore(SONGS_STORE, 'readonly').getAll());
         const existingBySlug = Object.create(null);
-        existingRows.forEach(function(record) {
-          if (record && record.slug) existingBySlug[record.slug] = record;
+        (Array.isArray(existingRows) ? existingRows : []).forEach(function(record) {
+          if (record && record.slug) existingBySlug[String(record.slug)] = record;
         });
         const seen = Object.create(null);
         const normalizedRecords = source.map(function(item) {
@@ -3545,28 +3583,28 @@
       replaceAllSetlists: async function(records) {
         await this.ready();
         const source = Array.isArray(records) ? records : [];
-        const existingRows = await this.listSetlists();
+        const existingRows = await this._requestToPromise(this._txStore(SETLISTS_STORE, 'readonly').getAll());
         const existingById = Object.create(null);
-        existingRows.forEach(function(record) {
-          if (record && record.id) existingById[record.id] = record;
+        (Array.isArray(existingRows) ? existingRows : []).forEach(function(record) {
+          if (record && record.id) existingById[String(record.id)] = record;
         });
         const seen = Object.create(null);
-        const now = new Date().toISOString();
         const normalizedRecords = source.map(function(item) {
           const normalized = normalizeSetlistPayload(item || {});
           validateSetlist(normalized);
-          const id = String(normalized.id || '').trim() || generateSetlistId();
+          const id = normalized.id || generateSetlistId();
           if (seen[id]) {
             throw new Error('Duplicate setlist id in import file: ' + id);
           }
           seen[id] = true;
           const existing = existingById[id] || null;
+          const now = new Date().toISOString();
           return {
             id: id,
             title: normalized.title,
             items: normalizeSetlistItems(normalized.items),
-            createdAt: existing && existing.createdAt ? existing.createdAt : (normalized.createdAt || now),
-            updatedAt: now
+            createdAt: item && item.createdAt || (existing && existing.createdAt) || normalized.createdAt || now,
+            updatedAt: item && item.updatedAt || normalized.updatedAt || now
           };
         });
         const tx = this._db.transaction(SETLISTS_STORE, 'readwrite');
@@ -3884,14 +3922,41 @@
     }
   }
 
+  function normalizeNoteColor(value) {
+    const normalized = String(value || '').trim().toLowerCase();
+    return ['yellow', 'blue', 'green', 'pink', 'lavender'].indexOf(normalized) !== -1 ? normalized : 'yellow';
+  }
+
+  function getNoteColorPalette(name) {
+    switch (normalizeNoteColor(name)) {
+      case 'blue':
+        return { swatch: '#bfdbfe', dot: 'rgba(191, 219, 254, 0.88)', hover: 'rgba(147, 197, 253, 0.96)', bg: 'rgba(219, 234, 254, 0.84)', editor: 'rgba(239, 246, 255, 0.97)', border: 'rgba(37, 99, 235, 0.55)', placing: 'rgba(219, 234, 254, 0.22)' };
+      case 'green':
+        return { swatch: '#bbf7d0', dot: 'rgba(187, 247, 208, 0.88)', hover: 'rgba(134, 239, 172, 0.96)', bg: 'rgba(220, 252, 231, 0.84)', editor: 'rgba(240, 253, 244, 0.97)', border: 'rgba(22, 163, 74, 0.55)', placing: 'rgba(220, 252, 231, 0.22)' };
+      case 'pink':
+        return { swatch: '#fecdd3', dot: 'rgba(254, 205, 211, 0.88)', hover: 'rgba(253, 164, 175, 0.96)', bg: 'rgba(255, 228, 230, 0.84)', editor: 'rgba(255, 241, 242, 0.97)', border: 'rgba(225, 29, 72, 0.5)', placing: 'rgba(255, 228, 230, 0.22)' };
+      case 'lavender':
+        return { swatch: '#ddd6fe', dot: 'rgba(221, 214, 254, 0.88)', hover: 'rgba(196, 181, 253, 0.96)', bg: 'rgba(237, 233, 254, 0.84)', editor: 'rgba(245, 243, 255, 0.97)', border: 'rgba(124, 58, 237, 0.5)', placing: 'rgba(237, 233, 254, 0.22)' };
+      case 'yellow':
+      default:
+        return { swatch: '#fff8c4', dot: 'rgba(255, 248, 196, 0.88)', hover: 'rgba(255, 244, 163, 0.96)', bg: 'rgba(255, 250, 205, 0.82)', editor: 'rgba(255, 250, 205, 0.96)', border: 'rgba(234, 179, 8, 0.75)', placing: 'rgba(254, 249, 195, 0.22)' };
+    }
+  }
+
   function renderColorChipHtml(actionName, value, label, currentValue) {
-    const normalizedValue = actionName === 'set-bpm-blink-color' ? normalizeBpmBlinkColor(value) : normalizeAccentColor(value);
-    const normalizedCurrent = actionName === 'set-bpm-blink-color' ? normalizeBpmBlinkColor(currentValue) : normalizeAccentColor(currentValue);
+    const normalizedValue = actionName === 'set-bpm-blink-color' ? normalizeBpmBlinkColor(value)
+      : actionName === 'set-note-color' ? normalizeNoteColor(value)
+      : normalizeAccentColor(value);
+    const normalizedCurrent = actionName === 'set-bpm-blink-color' ? normalizeBpmBlinkColor(currentValue)
+      : actionName === 'set-note-color' ? normalizeNoteColor(currentValue)
+      : normalizeAccentColor(currentValue);
     const isActive = normalizedCurrent === normalizedValue;
     if (normalizedValue === 'off') {
       return '<button class="color-chip color-chip-off' + (isActive ? ' is-active' : '') + '" type="button" data-app-action="' + escapeHtml(actionName) + '" data-app-value="off" aria-pressed="' + (isActive ? 'true' : 'false') + '">Off</button>';
     }
-    const chipColor = actionName === 'set-bpm-blink-color' ? getBpmBlinkColorValue(normalizedValue) : getAccentPalette(normalizedValue).accent;
+    const chipColor = actionName === 'set-bpm-blink-color' ? getBpmBlinkColorValue(normalizedValue)
+      : actionName === 'set-note-color' ? getNoteColorPalette(normalizedValue).swatch
+      : getAccentPalette(normalizedValue).accent;
     return [
       '<button class="color-chip color-chip-swatch-btn', isActive ? ' is-active' : '', '" type="button" data-app-action="', escapeHtml(actionName), '" data-app-value="', escapeHtml(normalizedValue), '" aria-label="', escapeHtml(label), '" title="', escapeHtml(label), '" aria-pressed="', isActive ? 'true' : 'false', '">',
         '<span class="color-chip-swatch" style="--color-chip-color:', escapeHtml(chipColor), ';"></span>',
@@ -3908,8 +3973,24 @@
     root.style.setProperty('--accent-rgb', palette.rgb);
   }
 
+  function applyNoteColor(noteColor) {
+    const palette = getNoteColorPalette(noteColor);
+    const root = document.documentElement;
+    if (!root || !root.style) return;
+    root.style.setProperty('--viewer-note-dot-bg', palette.dot);
+    root.style.setProperty('--viewer-note-dot-hover-bg', palette.hover);
+    root.style.setProperty('--viewer-note-bg', palette.bg);
+    root.style.setProperty('--viewer-note-editor-bg', palette.editor);
+    root.style.setProperty('--viewer-note-place-border', palette.border);
+    root.style.setProperty('--viewer-note-place-bg', palette.placing);
+  }
+
   function renderBpmColorChipHtml(value, label, state) {
     return renderColorChipHtml('set-bpm-blink-color', value, label, state);
+  }
+
+  function renderNoteColorChipHtml(value, label, state) {
+    return renderColorChipHtml('set-note-color', value, label, state);
   }
 
   function renderTempoAwareComment(text, formatOptions) {
@@ -4060,6 +4141,7 @@
     let editingNoteId = '';
     let noteFocusPending = false;
     let currentSongNotes = [];
+    let currentSongNotesSlug = '';
     let noteResizeObserver = null;
     let lastSongNoteTriggerAt = 0;
     let lastSongNoteTriggerKey = '';
@@ -4448,15 +4530,21 @@ function getAllStoredSongNoteEntries() {
     : [];
 }
 
-function loadCurrentSongNotes() {
+function loadCurrentSongNotes(options) {
+      options = options || {};
       const song = getCurrentSong();
+      const slug = song && song.slug ? String(song.slug).trim() : '';
       const storageKey = getCurrentSongNoteStorageKey();
       if (!storageKey) {
         currentSongNotes = [];
+        currentSongNotesSlug = '';
         editingNoteId = '';
         return currentSongNotes;
       }
-      currentSongNotes = loadSongNotesForSlug(song && song.slug ? String(song.slug) : '');
+      if (options.force || currentSongNotesSlug !== slug) {
+        currentSongNotes = loadSongNotesForSlug(slug);
+        currentSongNotesSlug = slug;
+      }
       if (editingNoteId && !findSongNoteById(editingNoteId)) {
         editingNoteId = '';
         noteFocusPending = false;
@@ -4470,6 +4558,7 @@ function loadCurrentSongNotes() {
       const song = getCurrentSong();
       const slug = song && song.slug ? String(song.slug).trim() : '';
       if (!slug) return Promise.resolve({ ok: false, error: new Error('Missing song slug.') });
+      currentSongNotesSlug = slug;
       const keepEmptyNoteIds = [editingNoteId, preserveNoteId].filter(Boolean);
       const normalized = currentSongNotes
         .map(normalizeSongNote)
@@ -4636,7 +4725,7 @@ function loadCurrentSongNotes() {
     }
 
     function refreshCurrentSongNotesAfterImport() {
-      loadCurrentSongNotes();
+      loadCurrentSongNotes({ force: true });
       editingNoteId = '';
       noteFocusPending = false;
       toggleNoteCreateMode(false);
@@ -4806,9 +4895,14 @@ function loadCurrentSongNotes() {
     function getSheetStageMetrics(stage) {
       if (!stage) return { width: 1, height: 1 };
       const rect = stage.getBoundingClientRect();
+      const sheet = stage.querySelector ? stage.querySelector('.cw-sheet') : null;
+      const sheetRect = sheet ? sheet.getBoundingClientRect() : null;
+      const contentHeight = sheet
+        ? Math.max(sheet.scrollHeight, sheet.offsetHeight, sheetRect ? sheetRect.height : 0, stage.clientHeight, rect.height, 1)
+        : Math.max(stage.scrollHeight, stage.offsetHeight, rect.height, 1);
       return {
         width: Math.max(stage.clientWidth, rect.width, 1),
-        height: Math.max(stage.scrollHeight, stage.offsetHeight, rect.height, 1)
+        height: contentHeight
       };
     }
 
@@ -4874,7 +4968,7 @@ function loadCurrentSongNotes() {
       note.xPercent = clamped.xPercent;
       note.yPercent = clamped.yPercent;
       if (!options.skipSave) saveCurrentSongNotes();
-      if (!options.skipRender) renderSongNotes();
+      if (!options.skipRender) renderSingleSongNote(noteId);
     }
 
     function getSongNotePixelPosition(note, stage, options) {
@@ -4933,6 +5027,11 @@ function loadCurrentSongNotes() {
       return state;
     }
 
+    function clearActiveNoteInteraction(options) {
+      clearActiveNoteDrag(options);
+      clearActiveNoteResize(options);
+    }
+
     function maybeBeginSongNoteResize(event) {
       const stage = resolveSongNoteStageFromEvent(event) || cacheElements().sheetStage;
       if (!stage) return false;
@@ -4945,8 +5044,7 @@ function loadCurrentSongNotes() {
       if (!note) return false;
       const pointer = event && event.touches ? event.touches[0] : event;
       if (!pointer || typeof pointer.clientX !== 'number' || typeof pointer.clientY !== 'number') return false;
-      clearActiveNoteDrag({ keepPointerCapture: true });
-      clearActiveNoteResize({ keepPointerCapture: true });
+      clearActiveNoteInteraction({ keepPointerCapture: true });
       const resizeElement = resizeTarget.closest('.viewer-note-card, .viewer-note-popover') || resizeTarget;
       activeNoteResize = {
         noteId: noteId,
@@ -5012,7 +5110,6 @@ function loadCurrentSongNotes() {
       if (!state) return false;
       if (state.moved) {
         saveCurrentSongNotes({ preserveNoteId: editingNoteId || state.noteId });
-        renderSongNotes();
         if (event && event.cancelable) event.preventDefault();
         if (event && event.stopPropagation) event.stopPropagation();
       }
@@ -5035,7 +5132,7 @@ function loadCurrentSongNotes() {
       const metrics = getSheetStageMetrics(stage);
       const pointer = event && event.touches ? event.touches[0] : event;
       if (!pointer || typeof pointer.clientX !== 'number' || typeof pointer.clientY !== 'number') return false;
-      clearActiveNoteDrag({ keepPointerCapture: true });
+      clearActiveNoteInteraction({ keepPointerCapture: true });
       const moveElement = dragTarget.closest('.viewer-note-card, .viewer-note-popover, .viewer-note-dot') || dragTarget;
       activeNoteDrag = {
         noteId: noteId,
@@ -5108,7 +5205,6 @@ function loadCurrentSongNotes() {
           until: performance.now() + NOTE_DRAG_SUPPRESS_CLICK_MS
         };
         saveCurrentSongNotes({ preserveNoteId: editingNoteId || state.noteId });
-        renderSongNotes();
         if (event && event.cancelable) event.preventDefault();
         if (event && event.stopPropagation) event.stopPropagation();
       }
@@ -5151,7 +5247,7 @@ function loadCurrentSongNotes() {
         disconnectSongNoteResizeObserver();
       }
       saveCurrentSongNotes();
-      if (!options.skipRender) renderSongNotes();
+      if (!options.skipRender) renderSingleSongNote(noteId);
     }
 
     function updateSongNoteText(noteId, text, options) {
@@ -5160,7 +5256,7 @@ function loadCurrentSongNotes() {
       if (!note) return;
       note.text = String(text || '').slice(0, NOTE_MAX_LENGTH);
       saveCurrentSongNotes();
-      if (!options.skipRender) renderSongNotes();
+      if (!options.skipRender) renderSingleSongNote(noteId);
     }
 
     function updateSongNoteSize(noteId, widthPx, heightPx, options) {
@@ -5173,7 +5269,7 @@ function loadCurrentSongNotes() {
       note.widthPx = nextWidth;
       note.heightPx = nextHeight;
       saveCurrentSongNotes();
-      if (!options.skipRender) renderSongNotes();
+      if (!options.skipRender) renderSingleSongNote(noteId);
     }
 
     function updateSongNoteFontSizeLevel(noteId, delta, options) {
@@ -5184,7 +5280,7 @@ function loadCurrentSongNotes() {
       if (note.fontSizeLevel === nextLevel) return;
       note.fontSizeLevel = nextLevel;
       saveCurrentSongNotes();
-      if (!options.skipRender) renderSongNotes();
+      if (!options.skipRender) renderSingleSongNote(noteId);
     }
 
     function setSongNoteExpanded(noteId, isExpanded, options) {
@@ -5196,7 +5292,7 @@ function loadCurrentSongNotes() {
       if (note.isExpanded === nextValue) return;
       note.isExpanded = nextValue;
       saveCurrentSongNotes();
-      if (!options.skipRender) renderSongNotes();
+      if (!options.skipRender) renderSingleSongNote(noteId);
     }
 
     function toggleSongNoteExpanded(noteId) {
@@ -5228,34 +5324,37 @@ function loadCurrentSongNotes() {
     function commitActiveSongNote(options) {
       options = options || {};
       if (!editingNoteId) return;
+      const activeNoteId = editingNoteId;
       persistOpenSongNoteSize();
       const textarea = document.getElementById('viewer-note-textarea');
       if (textarea) {
-        updateSongNoteText(editingNoteId, textarea.value, { skipRender: true });
+        updateSongNoteText(activeNoteId, textarea.value, { skipRender: true });
       }
-      const note = findSongNoteById(editingNoteId);
+      const note = findSongNoteById(activeNoteId);
       if (!note) {
         editingNoteId = '';
         noteFocusPending = false;
         return;
       }
       if (!String(note.text || '').trim()) {
-        deleteSongNote(editingNoteId, { skipRender: true });
+        deleteSongNote(activeNoteId, { skipRender: true });
       }
       if (!options.keepOpen) {
         editingNoteId = '';
         noteFocusPending = false;
         disconnectSongNoteResizeObserver();
       }
-      renderSongNotes();
+      if (!options.skipRender) renderSingleSongNote(activeNoteId);
     }
 
     function openSongNoteEditor(noteId, options) {
       options = options || {};
       if (!findSongNoteById(noteId)) return;
+      const previousNoteId = editingNoteId;
       editingNoteId = noteId;
       noteFocusPending = options.focusText !== false;
-      renderSongNotes();
+      if (previousNoteId && previousNoteId !== noteId) renderSingleSongNote(previousNoteId);
+      renderSingleSongNote(noteId);
     }
 
     function handleNoteCardDoubleClick(event) {
@@ -5327,6 +5426,38 @@ function loadCurrentSongNotes() {
       ].join('');
     }
 
+    function renderSongNoteItem(note, stage) {
+      if (!note || !stage) return '';
+      if (note.isExpanded && editingNoteId !== note.id) {
+        return renderSongNoteDisplayCard(note, stage);
+      }
+      if (editingNoteId === note.id) {
+        return renderSongNotePopover(stage);
+      }
+      const dotPosition = getSongNotePixelPosition(note, stage);
+      return '<button type="button" class="viewer-note-dot viewer-note-ui" data-note-action="toggle" data-note-drag="dot" data-note-id="' + escapeHtml(note.id) + '" style="left:' + dotPosition.leftPx + 'px;top:' + dotPosition.topPx + 'px;" title="' + escapeHtml(getNotePreviewText(note.text)) + '" aria-label="Open note"></button>';
+    }
+
+    function renderSingleSongNote(noteId) {
+      const els = cacheElements();
+      if (!els.noteLayer || !els.sheetStage) {
+        renderSongNotes();
+        return;
+      }
+      Array.from(els.noteLayer.children || []).forEach(function(child) {
+        if (child && child.dataset && child.dataset.noteId === noteId) child.remove();
+      });
+      const note = findSongNoteById(noteId);
+      const html = renderSongNoteItem(note, els.sheetStage);
+      if (html) els.noteLayer.insertAdjacentHTML('beforeend', html);
+      if (editingNoteId === noteId) {
+        bindActiveSongNoteResizeObserver();
+        window.requestAnimationFrame(focusSongNoteTextarea);
+      } else if (!editingNoteId) {
+        disconnectSongNoteResizeObserver();
+      }
+    }
+
     function renderSongNotes() {
       const els = cacheElements();
       if (!els.noteLayer) return;
@@ -5335,14 +5466,8 @@ function loadCurrentSongNotes() {
         ? '<button type="button" class="viewer-note-capture" id="viewer-note-capture" aria-label="Place note" title="Click to place a note"></button>'
         : '';
       const notesHtml = currentSongNotes.map(function(note) {
-        if (note.isExpanded && editingNoteId !== note.id) {
-          return renderSongNoteDisplayCard(note, els.sheetStage);
-        }
-        if (editingNoteId === note.id) {
-          return '';
-        }
-        const dotPosition = getSongNotePixelPosition(note, els.sheetStage);
-        return '<button type="button" class="viewer-note-dot viewer-note-ui" data-note-action="toggle" data-note-drag="dot" data-note-id="' + escapeHtml(note.id) + '" style="left:' + dotPosition.leftPx + 'px;top:' + dotPosition.topPx + 'px;" title="' + escapeHtml(getNotePreviewText(note.text)) + '" aria-label="Open note"></button>';
+        if (editingNoteId === note.id) return '';
+        return renderSongNoteItem(note, els.sheetStage);
       }).join('');
       els.noteLayer.innerHTML = captureHtml + notesHtml + renderSongNotePopover(els.sheetStage);
       syncNoteCreateModeUi(els);
@@ -5426,6 +5551,7 @@ function loadCurrentSongNotes() {
       if (!stage) return false;
       if (event && event.cancelable) event.preventDefault();
       if (event && event.stopPropagation) event.stopPropagation();
+      clearActiveNoteInteraction();
       triggerSongNoteFromPointer(event, stage);
       toggleNoteCreateMode(false);
       return false;
@@ -5442,10 +5568,11 @@ function loadCurrentSongNotes() {
       if (!noteId) return false;
       if (event.cancelable) event.preventDefault();
       if (event.stopPropagation) event.stopPropagation();
+      clearActiveNoteInteraction();
       toggleNoteCreateMode(false);
       if (actionButton.dataset.noteAction === 'toggle') {
         if (editingNoteId === noteId) {
-          commitActiveSongNote();
+          commitActiveSongNote({ skipRender: true });
           if (findSongNoteById(noteId)) setSongNoteExpanded(noteId, false);
           return false;
         }
@@ -5498,10 +5625,11 @@ function loadCurrentSongNotes() {
         if (!noteId) return;
         event.preventDefault();
         event.stopPropagation();
+        clearActiveNoteInteraction();
         toggleNoteCreateMode(false);
         if (actionButton.dataset.noteAction === 'toggle') {
           if (editingNoteId === noteId) {
-            commitActiveSongNote();
+            commitActiveSongNote({ skipRender: true });
             if (findSongNoteById(noteId)) setSongNoteExpanded(noteId, false);
             return;
           }
@@ -5566,6 +5694,7 @@ function loadCurrentSongNotes() {
       if (!noteUiBound) {
         noteUiBound = true;
         document.addEventListener('pointerdown', function(event) {
+          if (activeNoteDrag || activeNoteResize) clearActiveNoteInteraction();
           if (maybeBeginSongNoteResize(event)) return;
           if (maybeBeginSongNoteDrag(event)) return;
           if (!editingNoteId) return;
@@ -5584,8 +5713,12 @@ function loadCurrentSongNotes() {
           finishActiveSongNoteDrag(event);
         }, true);
         window.addEventListener('pointercancel', function(event) {
+          if (finishActiveSongNoteResize(event)) return;
           finishActiveSongNoteDrag(event);
         }, true);
+        window.addEventListener('blur', function() {
+          clearActiveNoteInteraction();
+        });
         document.addEventListener('keydown', function(event) {
           if (event.key !== 'Escape' || !editingNoteId) return;
           if (event.target && event.target.id === 'viewer-note-textarea') return;
@@ -6212,14 +6345,13 @@ function loadCurrentSongNotes() {
                 App.renderSetlistPlaybackBar(),
                 App.status.message ? '<div class="status-box viewer-status' + (App.status.type === 'error' ? ' error' : '') + '">' + escapeHtml(App.status.message) + '</div>' : '',
                 '<div class="song-header">',
-                  '<div>',
+                  '<div class="song-header-main">',
                     '<h2>' + escapeHtml(song.title) + '</h2>',
-                    '<p>' + escapeHtml(song.artist) + '</p>',
-                    tags ? '<div class="tag-row">' + tags + '</div>' : '',
+                    '<div class="song-detail-row song-header-detail-row"><p>' + escapeHtml(song.artist) + '</p>' + (tags ? '<div class="tag-row tag-row-inline">' + tags + '</div>' : '') + '</div>',
                   '</div>',
                   '<div class="inline-actions song-header-actions">',
                     state.currentSetlist ? '' : '<button class="btn" type="button" data-app-action="show-list">← Back</button>',
-                    state.currentSetlist ? '' : '<button class="btn" type="button" data-app-action="open-editor" data-song-slug="' + escapeHtml(song.slug) + '">Edit</button>',
+                    state.currentSetlist ? '' : '<button class="btn soft-accent" type="button" data-app-action="open-editor" data-song-slug="' + escapeHtml(song.slug) + '">Edit</button>',
                   '</div>',
                 '</div>',
                 '<div class="sheet-stage" id="sheet-stage">',
@@ -6331,7 +6463,7 @@ function loadCurrentSongNotes() {
                 '</div>',
               '</div>',
               '<div class="panel pad sidebar-panel sidebar-panel-color">',
-                sectionTitleHtml('palette', 'Color'),
+                sectionTitleHtml('palette', 'Colors'),
                 '<div class="color-format-row">',
                   '<div class="color-format-label">Accent</div>',
                   '<div class="color-chip-group">',
@@ -6351,6 +6483,16 @@ function loadCurrentSongNotes() {
                     renderBpmColorChipHtml('red', 'Red', state.formatOptions.bpmBlinkColor),
                     renderBpmColorChipHtml('black', 'Black', state.formatOptions.bpmBlinkColor),
                     renderBpmColorChipHtml('off', 'Off', state.formatOptions.bpmBlinkColor),
+                  '</div>',
+                '</div>',
+                '<div class="color-format-row">',
+                  '<div class="color-format-label">Notes</div>',
+                  '<div class="color-chip-group">',
+                    renderNoteColorChipHtml('yellow', 'Yellow', state.noteColor),
+                    renderNoteColorChipHtml('blue', 'Blue', state.noteColor),
+                    renderNoteColorChipHtml('green', 'Green', state.noteColor),
+                    renderNoteColorChipHtml('pink', 'Pink', state.noteColor),
+                    renderNoteColorChipHtml('lavender', 'Lavender', state.noteColor),
                   '</div>',
                 '</div>',
               '</div>',
@@ -6579,7 +6721,6 @@ function renderFloatingPlayer(song) {
               '<button class="btn soft-accent" type="button" data-app-action="save-current-song">Save</button>',
             '</div>',
           '</div>',
-          '<input id="edit-song-import-input" type="file" accept="application/json,.json" data-app-change="song-single-import" hidden>',
           App.status.message ? '<div class="status-box' + (App.status.type === 'error' ? ' error' : '') + '">' + escapeHtml(App.status.message) + '</div>' : '',
           '<div class="editor-grid">',
             '<div class="panel pad">',
@@ -6641,6 +6782,7 @@ function renderFloatingPlayer(song) {
 
     function normalizeEditorSong(song) {
       const raw = song || {};
+      const hasOriginalSlug = Object.prototype.hasOwnProperty.call(raw, 'originalSlug');
       const tags = Array.isArray(raw.tags)
         ? raw.tags.map(String).map(function(v) { return v.trim(); }).filter(Boolean)
         : String(raw.tags || '').split(/[\n,]/).map(function(v) { return String(v || '').trim(); }).filter(Boolean);
@@ -6655,13 +6797,13 @@ function renderFloatingPlayer(song) {
       const safeScrollEndPercent = Number.isFinite(scrollEndPercent) ? Math.max(0, Math.min(1, scrollEndPercent)) : 1;
       const scrollDurationSec = Math.max(1, parseInt(raw.scrollDurationSec, 10) || 240);
       return {
-        originalSlug: String(raw.originalSlug || raw.slug || '').trim(),
+        originalSlug: String(hasOriginalSlug ? raw.originalSlug : (raw.slug || '')).trim(),
         slug: String(raw.slug || '').trim(),
         title: String(raw.title || '').trim(),
         artist: String(raw.artist || '').trim(),
         tags: tags,
         youtube: youtube,
-        chordPro: String(raw.chordPro || '{title: }\n{subtitle: }\n'),
+        chordPro: String(raw.chordPro || ''),
         scrollStartPercent: safeScrollStartPercent,
         scrollEndPercent: safeScrollEndPercent,
         scrollDurationSec: scrollDurationSec,
@@ -6705,6 +6847,7 @@ function renderFloatingPlayer(song) {
     lyricsFont: 'personal_chordpro_viewer_lyricsFont',
     chordFont: 'personal_chordpro_viewer_chordFont',
     accentColor: 'personal_chordpro_viewer_accentColor',
+    noteColor: 'personal_chordpro_viewer_noteColor',
     viewerSidebarWidth: 'personal_chordpro_viewer_viewerSidebarWidth'
   };
 
@@ -6909,21 +7052,25 @@ function renderFloatingPlayer(song) {
     if (!record || typeof record !== 'object') return null;
     const setlist = normalizeSetlistForApp(record);
     if (!setlist.title && !setlist.items.length) return null;
-    if (!setlist.title) setlist.title = 'Imported Setlist';
     return setlist;
   }
 
-  function extractSetlistImportRecords(payload) {
+  function extractSingleSetlistImportRecord(payload) {
     if (payload && payload.type === 'personal-chordpro-viewer-setlists' && payload.scope === 'setlist' && payload.setlist && typeof payload.setlist === 'object') {
-      const single = normalizeImportedSetlistRecord(payload.setlist);
-      return single ? [single] : [];
-    }
-    if (payload && payload.type === 'personal-chordpro-viewer-setlists' && payload.scope === 'all' && Array.isArray(payload.setlists)) {
-      return payload.setlists.map(normalizeImportedSetlistRecord).filter(Boolean);
+      return normalizeImportedSetlistRecord(payload.setlist);
     }
     if (payload && payload.setlist && typeof payload.setlist === 'object') {
-      const single = normalizeImportedSetlistRecord(payload.setlist);
-      return single ? [single] : [];
+      return normalizeImportedSetlistRecord(payload.setlist);
+    }
+    if (payload && typeof payload === 'object' && !Array.isArray(payload) && (payload.title || payload.items)) {
+      return normalizeImportedSetlistRecord(payload);
+    }
+    return null;
+  }
+
+  function extractAllSetlistImportRecords(payload) {
+    if (payload && payload.type === 'personal-chordpro-viewer-setlists' && payload.scope === 'all' && Array.isArray(payload.setlists)) {
+      return payload.setlists.map(normalizeImportedSetlistRecord).filter(Boolean);
     }
     if (payload && Array.isArray(payload.setlists)) {
       return payload.setlists.map(normalizeImportedSetlistRecord).filter(Boolean);
@@ -6931,29 +7078,7 @@ function renderFloatingPlayer(song) {
     if (Array.isArray(payload)) {
       return payload.map(normalizeImportedSetlistRecord).filter(Boolean);
     }
-    if (payload && typeof payload === 'object' && !Array.isArray(payload) && (payload.title || payload.items)) {
-      const single = normalizeImportedSetlistRecord(payload);
-      return single ? [single] : [];
-    }
     return [];
-  }
-
-  function isSingleSongImportPayload(payload) {
-    if (!payload || Array.isArray(payload)) return false;
-    if (payload.type === 'personal-chordpro-viewer-songs') {
-      return payload.scope === 'song';
-    }
-    return !!(payload.song && typeof payload.song === 'object')
-      || (!!(payload.slug || payload.title || payload.chordPro) && !Array.isArray(payload.songs));
-  }
-
-  function isSingleSetlistImportPayload(payload) {
-    if (!payload || Array.isArray(payload)) return false;
-    if (payload.type === 'personal-chordpro-viewer-setlists') {
-      return payload.scope === 'setlist';
-    }
-    return !!(payload.setlist && typeof payload.setlist === 'object')
-      || (!!(payload.title || payload.items) && !Array.isArray(payload.setlists));
   }
 
   const App = {
@@ -6974,7 +7099,6 @@ function renderFloatingPlayer(song) {
       currentSetlist: null,
       editorSong: null,
       setlistEditor: null,
-      setlistEditorImportedDraft: false,
       setlistEditMode: false,
       searchText: '',
       searchDraft: '',
@@ -6989,6 +7113,7 @@ function renderFloatingPlayer(song) {
       lyricsFont: normalizeFontToken('lyrics', loadStoredString(STORAGE_KEYS.lyricsFont, 'mplusrounded1c')),
       chordFont: normalizeFontToken('chord', loadStoredString(STORAGE_KEYS.chordFont, 'jetbrainsmono')),
       accentColor: normalizeAccentColor(loadStoredString(STORAGE_KEYS.accentColor, 'blue')),
+      noteColor: normalizeNoteColor(loadStoredString(STORAGE_KEYS.noteColor, 'yellow')),
       viewerSidebarWidth: loadStoredInteger(STORAGE_KEYS.viewerSidebarWidth, 300, 160, 520),
       scroll: {
         isPlaying: false,
@@ -7223,6 +7348,7 @@ function renderFloatingPlayer(song) {
     init: function() {
       this.config = resolveFontConfig({});
       applyAccentColor(this.state.accentColor);
+      applyNoteColor(this.state.noteColor);
       this.bindGlobalPointerDefocus();
       this.bindSongListInteractions();
       this.bindAppDelegatedInteractions();
@@ -7395,7 +7521,6 @@ function renderFloatingPlayer(song) {
           case 'export-all-songs': App.exportAllSongs(); break;
           case 'import-all-songs': App.openSongLibraryImportDialog(); break;
           case 'export-current-song': App.exportCurrentEditorSong(); break;
-          case 'import-current-song': App.openCurrentSongImportDialog(); break;
           case 'open-editor': App.openEditor(actionEl.getAttribute('data-song-slug') || ''); break;
           case 'change-transpose': App.changeTranspose(delta); break;
           case 'set-notation': App.setNotation(value); break;
@@ -7411,6 +7536,7 @@ function renderFloatingPlayer(song) {
           case 'change-font-size': App.changeFontSizeLevel(delta); break;
           case 'change-chord-size': App.changeChordSizeLevel(delta); break;
           case 'set-accent-color': App.setAccentColor(value); break;
+          case 'set-note-color': App.setNoteColor(value); break;
           case 'set-bpm-blink-color': App.setBpmBlinkColor(value); break;
           case 'clear-search': App.clearSearch(); break;
           case 'play-youtube': if (!isNaN(index)) App.playYouTube(index); break;
@@ -7464,7 +7590,6 @@ function renderFloatingPlayer(song) {
           case 'scroll-seconds': App.commitScrollSecondsInputValue(target.value); break;
           case 'note-import': Viewer.handleNoteImportChange(event); break;
           case 'song-library-import': App.handleSongLibraryImportChange(event); break;
-          case 'song-single-import': App.handleCurrentSongImportChange(event); break;
           case 'setlist-import': App.handleSetlistImportChange(event); break;
           case 'lyrics-font': App.setLyricsFont(target.value); break;
           case 'chord-font': App.setChordFont(target.value); break;
@@ -7516,64 +7641,68 @@ function renderFloatingPlayer(song) {
         }
       });
 
-      document.addEventListener('pointerdown', function(event) {
+      document.addEventListener('dragstart', function(event) {
         const target = event && event.target;
         const item = target && target.closest ? target.closest('.setlist-editor-item[data-setlist-editor-index]') : null;
         if (!item) return;
         if (target.closest('.actions')) return;
-        const index = parseInt(item.getAttribute('data-setlist-editor-index') || '', 10);
-        if (isNaN(index)) return;
-        App._setlistPointerDrag = {
-          pointerId: typeof event.pointerId === 'number' ? event.pointerId : null,
-          item: item,
-          fromIndex: index,
-          startX: typeof event.clientX === 'number' ? event.clientX : 0,
-          startY: typeof event.clientY === 'number' ? event.clientY : 0,
-          moved: false
-        };
+        App._setlistDragIndex = parseInt(item.getAttribute('data-setlist-editor-index') || '', 10);
+        item.classList.add('is-dragging');
+        if (event.dataTransfer) {
+          event.dataTransfer.effectAllowed = 'move';
+          event.dataTransfer.setData('text/plain', String(App._setlistDragIndex));
+          if (typeof event.dataTransfer.setDragImage === 'function') {
+            event.dataTransfer.setDragImage(item, 18, Math.min(32, Math.max(12, Math.floor(item.offsetHeight / 2))));
+          }
+        }
       });
 
-      document.addEventListener('pointermove', function(event) {
-        const drag = App._setlistPointerDrag;
-        if (!drag) return;
-        if (drag.pointerId !== null && typeof event.pointerId === 'number' && drag.pointerId !== event.pointerId) return;
-        const dx = Math.abs((typeof event.clientX === 'number' ? event.clientX : 0) - drag.startX);
-        const dy = Math.abs((typeof event.clientY === 'number' ? event.clientY : 0) - drag.startY);
-        if (!drag.moved && Math.max(dx, dy) < 4) return;
-        drag.moved = true;
-        if (drag.item) drag.item.classList.add('is-dragging');
-        document.body.classList.add('is-setlist-pointer-dragging');
-      });
-
-      document.addEventListener('pointerup', function(event) {
-        const drag = App._setlistPointerDrag;
-        if (!drag) return;
-        if (drag.pointerId !== null && typeof event.pointerId === 'number' && drag.pointerId !== event.pointerId) return;
-        App._setlistPointerDrag = null;
-        document.body.classList.remove('is-setlist-pointer-dragging');
+      document.addEventListener('dragend', function() {
+        App._setlistDragIndex = null;
         document.querySelectorAll('.setlist-editor-item.is-dragging').forEach(function(item) {
           item.classList.remove('is-dragging');
         });
-        if (!drag.moved) return;
-        const dropTarget = document.elementFromPoint(
-          typeof event.clientX === 'number' ? event.clientX : 0,
-          typeof event.clientY === 'number' ? event.clientY : 0
-        );
-        const item = dropTarget && dropTarget.closest ? dropTarget.closest('.setlist-editor-item[data-setlist-editor-index]') : null;
+      });
+
+      document.addEventListener('dragenter', function(event) {
+        if (typeof App._setlistDragIndex !== 'number' || isNaN(App._setlistDragIndex)) return;
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+      });
+
+      document.addEventListener('dragover', function(event) {
+        const target = event && event.target;
+        if (typeof App._setlistDragIndex === 'number' && !isNaN(App._setlistDragIndex)) {
+          event.preventDefault();
+          if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+        }
+        const list = target && target.closest ? target.closest('.setlist-editor-list') : null;
+        if (!list || typeof App._setlistDragIndex !== 'number' || isNaN(App._setlistDragIndex)) return;
+        const item = target && target.closest ? target.closest('.setlist-editor-item[data-setlist-editor-index]') : null;
         if (!item) return;
-        const toIndex = parseInt(item.getAttribute('data-setlist-editor-index') || '', 10);
-        if (!isNaN(drag.fromIndex) && !isNaN(toIndex)) App.moveSetlistItem(drag.fromIndex, toIndex);
       });
 
-      document.addEventListener('pointercancel', function(event) {
-        const drag = App._setlistPointerDrag;
-        if (!drag) return;
-        if (drag.pointerId !== null && typeof event.pointerId === 'number' && drag.pointerId !== event.pointerId) return;
-        App._setlistPointerDrag = null;
-        document.body.classList.remove('is-setlist-pointer-dragging');
+      document.addEventListener('drop', function(event) {
+        const target = event && event.target;
+        const isSetlistDrag = typeof App._setlistDragIndex === 'number' && !isNaN(App._setlistDragIndex);
+        if (isSetlistDrag) event.preventDefault();
+        const list = target && target.closest ? target.closest('.setlist-editor-list') : null;
+        if (!list || typeof App._setlistDragIndex !== 'number' || isNaN(App._setlistDragIndex)) return;
+        const item = target && target.closest ? target.closest('.setlist-editor-item[data-setlist-editor-index]') : null;
+        if (!item) {
+          App._setlistDragIndex = null;
+          document.querySelectorAll('.setlist-editor-item.is-dragging').forEach(function(item) {
+            item.classList.remove('is-dragging');
+          });
+          return;
+        }
+        const fromIndex = parseInt(App._setlistDragIndex, 10);
+        const toIndex = parseInt(item.getAttribute('data-setlist-editor-index') || '', 10);
+        App._setlistDragIndex = null;
         document.querySelectorAll('.setlist-editor-item.is-dragging').forEach(function(item) {
           item.classList.remove('is-dragging');
         });
+        if (!isNaN(fromIndex) && !isNaN(toIndex)) App.moveSetlistItem(fromIndex, toIndex);
       });
     },
 
@@ -7609,14 +7738,14 @@ function renderFloatingPlayer(song) {
               if (typeof callback === 'function') callback();
             })
             .withFailureHandler(function(err) {
-              if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
+              App.endBusy();
               App.setStatus('error', String(err && err.message || err || 'Failed to load setlists.'));
               App.render();
             })
             .listSetlists();
         })
         .withFailureHandler(function(err) {
-          if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
+          App.endBusy();
           App.setStatus('error', String(err && err.message || err || 'Failed to load songs.'));
           App.render();
         })
@@ -7703,7 +7832,7 @@ function renderFloatingPlayer(song) {
           if (typeof callback === 'function') callback(App.state.setlists);
         })
         .withFailureHandler(function(err) {
-          if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
+          App.endBusy();
           App.setStatus('error', String(err && err.message || err || 'Failed to load setlists.'));
           App.render();
         })
@@ -7713,6 +7842,8 @@ function renderFloatingPlayer(song) {
     showSetlists: function(options) {
       options = options || {};
       Viewer.stopAutoScroll({ skipRender: true, resetProgress: true });
+      const shouldEndBusy = !options.skipBusy || options.endBusyOnDone;
+      if (!options.skipBusy) this.beginBusy(options.busyMessage || 'Opening setlists…');
       this.state.page = 'setlists';
       this.state.currentSong = null;
       this.state.currentSetlist = null;
@@ -7722,8 +7853,8 @@ function renderFloatingPlayer(song) {
       this.updateUrl({ page: 'setlists' });
       this.loadSetlists(function() {
         App.render();
-        if (options.endBusyOnDone) App.endBusy();
-      }, { skipBusy: true, endBusyOnDone: options.endBusyOnDone });
+        if (shouldEndBusy) App.endBusy();
+      }, { skipBusy: true, endBusyOnDone: shouldEndBusy });
     },
 
     getSongSummaryBySlug: function(slug) {
@@ -7839,10 +7970,9 @@ function renderFloatingPlayer(song) {
       this.state.setlistSongSearchText = '';
       this.state.setlistSongSearchDraft = '';
       this._isSetlistSongSearchComposing = false;
-      this.state.setlistEditorImportedDraft = false;
       this.state.setlistEditMode = !!options.editMode;
       if (!normalizedId) {
-        this.state.setlistEditor = normalizeSetlistForApp({ title: 'New Setlist', items: [] });
+        this.state.setlistEditor = normalizeSetlistForApp({ title: '', items: [] });
         this.state.page = 'setlist-edit';
         this.state.currentSong = null;
         this.state.currentSetlist = null;
@@ -7964,7 +8094,7 @@ function renderFloatingPlayer(song) {
     cancelSetlistEditMode: function() {
       if (this.state.page !== 'setlist-edit' || !this.state.setlistEditor) return;
       const id = String(this.state.setlistEditor.id || '').trim();
-      if (this.state.setlistEditorImportedDraft || !id) {
+      if (!id) {
         this.showSetlists();
         return;
       }
@@ -7985,7 +8115,7 @@ function renderFloatingPlayer(song) {
           App.setStatus('info', 'Setlist saved.');
           App.loadSetlists(function() {
             App.openSetlistEditor(result && result.id ? result.id : payload.id, { skipBusy: true, endBusyOnDone: true, keepStatus: true, editMode: false });
-          }, { skipBusy: true, endBusyOnDone: true });
+          }, { skipBusy: true });
         })
         .withFailureHandler(function(err) {
           App.endBusy();
@@ -8005,7 +8135,7 @@ function renderFloatingPlayer(song) {
           App.setStatus('info', 'Setlist deleted.');
           App.loadSetlists(function() {
             App.showSetlists({ skipBusy: true, endBusyOnDone: true, keepStatus: true });
-          }, { skipBusy: true, endBusyOnDone: true });
+          }, { skipBusy: true });
         })
         .withFailureHandler(function(err) {
           App.endBusy();
@@ -8115,7 +8245,7 @@ function renderFloatingPlayer(song) {
           artist: '',
           tags: [],
           youtube: [],
-          chordPro: '{title: }\n{subtitle: }\n',
+          chordPro: '',
           transpose: 0,
           notation: 'default'
         };
@@ -8131,7 +8261,7 @@ function renderFloatingPlayer(song) {
       google.script.run
         .withSuccessHandler(function(song) {
           App.state.editorSong = Object.assign({ originalSlug: '' }, song || {
-            slug: '', title: '', artist: '', tags: [], youtube: [], chordPro: '{title: }\n{subtitle: }\n', transpose: 0, notation: 'default'
+            slug: '', title: '', artist: '', tags: [], youtube: [], chordPro: '', transpose: 0, notation: 'default'
           }, { originalSlug: song && song.slug ? song.slug : '' });
           App.state.page = 'edit';
           App.state.currentSetlist = null;
@@ -8150,9 +8280,9 @@ function renderFloatingPlayer(song) {
     saveCurrentSong: function() {
       const payload = this.collectEditorPayload();
       const originalSlug = String(payload.originalSlug || '').trim();
-      const isNewSong = !originalSlug;
-      const existingSong = isNewSong ? this.getSongSummaryBySlug(payload.slug) : null;
-      if (existingSong && !window.confirm('A song with this slug already exists. Overwrite it?\n\nSlug: ' + payload.slug)) {
+      const nextSlug = String(payload.slug || '').trim();
+      const existingSong = !originalSlug && nextSlug ? this.getSongSummaryBySlug(nextSlug) : null;
+      if (existingSong && !window.confirm('A song with this slug already exists. Overwrite it?')) {
         return;
       }
       this.beginBusy('Saving song…');
@@ -8163,7 +8293,7 @@ function renderFloatingPlayer(song) {
           App.loadSongs(function() {
             App.setBusyMessage('Opening song…');
             App.openSong(result.slug, { skipBusy: true, endBusyOnDone: true });
-          }, { skipBusy: true, endBusyOnDone: true });
+          }, { skipBusy: true });
         })
         .withFailureHandler(function(err) {
           App.endBusy();
@@ -8195,7 +8325,7 @@ function renderFloatingPlayer(song) {
           App.setBusyMessage('Refreshing list…');
           App.loadSongs(function() {
             App.showList({ endBusyOnDone: true, keepStatus: true });
-          }, { skipBusy: true, endBusyOnDone: true });
+          }, { skipBusy: true });
         })
         .withFailureHandler(function(err) {
           App.endBusy();
@@ -8673,6 +8803,14 @@ function renderFloatingPlayer(song) {
       this.render();
     },
 
+    setNoteColor: function(value) {
+      this.state.noteColor = normalizeNoteColor(value);
+      applyNoteColor(this.state.noteColor);
+      if (!saveStoredString(STORAGE_KEYS.noteColor, this.state.noteColor)) this.notifyStorageUnavailable();
+      this.closeYouTubePlayback();
+      this.render();
+    },
+
     setBpmBlinkColor: function(value) {
       this.state.formatOptions.bpmBlinkColor = normalizeBpmBlinkColor(value);
       this.state.formatOptions = normalizeFormatOptions(this.state.formatOptions);
@@ -8933,24 +9071,19 @@ function renderFloatingPlayer(song) {
         try {
           const raw = loadEvent && loadEvent.target ? String(loadEvent.target.result || '') : '';
           const payload = JSON.parse(raw);
-          if (isSingleSongImportPayload(payload)) {
-            const record = extractSingleSongImportRecord(payload);
-            if (!record) {
-              App.flashStatus('error', 'Invalid song JSON file.', 2600);
-              return;
-            }
-            App.state.editorSong = Object.assign({}, record, { originalSlug: '' });
+          const songs = extractAllSongImportRecords(payload);
+          const singleSong = songs.length ? null : extractSingleSongImportRecord(payload);
+          if (singleSong) {
+            App.state.editorSong = Object.assign({}, singleSong, { originalSlug: '' });
             App.state.page = 'edit';
             App.state.currentSong = null;
             App.state.currentSetlist = null;
-            App.clearStatus();
-            App.setStatus('info', 'Song loaded into the editor. Save to import, or Cancel to discard.');
             App.updateUrl({ page: 'edit' });
+            App.clearStatus();
             App.render();
+            App.flashStatus('info', 'Song loaded into the editor. Save to import it.', 2600);
             return;
           }
-
-          const songs = extractAllSongImportRecords(payload);
           if (!songs.length) {
             App.flashStatus('error', 'Invalid song JSON file.', 2600);
             return;
@@ -8965,7 +9098,7 @@ function renderFloatingPlayer(song) {
               App.loadSongs(function() {
                 App.showList({ endBusyOnDone: true, keepStatus: true });
                 App.flashStatus('info', 'Imported ' + ((result && result.count) || songs.length) + ' song(s).', 2400);
-              }, { skipBusy: true, endBusyOnDone: true });
+              }, { skipBusy: true });
             })
             .catch(function(err) {
               App.endBusy();
@@ -9043,15 +9176,10 @@ function renderFloatingPlayer(song) {
         try {
           const raw = loadEvent && loadEvent.target ? String(loadEvent.target.result || '') : '';
           const payload = JSON.parse(raw);
-          if (isSingleSetlistImportPayload(payload)) {
-            const setlists = extractSetlistImportRecords(payload);
-            const record = setlists.length ? setlists[0] : null;
-            if (!record) {
-              App.flashStatus('error', 'Invalid setlist JSON file.', 2600);
-              return;
-            }
-            App.state.setlistEditor = normalizeSetlistForApp(record);
-            App.state.setlistEditorImportedDraft = true;
+          const setlists = extractAllSetlistImportRecords(payload);
+          const singleSetlist = setlists.length ? null : extractSingleSetlistImportRecord(payload);
+          if (singleSetlist) {
+            App.state.setlistEditor = Object.assign({}, singleSetlist, { id: '' });
             App.state.setlistEditMode = true;
             App.state.setlistSongSearchText = '';
             App.state.setlistSongSearchDraft = '';
@@ -9059,14 +9187,12 @@ function renderFloatingPlayer(song) {
             App.state.page = 'setlist-edit';
             App.state.currentSong = null;
             App.state.currentSetlist = null;
-            App.clearStatus();
-            App.setStatus('info', 'Setlist loaded into the editor. Save to import, or Cancel to discard.');
             App.updateUrl({ page: 'setlist-edit' });
+            App.clearStatus();
             App.render();
+            App.flashStatus('info', 'Setlist loaded into the editor. Save to import it.', 2600);
             return;
           }
-
-          const setlists = extractSetlistImportRecords(payload);
           if (!setlists.length) {
             App.flashStatus('error', 'Invalid setlist JSON file.', 2600);
             return;
@@ -9122,50 +9248,6 @@ function renderFloatingPlayer(song) {
       return false;
     },
 
-    openCurrentSongImportDialog: function() {
-      const input = document.getElementById('edit-song-import-input');
-      if (!input) {
-        this.flashStatus('error', 'Song import input not found.', 2200);
-        return false;
-      }
-      input.value = '';
-      input.click();
-      return false;
-    },
-
-    handleCurrentSongImportChange: function(event) {
-      const input = event && event.target ? event.target : null;
-      const file = input && input.files && input.files[0] ? input.files[0] : null;
-      if (input) input.value = '';
-      if (!file) return false;
-      const reader = new FileReader();
-      reader.onload = async function(loadEvent) {
-        try {
-          const raw = loadEvent && loadEvent.target ? String(loadEvent.target.result || '') : '';
-          const payload = JSON.parse(raw);
-          const record = extractSingleSongImportRecord(payload);
-          if (!record) {
-            App.flashStatus('error', 'Invalid song JSON file.', 2600);
-            return;
-          }
-          if (!window.confirm('Replace the current edit form with the imported song?')) {
-            return;
-          }
-          App.state.editorSong = Object.assign({}, record, { originalSlug: '' });
-          App.clearStatus();
-          App.render();
-          App.flashStatus('info', 'Song loaded into the editor.', 2200);
-        } catch (err) {
-          App.flashStatus('error', String(err && err.message || err || 'Failed to read song JSON file.'), 2600);
-        }
-      };
-      reader.onerror = function() {
-        App.flashStatus('error', 'Failed to read song JSON file.', 2600);
-      };
-      reader.readAsText(file);
-      return false;
-    },
-
     render: function() {
       const app = document.getElementById('app');
       if (!app) return;
@@ -9206,6 +9288,7 @@ function renderFloatingPlayer(song) {
       }
 
       applyAccentColor(this.state.accentColor);
+      applyNoteColor(this.state.noteColor);
       document.body.classList.toggle('view-mode-body', this.state.page === 'view');
       document.body.classList.toggle('edit-mode-body', this.state.page === 'edit');
       document.body.classList.toggle('list-mode-body', this.state.page === 'list' || this.state.page === 'setlists' || this.state.page === 'setlist-edit');
@@ -9289,20 +9372,24 @@ function renderFloatingPlayer(song) {
       }
     },
 
+    renderSongDetailHtml: function(song) {
+      song = song || {};
+      const tags = (song.tags || []).map(function(tag) {
+        return '<span class="tag">' + escapeHtml(tag) + '</span>';
+      }).join('');
+      return '<div class="song-detail-row"><p>' + escapeHtml(song.artist || '') + '</p>' + (tags ? '<div class="tag-row tag-row-inline">' + tags + '</div>' : '') + '</div>';
+    },
+
     renderSongListHtml: function(songs) {
       songs = Array.isArray(songs) ? songs : [];
       return songs.length ? songs.map(function(song) {
-        const tags = (song.tags || []).map(function(tag) {
-          return '<span class="tag">' + escapeHtml(tag) + '</span>';
-        }).join('');
         return [
           '<div class="song-item song-item-clickable" role="button" tabindex="0" data-song-slug="' + escapeHtml(song.slug) + '">',
             '<div class="song-meta">',
               '<div class="song-title-row">',
                 '<h3>' + escapeHtml(song.title) + '</h3>',
               '</div>',
-              '<p>' + escapeHtml(song.artist) + '</p>',
-              (tags ? '<div class="tag-row tag-row-inline tag-row-inline-actions">' + tags + '</div>' : ''),
+              App.renderSongDetailHtml(song),
             '</div>',
           '</div>'
         ].join('');
@@ -9366,7 +9453,7 @@ function renderFloatingPlayer(song) {
           ].join('');
         }
         return [
-          '<div class="song-item setlist-editor-item" data-setlist-editor-index="' + index + '">',
+          '<div class="song-item setlist-editor-item" draggable="true" data-setlist-editor-index="' + index + '">',
             '<div class="setlist-row-number">' + (index + 1) + '</div>',
             '<div class="setlist-drag-handle" aria-hidden="true">☰</div>',
             '<div class="song-meta">',
@@ -9393,7 +9480,7 @@ function renderFloatingPlayer(song) {
           '<div class="song-item">',
             '<div class="song-meta">',
               '<div class="song-title-row"><h3>' + escapeHtml(song.title) + '</h3></div>',
-              '<p>' + escapeHtml(song.artist) + '</p>',
+              App.renderSongDetailHtml(song),
             '</div>',
             '<div class="actions">',
               '<button class="btn" type="button" data-app-action="add-song-to-setlist" data-song-slug="' + escapeHtml(song.slug) + '">Add</button>',
@@ -9413,7 +9500,7 @@ function renderFloatingPlayer(song) {
             '<div class="actions">',
               isEditing
                 ? '<button class="btn" data-app-action="cancel-setlist-edit">Cancel</button><button class="btn soft-accent" data-app-action="save-setlist">Save</button>'
-                : '<button class="btn" data-app-action="show-setlists">← Back</button><button class="btn" data-app-action="export-current-setlist">Export</button><button class="btn danger" data-app-action="delete-setlist" data-setlist-id="' + escapeHtml(setlist.id) + '"' + (setlist.id ? '' : ' disabled') + '>Delete</button><button class="btn" data-app-action="enter-setlist-edit">Edit</button>',
+                : '<button class="btn" data-app-action="show-setlists">← Back</button><button class="btn" data-app-action="export-current-setlist">Export</button><button class="btn danger" data-app-action="delete-setlist" data-setlist-id="' + escapeHtml(setlist.id) + '"' + (setlist.id ? '' : ' disabled') + '>Delete</button><button class="btn soft-accent" data-app-action="enter-setlist-edit">Edit</button>',
             '</div>',
           '</div>',
           this.status.message ? '<div class="status-box' + (this.status.type === 'error' ? ' error' : '') + '">' + escapeHtml(this.status.message) + '</div>' : '',
@@ -9463,7 +9550,7 @@ function renderFloatingPlayer(song) {
               '<h1>Personal ChordPro Viewer</h1>',
             '</div>',
             '<div class="actions">',
-              '<button class="btn primary" data-app-action="show-setlists">Setlists</button>',
+              '<button class="btn primary setlists-entry-btn" data-app-action="show-setlists">Setlists</button>',
               '<button class="btn" data-app-action="export-all-songs">Export all</button>',
               '<button class="btn" data-app-action="import-all-songs">Import</button>',
               '<button class="btn primary" data-app-action="open-editor">Add Song</button>',
