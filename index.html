@@ -2439,7 +2439,7 @@
     user-select: none;
   }
   body.is-setlist-touch-dragging {
-    overflow: hidden;
+    overflow-x: hidden;
     overscroll-behavior: none;
   }
   .setlist-songs-item {
@@ -2510,6 +2510,9 @@
     top: 0;
     z-index: 10000;
     margin: 0;
+    box-sizing: border-box;
+    max-width: calc(100vw - 8px);
+    overflow: hidden;
     pointer-events: none;
     box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
     transform: translate3d(0, 0, 0);
