@@ -8497,7 +8497,7 @@ function renderFloatingPlayer(song) {
       this.state.page = 'view';
       this.state.playingYtIdx = null;
       this._resetViewerScrollOnNextRender = true;
-      this.setStatus('error', 'Missing song.');
+      this.clearStatus();
       this.updateCurrentViewUrl();
       this.render();
       if (!options.skipBusy || options.endBusyOnDone) this.endBusy();
@@ -10053,7 +10053,7 @@ function renderFloatingPlayer(song) {
       return items.map(function(item, index) {
         const song = App.getSongSummaryBySlug(item.slug);
         const title = song ? song.title : '(Missing song)';
-        const artist = song ? song.artist : item.slug;
+        const artist = song ? song.artist : ('slug: ' + (item.slug || '(unknown)'));
         if (!isEditing) {
           return [
             '<div class="song-item setlist-songs-item">',
@@ -10146,17 +10146,14 @@ function renderFloatingPlayer(song) {
           '<div class="panel viewer-body pane-scroll" id="viewer-scroll-pane">',
             '<div class="viewer-content" id="viewer-content">',
               this.renderSetlistPlaybackBar(),
-              this.status.message ? '<div class="status-box viewer-status error">' + escapeHtml(this.status.message) + '</div>' : '',
               '<div class="song-header">',
                 '<div class="song-header-main">',
-                  '<h2>Missing song</h2>',
-                  '<div class="song-detail-row song-header-detail-row"><p>' + (slug ? 'Slug: ' + escapeHtml(slug) : 'Song reference not found.') + '</p></div>',
+                  '<h2>(Missing song)</h2>',
+                  '<div class="song-detail-row song-header-detail-row"><p>slug: ' + (slug ? escapeHtml(slug) : '(unknown)') + '</p></div>',
                 '</div>',
               '</div>',
               '<div class="sheet-stage" id="sheet-stage">',
-                '<div class="cw-sheet">',
-                  '<p>This song is no longer available. Use Prev / Next to continue, or Back to edit the setlist.</p>',
-                '</div>',
+                '<div class="cw-sheet"></div>',
               '</div>',
             '</div>',
           '</div>',
