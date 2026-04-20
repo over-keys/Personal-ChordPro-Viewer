@@ -1628,6 +1628,23 @@
     flex-wrap: nowrap;
     overflow: hidden;
   }
+  .list-mode-body .topbar > .actions.setlist-page-actions {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    overflow: visible;
+  }
+  .setlist-page-action-group {
+    display: inline-flex;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    min-width: 0;
+    max-width: 100%;
+  }
   .list-mode-body .topbar > .actions .btn {
     white-space: nowrap;
     flex-shrink: 0;
@@ -2519,13 +2536,13 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     padding: 10px 12px;
     margin-bottom: 12px;
     border: 1px solid rgba(var(--accent-rgb), 0.24);
     border-radius: 8px;
     background: rgba(var(--accent-rgb), 0.07);
-    overflow: hidden;
+    overflow: visible;
   }
   .setlist-playbar .btn,
   .setlist-playbar-count {
@@ -2533,11 +2550,19 @@
   }
   .setlist-playbar-title {
     min-width: 0;
-    flex: 1 1 0;
+    flex: 1 1 8rem;
     font-weight: 700;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  .setlist-playbar-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex: 0 0 auto;
+    margin-left: auto;
   }
   .setlist-playbar-count {
     color: var(--muted);
@@ -2928,7 +2953,10 @@
       padding: 8px;
     }
     .view-mode-body .setlist-playbar .btn {
-      padding-inline: 8px;
+      padding-inline: 12px;
+    }
+    .view-mode-body .setlist-playbar-controls {
+      gap: 8px;
     }
     .view-mode-body .setlist-playbar-count {
       font-size: 0.9rem;
@@ -2989,16 +3017,24 @@
       padding-bottom: 8px;
     }
     .view-mode-body .setlist-playbar {
-      gap: 4px;
-      padding: 6px;
+      gap: 6px;
+      padding: 8px;
     }
     .view-mode-body .setlist-playbar .btn {
-      min-height: 30px;
-      padding: 6px;
-      font-size: 0.78rem;
+      min-height: 40px;
+      padding: 8px 10px;
+      font-size: 0.9rem;
+    }
+    .view-mode-body .setlist-playbar-title {
+      flex-basis: 0;
+    }
+    .view-mode-body .setlist-playbar-controls {
+      flex: 1 1 100%;
+      gap: 8px;
+      margin-left: 0;
     }
     .view-mode-body .setlist-playbar-count {
-      font-size: 0.78rem;
+      font-size: 0.9rem;
     }
     .view-mode-body .sheet-stage {
       padding-left: 18px;
@@ -10074,10 +10110,10 @@ function renderFloatingPlayer(song) {
         '<div class="shell">',
           '<div class="topbar">',
             '<div class="title-block"><h1>Setlist Songs</h1></div>',
-            '<div class="actions">',
+            '<div class="actions setlist-page-actions">',
               isEditing
                 ? '<button class="btn" data-app-action="cancel-setlist-edit">Cancel</button><button class="btn soft-accent" data-app-action="save-setlist">Save</button>'
-                : '<button class="btn" data-app-action="show-setlists">← Back</button><button class="btn" data-app-action="export-current-setlist">Export</button><button class="btn danger" data-app-action="delete-setlist" data-setlist-id="' + escapeHtml(setlist.id) + '"' + (setlist.id ? '' : ' disabled') + '>Delete</button><button class="btn soft-accent" data-app-action="enter-setlist-edit">Edit</button>',
+                : '<button class="btn" data-app-action="show-setlists">← Back</button><span class="setlist-page-action-group"><button class="btn" data-app-action="export-current-setlist">Export</button><button class="btn danger" data-app-action="delete-setlist" data-setlist-id="' + escapeHtml(setlist.id) + '"' + (setlist.id ? '' : ' disabled') + '>Delete</button><button class="btn soft-accent" data-app-action="enter-setlist-edit">Edit</button></span>',
             '</div>',
           '</div>',
           this.status.message ? '<div class="status-box' + (this.status.type === 'error' ? ' error' : '') + '">' + escapeHtml(this.status.message) + '</div>' : '',
@@ -10136,9 +10172,11 @@ function renderFloatingPlayer(song) {
         '<div class="setlist-playbar">',
           '<button class="btn" type="button" data-app-action="setlist-back">← Back</button>',
           '<div class="setlist-playbar-title">' + escapeHtml(context.title || 'Untitled setlist') + '</div>',
-          '<div class="setlist-playbar-count">' + (index + 1) + ' / ' + context.items.length + '</div>',
-          '<button class="btn" type="button" data-app-action="setlist-prev"' + (index <= 0 ? ' disabled' : '') + '>Prev</button>',
-          '<button class="btn" type="button" data-app-action="setlist-next"' + (index >= context.items.length - 1 ? ' disabled' : '') + '>Next</button>',
+          '<div class="setlist-playbar-controls">',
+            '<div class="setlist-playbar-count">' + (index + 1) + ' / ' + context.items.length + '</div>',
+            '<button class="btn" type="button" data-app-action="setlist-prev"' + (index <= 0 ? ' disabled' : '') + '>Prev</button>',
+            '<button class="btn" type="button" data-app-action="setlist-next"' + (index >= context.items.length - 1 ? ' disabled' : '') + '>Next</button>',
+          '</div>',
         '</div>'
       ].join('');
     },
