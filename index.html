@@ -2675,7 +2675,15 @@
     --cw-chord-size: 1.15rem;
     line-height: 1.6;
     font-variant-ligatures: none;
-    word-break: keep-all;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+  .cw-renderer,
+  .cw-sheet,
+  .cw-line,
+  .cw-segment {
+    min-width: 0;
+    max-width: 100%;
   }
   .cw-empty-line {
     height: 1.5em;
@@ -2693,6 +2701,8 @@
     font-family: var(--cw-lyrics-font);
     font-size: calc(var(--cw-lyrics-size) * 0.78);
     white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: normal;
   }
   .cw-directive-line {
     clear: both;
@@ -2702,6 +2712,7 @@
   }
   .cw-comment-italic {
     font-style: italic;
+    font-weight: 700;
   }
   .cw-directive {
     color: var(--muted);
@@ -2728,6 +2739,8 @@
   }
   .cw-plain-line {
     white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: normal;
     margin: 4px 0;
     font-family: var(--cw-lyrics-font);
     font-size: var(--cw-lyrics-size);
@@ -2756,7 +2769,9 @@
     letter-spacing: -0.02em;
   }
   .cw-lyrics {
-    white-space: pre;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: normal;
     line-height: 1.2;
     font-family: var(--cw-lyrics-font);
     font-size: var(--cw-lyrics-size);
