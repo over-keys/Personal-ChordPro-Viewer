@@ -7325,6 +7325,7 @@ function renderFloatingPlayer(song) {
       setlists: [],
       currentSong: null,
       currentSetlist: null,
+      missingSetlistSong: null,
       editorSong: null,
       editorReturn: null,
       setlistEditor: null,
@@ -8259,6 +8260,7 @@ function renderFloatingPlayer(song) {
       this.state.page = 'list';
       this.state.currentSong = null;
       this.state.currentSetlist = null;
+      this.state.missingSetlistSong = null;
       this.state.editorReturn = null;
       this.state.setlistEditMode = false;
       this.state.playingYtIdx = null;
@@ -8293,6 +8295,7 @@ function renderFloatingPlayer(song) {
       this.state.page = 'setlists';
       this.state.currentSong = null;
       this.state.currentSetlist = null;
+      this.state.missingSetlistSong = null;
       this.state.setlistEditMode = false;
       this.state.playingYtIdx = null;
       if (!options.keepStatus) this.clearStatus();
@@ -8319,6 +8322,16 @@ function renderFloatingPlayer(song) {
 
     openSetlist: function(id, options) {
       this.openSetlistEditor(id, Object.assign({ editMode: false }, options || {}));
+    },
+
+    normalizeSetlistPlaybackContext: function(context) {
+      if (!context) return null;
+      return Object.assign({}, context, {
+        items: normalizeSetlistItemsForApp(context.items),
+        index: Math.max(0, parseInt(context.index, 10) || 0),
+        title: context.title || 'Untitled setlist',
+        returnPage: context.returnPage || 'songs'
+      });
     },
 
     openSetlistSong: function(id, index, options) {
@@ -8398,6 +8411,20 @@ function renderFloatingPlayer(song) {
       });
     },
 
+    showMissingSetlistSong: function(slug, options) {
+      options = options || {};
+      this.state.currentSong = null;
+      this.state.currentSetlist = this.normalizeSetlistPlaybackContext(options.setlistContext);
+      this.state.missingSetlistSong = { slug: String(slug || '').trim() };
+      this.state.page = 'view';
+      this.state.playingYtIdx = null;
+      this._resetViewerScrollOnNextRender = true;
+      this.setStatus('error', 'Missing song.');
+      this.updateCurrentViewUrl();
+      this.render();
+      if (!options.skipBusy || options.endBusyOnDone) this.endBusy();
+    },
+
     handleSetlistBack: function() {
       const context = this.state.currentSetlist || {};
       Viewer.stopAutoScroll({ skipRender: true, resetProgress: true });
@@ -8425,6 +8452,7 @@ function renderFloatingPlayer(song) {
         this.state.page = 'setlist-edit';
         this.state.currentSong = null;
         this.state.currentSetlist = null;
+        this.state.missingSetlistSong = null;
         this.updateUrl({ page: 'setlist-edit' });
         this.render();
         if (options.endBusyOnDone) this.endBusy();
@@ -8445,6 +8473,7 @@ function renderFloatingPlayer(song) {
           App.state.page = 'setlist-edit';
           App.state.currentSong = null;
           App.state.currentSetlist = null;
+          App.state.missingSetlistSong = null;
           App.updateUrl({ page: 'setlist-edit', id: setlist.id });
           App.render();
           if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
@@ -8603,6 +8632,10 @@ function renderFloatingPlayer(song) {
       google.script.run
         .withSuccessHandler(function(song) {
           if (!song) {
+            if (options.setlistContext) {
+              App.showMissingSetlistSong(slug, options);
+              return;
+            }
             if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
             App.setStatus('error', 'Song not found.');
             App.showList();
@@ -8615,12 +8648,8 @@ function renderFloatingPlayer(song) {
           var requestedNotation = normalizeStoredNotation(options.urlNotation, '');
           var savedNotation = normalizeStoredNotation(song.notation, 'default');
           App.state.currentSong = song;
-          App.state.currentSetlist = options.setlistContext
-            ? Object.assign({}, options.setlistContext, {
-                items: normalizeSetlistItemsForApp(options.setlistContext.items),
-                index: Math.max(0, parseInt(options.setlistContext.index, 10) || 0)
-              })
-            : null;
+          App.state.currentSetlist = App.normalizeSetlistPlaybackContext(options.setlistContext);
+          App.state.missingSetlistSong = null;
           App.state.scroll.startPercent = Math.max(0, Math.min(1, parseFloat(song.scrollStartPercent)));
           if (!isFinite(App.state.scroll.startPercent)) App.state.scroll.startPercent = 0;
           App.state.scroll.endPercent = Math.max(App.state.scroll.startPercent, Math.min(1, parseFloat(song.scrollEndPercent)));
@@ -8723,6 +8752,7 @@ function renderFloatingPlayer(song) {
         };
         this.state.page = 'edit';
         this.state.currentSetlist = null;
+        this.state.missingSetlistSong = null;
         this.updateUrl({ page: 'edit' });
         this.render();
         if (options.endBusyOnDone) this.endBusy();
@@ -8737,6 +8767,7 @@ function renderFloatingPlayer(song) {
           }, { originalSlug: song && song.slug ? song.slug : '' });
           App.state.page = 'edit';
           App.state.currentSetlist = null;
+          App.state.missingSetlistSong = null;
           App.state.editorReturn = editorReturn;
           App.updateUrl({ page: 'edit', slug: App.state.editorSong.slug || slug });
           App.render();
@@ -9571,6 +9602,7 @@ function renderFloatingPlayer(song) {
             App.state.page = 'edit';
             App.state.currentSong = null;
             App.state.currentSetlist = null;
+            App.state.missingSetlistSong = null;
             App.updateUrl({ page: 'edit' });
             App.clearStatus();
             App.render();
@@ -9680,6 +9712,7 @@ function renderFloatingPlayer(song) {
             App.state.page = 'setlist-edit';
             App.state.currentSong = null;
             App.state.currentSetlist = null;
+            App.state.missingSetlistSong = null;
             App.updateUrl({ page: 'setlist-edit' });
             App.clearStatus();
             App.render();
@@ -9809,6 +9842,15 @@ function renderFloatingPlayer(song) {
           this._viewerRerenderInProgress = false;
           this._resetViewerScrollOnNextRender = false;
           app.innerHTML = this.renderSetlistEditorPage();
+          this.syncViewerPaneLayout();
+          if (typeof applyPersonalChordProViewerTypography === 'function') applyPersonalChordProViewerTypography(app);
+          return;
+        }
+
+        if (this.state.page === 'view' && this.state.currentSetlist && this.state.missingSetlistSong) {
+          this._viewerRerenderInProgress = false;
+          this._resetViewerScrollOnNextRender = false;
+          app.innerHTML = this.renderMissingSetlistSongPage();
           this.syncViewerPaneLayout();
           if (typeof applyPersonalChordProViewerTypography === 'function') applyPersonalChordProViewerTypography(app);
           return;
@@ -10014,6 +10056,32 @@ function renderFloatingPlayer(song) {
               '<div class="song-list setlist-add-results">' + this.renderSetlistAddSongResultsHtml() + '</div>',
             '</div>'
           ].join('') : '',
+        '</div>'
+      ].join('');
+    },
+
+    renderMissingSetlistSongPage: function() {
+      const missing = this.state.missingSetlistSong || {};
+      const slug = String(missing.slug || '').trim();
+      return [
+        '<div class="shell">',
+          '<div class="panel viewer-body pane-scroll" id="viewer-scroll-pane">',
+            '<div class="viewer-content" id="viewer-content">',
+              this.renderSetlistPlaybackBar(),
+              this.status.message ? '<div class="status-box viewer-status error">' + escapeHtml(this.status.message) + '</div>' : '',
+              '<div class="song-header">',
+                '<div class="song-header-main">',
+                  '<h2>Missing song</h2>',
+                  '<div class="song-detail-row song-header-detail-row"><p>' + (slug ? 'Slug: ' + escapeHtml(slug) : 'Song reference not found.') + '</p></div>',
+                '</div>',
+              '</div>',
+              '<div class="sheet-stage" id="sheet-stage">',
+                '<div class="cw-sheet">',
+                  '<p>This song is no longer available. Use Prev / Next to continue, or Back to edit the setlist.</p>',
+                '</div>',
+              '</div>',
+            '</div>',
+          '</div>',
         '</div>'
       ].join('');
     },
