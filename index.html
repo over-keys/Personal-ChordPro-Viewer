@@ -2519,16 +2519,21 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     padding: 10px 12px;
     margin-bottom: 12px;
     border: 1px solid rgba(var(--accent-rgb), 0.24);
     border-radius: 8px;
     background: rgba(var(--accent-rgb), 0.07);
+    overflow: hidden;
+  }
+  .setlist-playbar .btn,
+  .setlist-playbar-count {
+    flex: 0 0 auto;
   }
   .setlist-playbar-title {
     min-width: 0;
-    flex: 1 1 auto;
+    flex: 1 1 0;
     font-weight: 700;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2903,6 +2908,16 @@
       margin-bottom: 10px;
       padding-bottom: 10px;
     }
+    .view-mode-body .setlist-playbar {
+      gap: 6px;
+      padding: 8px;
+    }
+    .view-mode-body .setlist-playbar .btn {
+      padding-inline: 8px;
+    }
+    .view-mode-body .setlist-playbar-count {
+      font-size: 0.9rem;
+    }
     .view-mode-body .sheet-stage {
       padding-left: 20px;
       padding-right: 0;
@@ -2957,6 +2972,18 @@
       gap: 6px;
       margin-bottom: 8px;
       padding-bottom: 8px;
+    }
+    .view-mode-body .setlist-playbar {
+      gap: 4px;
+      padding: 6px;
+    }
+    .view-mode-body .setlist-playbar .btn {
+      min-height: 30px;
+      padding: 6px;
+      font-size: 0.78rem;
+    }
+    .view-mode-body .setlist-playbar-count {
+      font-size: 0.78rem;
     }
     .view-mode-body .sheet-stage {
       padding-left: 18px;
