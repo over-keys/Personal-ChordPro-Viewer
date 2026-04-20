@@ -1632,7 +1632,8 @@
     white-space: nowrap;
     flex-shrink: 0;
   }
-  .list-mode-body .topbar > .actions .setlists-entry-btn {
+  .list-mode-body .topbar > .actions .setlists-entry-btn,
+  .list-mode-body .topbar > .actions .setlists-back-btn {
     margin-right: 12px;
   }
   .list-mode-body .song-item {
@@ -2891,6 +2892,21 @@
     .sheet-stage {
       padding-left: 24px;
     }
+    .view-mode-body .shell {
+      padding: 8px;
+    }
+    .view-mode-body .viewer-content {
+      padding: 10px;
+    }
+    .view-mode-body .song-header {
+      gap: 8px;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+    }
+    .view-mode-body .sheet-stage {
+      padding-left: 20px;
+      padding-right: 0;
+    }
     .setting-row {
       grid-template-columns: 1fr;
       gap: 6px;
@@ -2928,22 +2944,37 @@
 
 
   @media (max-width: 420px) {
+    .view-mode-body .shell {
+      padding: 4px;
+    }
+    .view-mode-body .viewer-body {
+      border-radius: 8px;
+    }
+    .view-mode-body .viewer-content {
+      padding: 6px;
+    }
+    .view-mode-body .song-header {
+      gap: 6px;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+    }
+    .view-mode-body .sheet-stage {
+      padding-left: 18px;
+    }
     .list-mode-body .topbar > .actions.list-topbar-actions,
     .list-mode-body .topbar > .actions.setlists-topbar-actions {
       flex: 1 1 100%;
       width: 100%;
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      justify-content: stretch;
-      justify-items: stretch;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
       align-items: center;
-      overflow: hidden;
+      overflow: visible;
       gap: 8px;
     }
     .list-mode-body .topbar > .actions.list-topbar-actions .btn,
     .list-mode-body .topbar > .actions.setlists-topbar-actions .btn {
       flex: 0 0 auto;
-      width: 100%;
       min-width: 0;
       max-width: 100%;
       padding-inline: 6px;
@@ -2953,25 +2984,8 @@
     }
     .list-mode-body .topbar > .actions.list-topbar-actions .setlists-entry-btn,
     .list-mode-body .topbar > .actions.setlists-topbar-actions .setlists-back-btn {
-      grid-row: 1;
-      grid-column: 3;
-      margin-right: 0;
+      margin-right: 12px;
       justify-content: center;
-    }
-    .list-mode-body .topbar > .actions.list-topbar-actions .btn:nth-child(2),
-    .list-mode-body .topbar > .actions.setlists-topbar-actions .btn:nth-child(2) {
-      grid-row: 2;
-      grid-column: 1;
-    }
-    .list-mode-body .topbar > .actions.list-topbar-actions .btn:nth-child(3),
-    .list-mode-body .topbar > .actions.setlists-topbar-actions .btn:nth-child(3) {
-      grid-row: 2;
-      grid-column: 2;
-    }
-    .list-mode-body .topbar > .actions.list-topbar-actions .btn:nth-child(4),
-    .list-mode-body .topbar > .actions.setlists-topbar-actions .btn:nth-child(4) {
-      grid-row: 2;
-      grid-column: 3;
     }
   }
   @media (max-width: 520px) {
@@ -2996,6 +3010,28 @@
       line-height: 1.2;
     }
     .list-mode-body .topbar > .actions {
+      flex: 1 1 100%;
+      width: 100%;
+      overflow: visible;
+      justify-content: flex-end;
+    }
+    .edit-mode-body .topbar {
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .edit-mode-body .title-block {
+      flex: 1 1 100%;
+      width: 100%;
+    }
+    .edit-mode-body .title-block h1 {
+      overflow: visible;
+      text-overflow: clip;
+      white-space: normal;
+      text-align: left;
+      line-height: 1.2;
+    }
+    .edit-mode-body .topbar > .actions {
       flex: 1 1 100%;
       width: 100%;
       overflow: visible;
