@@ -3214,6 +3214,10 @@
       return 'default';
     }
 
+    window.__PCV_SHARED_NORMALIZERS__ = window.__PCV_SHARED_NORMALIZERS__ || {};
+    window.__PCV_SHARED_NORMALIZERS__.normalizeStoredTranspose = normalizeStoredTranspose;
+    window.__PCV_SHARED_NORMALIZERS__.normalizeStoredNotation = normalizeStoredNotation;
+
     function buildSlug(value) {
       return String(value || '')
         .trim()
@@ -4052,20 +4056,8 @@
     'G': 7, 'G#': 8, 'Ab': 8, 'A': 9, 'A#': 10, 'Bb': 10, 'B': 11, 'Cb': 11, 'E#': 5, 'B#': 0, 'Fb': 4
   };
 
-  function normalizeStoredTranspose(value, fallback) {
-    var num = parseInt(value, 10);
-    if (!isFinite(num)) num = parseInt(fallback, 10);
-    if (!isFinite(num)) num = 0;
-    return Math.max(-11, Math.min(11, num));
-  }
-
-  function normalizeStoredNotation(value, fallback) {
-    var text = String(value || '').trim();
-    if (text === 'sharp' || text === 'flat' || text === 'default') return text;
-    text = String(fallback || '').trim();
-    if (text === 'sharp' || text === 'flat' || text === 'default') return text;
-    return 'default';
-  }
+  var normalizeStoredTranspose = window.__PCV_SHARED_NORMALIZERS__.normalizeStoredTranspose;
+  var normalizeStoredNotation = window.__PCV_SHARED_NORMALIZERS__.normalizeStoredNotation;
 
   function createSetlistItem(slug) {
     return {
