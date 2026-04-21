@@ -2804,19 +2804,35 @@
     font-family: var(--cw-lyrics-font);
     font-size: var(--cw-lyrics-size);
   }
+  .cw-paren {
+    display: inline-block;
+    margin-left: -0.11em;
+    margin-right: -0.11em;
+  }
   .cw-tension {
+    display: inline-flex;
+    align-items: flex-start;
     position: relative;
     top: -0.3em;
     font-size: 0.8em;
-    margin-left: 0.02em;
+  }
+  .cw-tight-symbol {
+    display: inline-block;
+    margin-left: -0.08em;
+    margin-right: -0.1em;
   }
   .cw-symbol {
     display: inline-block;
     position: relative;
     top: -0.22em;
     font-size: 0.82em;
-    margin-left: -0.03em;
-    margin-right: -0.05em;
+    margin-left: -0.13em;
+    margin-right: -0.15em;
+  }
+  .cw-triangle {
+    display: inline-block;
+    margin-left: -0.08em;
+    margin-right: -0.1em;
   }
   .cw-triangle,
   .cw-suffix {
@@ -4145,12 +4161,12 @@
         const inner = part.slice(1, -1);
         const slashParts = (!options || options.slashChords !== false) ? getSlashChordParts(inner) : null;
         if (slashParts) {
-          return ['(', renderSlashChordContent(slashParts, options), ')'].join('');
+          return [renderChordParen('('), renderSlashChordContent(slashParts, options), renderChordParen(')')].join('');
         }
         if ((!options || options.tensions !== false) && isTensionParenthetical(inner)) {
-          return '<span class="cw-tension">' + escapeHtml(part) + '</span>';
+          return renderTensionParenthetical(inner, options);
         }
-        return ['(', renderChordPart(inner, options), ')'].join('');
+        return [renderChordParen('('), renderChordPart(inner, options), renderChordParen(')')].join('');
       }
       if ((!options || options.symbols !== false) && (part === '♯' || part === '♭')) {
         return '<span class="cw-symbol">' + escapeHtml(part) + '</span>';
@@ -4167,6 +4183,30 @@
 
   function isTensionParenthetical(value) {
     return /^(?:[#b]?\d|[\u266d\u266f]\d)/i.test(String(value || '').trim());
+  }
+
+  function renderChordParen(value) {
+    return '<span class="cw-paren">' + escapeHtml(value) + '</span>';
+  }
+
+  function renderTensionParenthetical(value, options) {
+    return [
+      '<span class="cw-tension">',
+      renderChordParen('('),
+      renderTensionText(value),
+      renderChordParen(')'),
+      '</span>'
+    ].join('');
+  }
+
+  function renderTensionText(value) {
+    return String(value || '').split(/([#b\u266d\u266f])/).map(function(part) {
+      if (!part) return '';
+      if (/^[#b\u266d\u266f]$/.test(part)) {
+        return '<span class="cw-tight-symbol">' + escapeHtml(part) + '</span>';
+      }
+      return escapeHtml(part);
+    }).join('');
   }
 
   function getSlashChordParts(chordStr) {
