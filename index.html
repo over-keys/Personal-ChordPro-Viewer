@@ -4150,7 +4150,7 @@
         if ((!options || options.tensions !== false) && isTensionParenthetical(inner)) {
           return '<span class="cw-tension">' + escapeHtml(part) + '</span>';
         }
-        return escapeHtml(part);
+        return ['(', renderChordPart(inner, options), ')'].join('');
       }
       if ((!options || options.symbols !== false) && (part === '♯' || part === '♭')) {
         return '<span class="cw-symbol">' + escapeHtml(part) + '</span>';
