@@ -4141,8 +4141,16 @@
     const parts = String(chordStr).split(/(\([^)]+\))|([♯♭])|([△]|add|sus|aug|dim|alt|6\/9)/i);
     return parts.map(function(part) {
       if (!part) return '';
-      if ((!options || options.tensions !== false) && part.startsWith('(') && part.endsWith(')')) {
-        return '<span class="cw-tension">' + escapeHtml(part) + '</span>';
+      if (part.startsWith('(') && part.endsWith(')')) {
+        const inner = part.slice(1, -1);
+        const slashParts = (!options || options.slashChords !== false) ? getSlashChordParts(inner) : null;
+        if (slashParts) {
+          return ['(', renderSlashChordContent(slashParts, options), ')'].join('');
+        }
+        if ((!options || options.tensions !== false) && isTensionParenthetical(inner)) {
+          return '<span class="cw-tension">' + escapeHtml(part) + '</span>';
+        }
+        return escapeHtml(part);
       }
       if ((!options || options.symbols !== false) && (part === '♯' || part === '♭')) {
         return '<span class="cw-symbol">' + escapeHtml(part) + '</span>';
@@ -4157,26 +4165,45 @@
     }).join('');
   }
 
-  function renderTransposedChord(chordStr, options) {
-    if (!chordStr) return '';
-    const lastSlashIndex = chordStr.lastIndexOf('/');
-    let isSlashChord = false;
-    if (lastSlashIndex !== -1 && (!options || options.slashChords !== false)) {
-      const afterSlash = chordStr.substring(lastSlashIndex + 1);
-      const beforeSlashChar = chordStr[lastSlashIndex - 1];
-      isSlashChord = !(beforeSlashChar === '6' && afterSlash === '9');
-    }
-    if (!isSlashChord) return renderChordPart(chordStr, options);
+  function isTensionParenthetical(value) {
+    return /^(?:[#b]?\d|[\u266d\u266f]\d)/i.test(String(value || '').trim());
+  }
 
-    const mainChord = chordStr.substring(0, lastSlashIndex);
-    const bassNote = chordStr.substring(lastSlashIndex + 1);
+  function getSlashChordParts(chordStr) {
+    const text = String(chordStr || '');
+    const lastSlashIndex = text.lastIndexOf('/');
+    if (lastSlashIndex === -1) return null;
+    const afterSlash = text.substring(lastSlashIndex + 1);
+    const beforeSlashChar = text[lastSlashIndex - 1];
+    if (beforeSlashChar === '6' && afterSlash === '9') return null;
+    return {
+      mainChord: text.substring(0, lastSlashIndex),
+      bassNote: afterSlash
+    };
+  }
+
+  function renderSlashChordContent(parts, options) {
+    if (!parts || !parts.bassNote) return escapeHtml(parts && parts.mainChord ? parts.mainChord : '');
+    if (!parts.mainChord) {
+      return '/' + '<span class="cw-slash-bass">' + renderChordPart(parts.bassNote, options) + '</span>';
+    }
     return [
       '<span class="cw-slash">',
-      '<span class="cw-slash-main">', renderChordPart(mainChord, options), '</span>',
+      '<span class="cw-slash-main">', renderChordPart(parts.mainChord, options), '</span>',
       '<span class="cw-slash-sep">/</span>',
-      '<span class="cw-slash-bass">', renderChordPart(bassNote, options), '</span>',
+      '<span class="cw-slash-bass">', renderChordPart(parts.bassNote, options), '</span>',
       '</span>'
     ].join('');
+  }
+
+  function renderTransposedChord(chordStr, options) {
+    if (!chordStr) return '';
+    if (chordStr.startsWith('(') && chordStr.endsWith(')')) {
+      return renderChordPart(chordStr, options);
+    }
+    const slashParts = (!options || options.slashChords !== false) ? getSlashChordParts(chordStr) : null;
+    if (!slashParts) return renderChordPart(chordStr, options);
+    return renderSlashChordContent(slashParts, options);
   }
 
   function normalizeBpmBlinkColor(value) {
