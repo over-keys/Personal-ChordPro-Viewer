@@ -2804,45 +2804,44 @@
     font-family: var(--cw-lyrics-font);
     font-size: var(--cw-lyrics-size);
   }
-  .cw-paren {
-    display: inline-block;
-    margin-left: -0.11em;
-    margin-right: -0.11em;
-  }
   .cw-tension {
-    display: inline-flex;
-    align-items: flex-start;
+    display: inline-block;
     position: relative;
     top: -0.3em;
     font-size: 0.8em;
   }
-  .cw-tight-symbol {
+  .cw-paren {
     display: inline-block;
-    margin-left: -0.11em;
-    margin-right: -0.13em;
+    margin-left: -0.08em;
+    margin-right: -0.08em;
   }
   .cw-symbol {
     display: inline-block;
     position: relative;
     top: -0.22em;
     font-size: 0.82em;
-    margin-left: -0.1em;
-    margin-right: -0.12em;
+    margin-left: -0.12em;
+    margin-right: -0.14em;
+  }
+  .cw-tight-symbol {
+    display: inline-block;
+    margin-left: -0.13em;
+    margin-right: -0.15em;
   }
   .cw-symbol-flat {
     transform: scaleX(0.9);
-    transform-origin: center center;
+    transform-origin: center;
   }
   .cw-symbol-sharp {
     transform: scaleX(0.8);
-    transform-origin: center center;
+    transform-origin: center;
   }
   .cw-triangle {
     display: inline-block;
-    margin-left: -0.08em;
-    margin-right: -0.1em;
+    font-size: 0.85em;
+    margin-left: -0.05em;
+    margin-right: -0.07em;
   }
-  .cw-triangle,
   .cw-suffix {
     font-size: 0.85em;
   }
@@ -2855,7 +2854,7 @@
     top: -0.15em;
   }
   .cw-slash-sep {
-    margin: 0 -0.05em;
+    margin: 0;
   }
   .cw-slash-bass {
     position: relative;
@@ -4135,10 +4134,10 @@
 
     let transposed = String(chord);
     if (steps !== 0 || notation !== 'default') {
-      transposed = transposed.replace(/([A-G][#b♯♭]?)/g, function(match) {
-        const normalized = match.replace('♯', '#').replace('♭', 'b');
+      transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)/g, function(match) {
+        const normalized = match.replace('\u266f', '#').replace('\u266d', 'b');
         const index = NOTE_VALUES[normalized];
-        if (index === undefined) return match;
+        if (index == null) return match;
         let newIndex = (index + steps) % 12;
         if (newIndex < 0) newIndex += 12;
         if (notation === 'flat') return NOTES_FLAT[newIndex];
@@ -4148,81 +4147,62 @@
     }
 
     if (!options || options.symbols !== false) {
-      transposed = transposed.replace(/maj/gi, '△');
-      transposed = transposed.replace(/([A-G][#b♯♭]?m?)M(?=[0-9()/△]|$)/g, '$1△');
-      transposed = transposed.replace(/[-–]([0-9])/g, '♭$1');
-      transposed = transposed.replace(/b([0-9])/g, '♭$1');
-      transposed = transposed.replace(/#([0-9])/g, '♯$1');
-      transposed = transposed.replace(/([A-G])b/g, '$1♭');
-      transposed = transposed.replace(/([A-G])#/g, '$1♯');
+      transposed = transposed.replace(/maj/gi, '\u25b3');
+      transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)\+/g, '$1aug');
+      transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)-/g, '$1m');
+      transposed = transposed.replace(/mM(?=[0-9()/\u25b3]|$)/g, 'm\u25b3');
+      transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)M(?=[0-9()/\u25b3]|$)/g, '$1\u25b3');
+      transposed = transposed.replace(/[-\u2013]([0-9])/g, '\u266d$1');
+      transposed = transposed.replace(/b([0-9])/g, '\u266d$1');
+      transposed = transposed.replace(/#([0-9])/g, '\u266f$1');
+      transposed = transposed.replace(/\+([0-9])/g, '\u266f$1');
+      transposed = transposed.replace(/([A-G])b/g, '$1\u266d');
+      transposed = transposed.replace(/([A-G])#/g, '$1\u266f');
     }
 
     return transposed;
-  }
-
-  function renderChordPart(chordStr, options) {
-    if (!chordStr) return '';
-    const parts = String(chordStr).split(/(\([^)]+\))|([♯♭])|([△]|add|sus|aug|dim|alt|6\/9)/i);
-    return parts.map(function(part) {
-      if (!part) return '';
-      if (part.startsWith('(') && part.endsWith(')')) {
-        const inner = part.slice(1, -1);
-        const slashParts = (!options || options.slashChords !== false) ? getSlashChordParts(inner) : null;
-        const isTension = isTensionParenthetical(inner);
-        if (slashParts) {
-          return [renderChordParen('('), renderSlashChordContent(slashParts, options), renderChordParen(')')].join('');
-        }
-        if (isTension && (!options || options.tensions !== false)) {
-          return renderTensionParenthetical(inner, options);
-        }
-        return [renderChordParen('('), renderChordPart(inner, options), renderChordParen(')')].join('');
-      }
-      if ((!options || options.symbols !== false) && (part === '♯' || part === '♭')) {
-        return renderDisplaySymbol(part, 'cw-symbol');
-      }
-      if ((!options || options.symbols !== false) && part === '△') {
-        return '<span class="cw-triangle">' + escapeHtml(part) + '</span>';
-      }
-      if ((!options || options.suffixes !== false) && /^(add|sus|aug|dim|alt|6\/9)$/i.test(part)) {
-        return '<span class="cw-suffix">' + escapeHtml(part) + '</span>';
-      }
-      return escapeHtml(part);
-    }).join('');
-  }
-
-  function isTensionParenthetical(value) {
-    return /^(?:[#b]?\d|[\u266d\u266f]\d)/i.test(String(value || '').trim());
   }
 
   function renderChordParen(value) {
     return '<span class="cw-paren">' + escapeHtml(value) + '</span>';
   }
 
-  function renderTensionParenthetical(value, options) {
-    return [
-      '<span class="cw-tension">',
-      renderChordParen('('),
-      renderTensionText(value),
-      renderChordParen(')'),
-      '</span>'
-    ].join('');
+  function isTensionParenthetical(innerText) {
+    const normalized = String(innerText || '').trim();
+    return /^(?:[0-9]|[#b\u266f\u266d][0-9])/.test(normalized);
   }
 
-  function renderTensionText(value) {
-    return String(value || '').split(/([#b\u266d\u266f])/).map(function(part) {
+  function renderDisplaySymbol(value, baseClass) {
+    let normalized = value;
+    if (normalized === '#') normalized = '\u266f';
+    if (normalized === 'b') normalized = '\u266d';
+    let extraClass = '';
+    if (normalized === '\u266d') extraClass = ' cw-symbol-flat';
+    if (normalized === '\u266f') extraClass = ' cw-symbol-sharp';
+    return '<span class="' + baseClass + extraClass + '">' + escapeHtml(normalized) + '</span>';
+  }
+
+  function renderTensionText(innerText, options) {
+    const text = String(innerText || '');
+    if (!options || options.symbols === false) return escapeHtml(text);
+    return text.split(/([#b\u266f\u266d])/i).map(function(part) {
       if (!part) return '';
-      if (/^[#b\u266d\u266f]$/.test(part)) {
+      if (part === '#' || part === 'b' || part === '\u266f' || part === '\u266d') {
         return renderDisplaySymbol(part, 'cw-tight-symbol');
       }
       return escapeHtml(part);
     }).join('');
   }
 
-  function renderDisplaySymbol(value, baseClass) {
-    var extraClass = '';
-    if (value === '♭') extraClass = ' cw-symbol-flat';
-    if (value === '♯') extraClass = ' cw-symbol-sharp';
-    return '<span class="' + baseClass + extraClass + '">' + escapeHtml(value) + '</span>';
+  function renderTensionParenthetical(part, options) {
+    const inner = String(part || '').slice(1, -1);
+    return [
+      '<span class="cw-tension">',
+      renderChordParen('('),
+      renderTensionText(inner, options),
+      renderChordParen(')'),
+      '</span>'
+    ].join('');
   }
 
   function getSlashChordParts(chordStr) {
@@ -4252,13 +4232,43 @@
     ].join('');
   }
 
+  function renderParenthetical(part, options) {
+    const inner = String(part || '').slice(1, -1);
+    if ((!options || options.tensions !== false) && isTensionParenthetical(inner)) {
+      return renderTensionParenthetical(part, options);
+    }
+    return renderChordParen('(') + renderTransposedChord(inner, options) + renderChordParen(')');
+  }
+
+  function renderChordPart(chordStr, options) {
+    if (!chordStr) return '';
+    const parts = String(chordStr).split(/(\([^)]+\))|([#b\u266f\u266d])|([\u25b3]|add|sus|aug|dim|alt|6\/9)/i);
+    return parts.map(function(part) {
+      if (!part) return '';
+      if (part.startsWith('(') && part.endsWith(')')) {
+        return renderParenthetical(part, options);
+      }
+      if ((!options || options.symbols !== false) && (part === '#' || part === 'b' || part === '\u266f' || part === '\u266d')) {
+        return renderDisplaySymbol(part, 'cw-symbol');
+      }
+      if ((!options || options.symbols !== false) && part === '\u25b3') {
+        return '<span class="cw-triangle">' + escapeHtml(part) + '</span>';
+      }
+      if ((!options || options.suffixes !== false) && /^(add|sus|aug|dim|alt|6\/9)$/i.test(part)) {
+        return '<span class="cw-suffix">' + escapeHtml(part) + '</span>';
+      }
+      return escapeHtml(part);
+    }).join('');
+  }
+
   function renderTransposedChord(chordStr, options) {
     if (!chordStr) return '';
-    if (chordStr.startsWith('(') && chordStr.endsWith(')')) {
-      return renderChordPart(chordStr, options);
+    const text = String(chordStr);
+    if (text.startsWith('(') && text.endsWith(')')) {
+      return renderParenthetical(text, options);
     }
-    const slashParts = (!options || options.slashChords !== false) ? getSlashChordParts(chordStr) : null;
-    if (!slashParts) return renderChordPart(chordStr, options);
+    const slashParts = (!options || options.slashChords !== false) ? getSlashChordParts(text) : null;
+    if (!slashParts) return renderChordPart(text, options);
     return renderSlashChordContent(slashParts, options);
   }
 
