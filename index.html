@@ -2818,16 +2818,24 @@
   }
   .cw-tight-symbol {
     display: inline-block;
-    margin-left: -0.08em;
-    margin-right: -0.1em;
+    margin-left: -0.11em;
+    margin-right: -0.13em;
   }
   .cw-symbol {
     display: inline-block;
     position: relative;
     top: -0.22em;
     font-size: 0.82em;
-    margin-left: -0.13em;
-    margin-right: -0.15em;
+    margin-left: -0.1em;
+    margin-right: -0.12em;
+  }
+  .cw-symbol-flat {
+    transform: scaleX(0.9);
+    transform-origin: center center;
+  }
+  .cw-symbol-sharp {
+    transform: scaleX(0.8);
+    transform-origin: center center;
   }
   .cw-triangle {
     display: inline-block;
@@ -4141,7 +4149,7 @@
 
     if (!options || options.symbols !== false) {
       transposed = transposed.replace(/maj/gi, '△');
-      transposed = transposed.replace(/([A-G][#b♯♭]?)M(?=[0-9()/△]|$)/g, '$1△');
+      transposed = transposed.replace(/([A-G][#b♯♭]?m?)M(?=[0-9()/△]|$)/g, '$1△');
       transposed = transposed.replace(/[-–]([0-9])/g, '♭$1');
       transposed = transposed.replace(/b([0-9])/g, '♭$1');
       transposed = transposed.replace(/#([0-9])/g, '♯$1');
@@ -4160,16 +4168,17 @@
       if (part.startsWith('(') && part.endsWith(')')) {
         const inner = part.slice(1, -1);
         const slashParts = (!options || options.slashChords !== false) ? getSlashChordParts(inner) : null;
+        const isTension = isTensionParenthetical(inner);
         if (slashParts) {
           return [renderChordParen('('), renderSlashChordContent(slashParts, options), renderChordParen(')')].join('');
         }
-        if ((!options || options.tensions !== false) && isTensionParenthetical(inner)) {
+        if (isTension && (!options || options.tensions !== false)) {
           return renderTensionParenthetical(inner, options);
         }
         return [renderChordParen('('), renderChordPart(inner, options), renderChordParen(')')].join('');
       }
       if ((!options || options.symbols !== false) && (part === '♯' || part === '♭')) {
-        return '<span class="cw-symbol">' + escapeHtml(part) + '</span>';
+        return renderDisplaySymbol(part, 'cw-symbol');
       }
       if ((!options || options.symbols !== false) && part === '△') {
         return '<span class="cw-triangle">' + escapeHtml(part) + '</span>';
@@ -4203,10 +4212,17 @@
     return String(value || '').split(/([#b\u266d\u266f])/).map(function(part) {
       if (!part) return '';
       if (/^[#b\u266d\u266f]$/.test(part)) {
-        return '<span class="cw-tight-symbol">' + escapeHtml(part) + '</span>';
+        return renderDisplaySymbol(part, 'cw-tight-symbol');
       }
       return escapeHtml(part);
     }).join('');
+  }
+
+  function renderDisplaySymbol(value, baseClass) {
+    var extraClass = '';
+    if (value === '♭') extraClass = ' cw-symbol-flat';
+    if (value === '♯') extraClass = ' cw-symbol-sharp';
+    return '<span class="' + baseClass + extraClass + '">' + escapeHtml(value) + '</span>';
   }
 
   function getSlashChordParts(chordStr) {
