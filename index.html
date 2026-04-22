@@ -2474,13 +2474,6 @@
   }
   .setlist-song-click {
     cursor: pointer;
-    border-radius: 8px;
-    padding: 4px 6px;
-  }
-  .setlist-song-click:hover,
-  .setlist-song-click:focus-visible {
-    background: rgba(var(--accent-rgb), 0.08);
-    outline: none;
   }
   .setlist-add-panel {
     margin-top: 12px;
@@ -3192,7 +3185,7 @@
     const NOTES_STORE = 'notes';
     const SETLISTS_STORE = 'setlists';
 
-    const DEFAULT_FONTS = [
+    window.__PCV_FONT_PRESETS__ = window.__PCV_FONT_PRESETS__ || [
       { label: 'BIZ UDGothic', value: 'bizudgothic', stack: '"BIZ UDGothic", sans-serif' },
       { label: 'IBM Plex Sans JP', value: 'ibmplexsansjp', stack: '"IBM Plex Sans JP", sans-serif' },
       { label: 'M PLUS Rounded 1c', value: 'mplusrounded1c', stack: '"M PLUS Rounded 1c", sans-serif' },
@@ -3203,6 +3196,7 @@
       { label: 'Klee One', value: 'kleeone', stack: '"Klee One", cursive' },
       { label: 'Yusei Magic', value: 'yuseimagic', stack: '"Yusei Magic", sans-serif' }
     ];
+    const DEFAULT_FONTS = window.__PCV_FONT_PRESETS__;
 
     function cloneValue(value) {
       return value == null ? value : JSON.parse(JSON.stringify(value));
@@ -7222,17 +7216,7 @@ function renderFloatingPlayer(song) {
 </script>
 
     <script>
-  const FONT_PRESETS = [
-    { value: 'bizudgothic', label: 'BIZ UDGothic', stack: '"BIZ UDGothic", sans-serif' },
-    { value: 'ibmplexsansjp', label: 'IBM Plex Sans JP', stack: '"IBM Plex Sans JP", sans-serif' },
-    { value: 'mplusrounded1c', label: 'M PLUS Rounded 1c', stack: '"M PLUS Rounded 1c", sans-serif' },
-    { value: 'jetbrainsmono', label: 'JetBrains Mono', stack: '"JetBrains Mono", "BIZ UDGothic", monospace' },
-    { value: 'ibmplexmono', label: 'IBM Plex Mono', stack: '"IBM Plex Mono", "BIZ UDGothic", monospace' },
-    { value: 'zenoldmincho', label: 'Zen Old Mincho', stack: '"Zen Old Mincho", serif' },
-    { value: 'kaiseidecol', label: 'Kaisei Decol', stack: '"Kaisei Decol", serif' },
-    { value: 'kleeone', label: 'Klee One', stack: '"Klee One", cursive' },
-    { value: 'yuseimagic', label: 'Yusei Magic', stack: '"Yusei Magic", sans-serif' }
-  ];
+  const FONT_PRESETS = window.__PCV_FONT_PRESETS__;
 
   const STORAGE_KEYS = {
     fontSizeLevel: 'personal_chordpro_viewer_fontSizeLevel',
@@ -10144,9 +10128,9 @@ function renderFloatingPlayer(song) {
         const artist = song ? song.artist : ('slug: ' + (item.slug || '(unknown)'));
         if (!isEditing) {
           return [
-            '<div class="song-item setlist-songs-item">',
+            '<div class="song-item setlist-songs-item' + (song ? ' setlist-song-click" role="button" tabindex="0" data-setlist-play-index="' + index : '') + '">',
               '<div class="setlist-row-number">' + (index + 1) + '</div>',
-              '<div class="song-meta' + (song ? ' setlist-song-click" role="button" tabindex="0" data-setlist-play-index="' + index : '') + '">',
+              '<div class="song-meta">',
                 '<div class="song-title-row"><h3>' + escapeHtml(title) + '</h3></div>',
                 '<p>' + escapeHtml(artist) + '</p>',
               '</div>',
