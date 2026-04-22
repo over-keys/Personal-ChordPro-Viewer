@@ -3309,12 +3309,11 @@
     }
 
     function extractTitleArtistFromChordPro(content) {
-      var text = String(content || '');
-      var titleMatch = text.match(/\{(?:title|t):\s*([^}]+)\}/i);
-      var subtitleMatch = text.match(/\{(?:subtitle|st):\s*([^}]+)\}/i);
+      var titleMatch = findChordProDirectiveValue(content, ['title', 't']);
+      var subtitleMatch = findChordProDirectiveValue(content, ['subtitle', 'st']);
       return {
-        title: titleMatch ? titleMatch[1].trim() : '',
-        artist: subtitleMatch ? subtitleMatch[1].trim() : ''
+        title: titleMatch,
+        artist: subtitleMatch
       };
     }
 
@@ -4417,17 +4416,14 @@
     const chordSize = chordScale[options && options.chordSizeLevel || 3] || chordScale[3];
 
     const html = lines.map(function(line) {
-      if (line.startsWith('{') && line.endsWith('}')) {
-        const inner = line.slice(1, -1);
-        const colonIdx = inner.indexOf(':');
-        if (colonIdx !== -1) {
-          const key = inner.slice(0, colonIdx).trim().toLowerCase();
-          const val = inner.slice(colonIdx + 1).trim();
-          if (key === 'title' || key === 't' || key === 'subtitle' || key === 'st') return '';
-          if (key === 'comment' || key === 'c') return '<div class="cw-comment cw-directive-line">' + renderTempoAwareComment(val, formatOptions) + '</div>';
-          if (key === 'comment_italic' || key === 'ci') return '<div class="cw-comment-italic cw-directive-line">' + renderTempoAwareComment(val, formatOptions) + '</div>';
-          if (key === 'key' || key === 'k') return '<div class="cw-directive cw-directive-line">Key: ' + renderTransposedChord(transposeChord(val, transpose, notation, formatOptions), formatOptions) + '</div>';
-        }
+      const directive = parseChordProDirectiveLine(line);
+      if (directive) {
+        const key = directive.key;
+        const val = directive.value;
+        if (key === 'title' || key === 't' || key === 'subtitle' || key === 'st') return '';
+        if (key === 'comment' || key === 'c') return '<div class="cw-comment cw-directive-line">' + renderTempoAwareComment(val, formatOptions) + '</div>';
+        if (key === 'comment_italic' || key === 'ci') return '<div class="cw-comment-italic cw-directive-line">' + renderTempoAwareComment(val, formatOptions) + '</div>';
+        if (key === 'key' || key === 'k') return '<div class="cw-directive cw-directive-line">Key: ' + renderTransposedChord(transposeChord(val, transpose, notation, formatOptions), formatOptions) + '</div>';
         return '';
       }
 
@@ -4503,6 +4499,29 @@
     } catch (err) {
       return String(value || '');
     }
+  }
+
+  function parseChordProDirectiveLine(line) {
+    const text = String(line || '');
+    const match = text.match(/^[^{\r\n]*\{([^{}]+)\}\s*$/);
+    if (!match) return null;
+    const inner = String(match[1] || '');
+    const colonIdx = inner.indexOf(':');
+    if (colonIdx === -1) return null;
+    return {
+      key: inner.slice(0, colonIdx).trim().toLowerCase(),
+      value: inner.slice(colonIdx + 1).trim()
+    };
+  }
+
+  function findChordProDirectiveValue(content, keys) {
+    const targets = Array.isArray(keys) ? keys.map(function(key) { return String(key || '').toLowerCase(); }) : [String(keys || '').toLowerCase()];
+    const lines = String(content || '').split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const directive = parseChordProDirectiveLine(lines[i]);
+      if (directive && targets.indexOf(directive.key) !== -1) return directive.value;
+    }
+    return '';
   }
 </script>
 
@@ -9096,15 +9115,15 @@ function renderFloatingPlayer(song) {
       const chordProEl = document.getElementById('edit-chordpro');
       if (!chordProEl) return;
       const chordPro = chordProEl.value;
-      const titleMatch = chordPro.match(/\{(?:title|t):\s*([^}]+)\}/i);
-      const subtitleMatch = chordPro.match(/\{(?:subtitle|st):\s*([^}]+)\}/i);
+      const titleValue = findChordProDirectiveValue(chordPro, ['title', 't']);
+      const subtitleValue = findChordProDirectiveValue(chordPro, ['subtitle', 'st']);
       const titleEl = document.getElementById('edit-title');
       const artistEl = document.getElementById('edit-artist');
       const slugEl = document.getElementById('edit-slug');
-      if (titleMatch && titleEl) titleEl.value = titleMatch[1].trim();
-      if (subtitleMatch && artistEl) artistEl.value = subtitleMatch[1].trim();
-      if (slugEl && !slugEl.value && titleMatch) {
-        slugEl.value = this.slugify(titleMatch[1]);
+      if (titleValue && titleEl) titleEl.value = titleValue;
+      if (subtitleValue && artistEl) artistEl.value = subtitleValue;
+      if (slugEl && !slugEl.value && titleValue) {
+        slugEl.value = this.slugify(titleValue);
       }
       this.editorInputChanged();
     },
