@@ -7787,9 +7787,20 @@ function renderFloatingPlayer(song) {
       const overlay = document.getElementById('busy-overlay');
       const messageEl = document.getElementById('busy-message');
       if (!overlay || !messageEl) return;
+      const wasHidden = overlay.classList.contains('hidden');
       messageEl.textContent = this._busyMessage || 'Working…';
       overlay.classList.toggle('hidden', this._busyCount <= 0);
       document.body.classList.toggle('has-busy-overlay', this._busyCount > 0);
+      if (wasHidden && this._busyCount > 0) {
+        const spinner = overlay.querySelector('.busy-spinner');
+        if (spinner) {
+          spinner.style.animation = 'none';
+          spinner.style.webkitAnimation = 'none';
+          void spinner.offsetWidth;
+          spinner.style.animation = '';
+          spinner.style.webkitAnimation = '';
+        }
+      }
     },
 
     bindGlobalPointerDefocus: function() {
