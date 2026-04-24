@@ -7245,7 +7245,8 @@ function renderFloatingPlayer(song) {
     chordFont: 'personal_chordpro_viewer_chordFont',
     accentColor: 'personal_chordpro_viewer_accentColor',
     noteColor: 'personal_chordpro_viewer_noteColor',
-    viewerSidebarWidth: 'personal_chordpro_viewer_viewerSidebarWidth'
+    viewerSidebarWidth: 'personal_chordpro_viewer_viewerSidebarWidth',
+    gasSyncUrl: 'personal_chordpro_viewer_gasSyncUrl'
   };
 
   function normalizeFontToken(kind, storedValue) {
@@ -7930,6 +7931,7 @@ function renderFloatingPlayer(song) {
           case 'delete-current-song': App.deleteCurrentSong(); break;
           case 'save-current-song': App.saveCurrentSong(); break;
           case 'export-all-songs': App.exportAllSongs(); break;
+          case 'sync-library-to-gas': App.syncLibraryToGas(); break;
           case 'import-all-songs': App.openSongLibraryImportDialog(); break;
           case 'export-current-song': App.exportCurrentEditorSong(); break;
           case 'open-editor': {
@@ -9754,6 +9756,79 @@ function renderFloatingPlayer(song) {
         });
     },
 
+    normalizeGasSyncUrl: function(value) {
+      const raw = String(value || '').trim();
+      if (!raw) return '';
+      try {
+        const url = new URL(raw);
+        if (url.protocol !== 'https:' && url.protocol !== 'http:') return '';
+        url.search = '';
+        url.hash = '';
+        return url.toString();
+      } catch (err) {
+        return '';
+      }
+    },
+
+    submitGasLibrarySyncForm: function(syncUrl, songs, setlists, editPassword, targetName) {
+      const form = document.createElement('form');
+      form.method = 'post';
+      form.action = syncUrl;
+      form.target = targetName || '_self';
+      form.acceptCharset = 'UTF-8';
+      form.style.display = 'none';
+
+      function appendField(name, value, isLarge) {
+        const field = isLarge ? document.createElement('textarea') : document.createElement('input');
+        field.name = name;
+        if (!isLarge) field.type = 'hidden';
+        field.value = String(value == null ? '' : value);
+        if (isLarge) field.hidden = true;
+        form.appendChild(field);
+      }
+
+      appendField('syncAction', 'sync-library', false);
+      appendField('editPassword', editPassword || '', false);
+      appendField('songsJson', JSON.stringify(Array.isArray(songs) ? songs : []), true);
+      appendField('setlistsJson', JSON.stringify(Array.isArray(setlists) ? setlists : []), true);
+
+      document.body.appendChild(form);
+      form.submit();
+      document.body.removeChild(form);
+    },
+
+    syncLibraryToGas: function() {
+      const rememberedUrl = loadStoredString(STORAGE_KEYS.gasSyncUrl, '');
+      const enteredUrl = window.prompt('Paste the GAS web app URL.', rememberedUrl);
+      if (enteredUrl === null) return false;
+      const syncUrl = this.normalizeGasSyncUrl(enteredUrl);
+      if (!syncUrl) {
+        this.flashStatus('error', 'Enter a valid GAS web app URL.', 2600);
+        return false;
+      }
+      if (!saveStoredString(STORAGE_KEYS.gasSyncUrl, syncUrl)) this.notifyStorageUnavailable();
+      const editPassword = window.prompt('If edit lock is enabled, enter the Unlock edit password. Leave blank if not used.', '');
+      if (editPassword === null) return false;
+
+      this.beginBusy('Preparing GAS sync...');
+      Promise.all([
+        ChordProStorage.getAllSongsFull(),
+        ChordProStorage.listSetlists()
+      ]).then(function(results) {
+        const songs = Array.isArray(results[0]) ? results[0] : [];
+        const setlists = (Array.isArray(results[1]) ? results[1] : []).map(normalizeSetlistForApp);
+        App.endBusy();
+        if (!window.confirm('Send ' + songs.length + ' song(s) and ' + setlists.length + ' setlist(s) to GAS? Matching slugs / ids in GAS will be overwritten, and all other GAS data will be kept.')) {
+          return;
+        }
+        App.submitGasLibrarySyncForm(syncUrl, songs, setlists, editPassword, '_self');
+      }).catch(function(err) {
+        App.endBusy();
+        App.setStatus('error', String(err && err.message || err || 'Failed to prepare GAS sync.'));
+        App.render();
+      });
+      return false;
+    },
     openSongLibraryImportDialog: function() {
       const input = document.getElementById('list-song-import-input');
       if (!input) {
@@ -10291,6 +10366,7 @@ function renderFloatingPlayer(song) {
             '</div>',
             '<div class="actions list-topbar-actions">',
               '<button class="btn primary setlists-entry-btn" data-app-action="show-setlists">Setlists</button>',
+              '<button class="btn" data-app-action="sync-library-to-gas">Sync to GAS</button>',
               '<button class="btn" data-app-action="export-all-songs">Export all</button>',
               '<button class="btn" data-app-action="import-all-songs">Import</button>',
               '<button class="btn primary" data-app-action="open-editor">Add Song</button>',
