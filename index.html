@@ -8023,6 +8023,7 @@ function renderFloatingPlayer(song) {
       });
 
       document.addEventListener('focusout', function(event) {
+        if (App && App._viewerRerenderInProgress) return;
         const target = event && event.target;
         if (!target || !target.matches) return;
         const blurAction = target.getAttribute('data-app-blur') || '';
