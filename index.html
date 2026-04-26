@@ -6,7 +6,7 @@
     <title>Personal ChordPro Viewer</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=LINE+Seed+JP:wght@400;700&family=M+PLUS+Rounded+1c:wght@400;500;700&family=Libre+Franklin:wght@400;500;700&family=Atkinson+Hyperlegible:wght@400;700&family=Zen+Old+Mincho:wght@400;500;700&family=Source+Serif+4:wght@400;500;700&family=Lora:wght@400;500;700&family=Klee+One:wght@400;600&family=Comic+Neue:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic:wght@400;700&family=LINE+Seed+JP:wght@400;700&family=M+PLUS+Rounded+1c:wght@400;500;700&family=Libre+Franklin:wght@400;500;700&family=Atkinson+Hyperlegible:wght@400;700&family=Zen+Old+Mincho:wght@400;500;700&family=Source+Serif+4:wght@400;500;700&family=Lora:wght@400;500;700&family=Klee+One:wght@400;600&family=Patrick+Hand&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,1,0" rel="stylesheet">
     <style>
   :root {
@@ -36,6 +36,17 @@
   }
 
   * { box-sizing: border-box; }
+  @font-face {
+    font-family: "MuseJazz Text Local";
+    src:
+      local("MuseJazz Text"),
+      local("MuseJazzText"),
+      local("MuseJazz Text Regular");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+
   html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
@@ -961,6 +972,24 @@
     flex: 0 0 auto;
     display: inline-block;
   }
+  .font-help-link {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    margin-top: 2px;
+    font-size: 0.74rem;
+    line-height: 1.2;
+    color: var(--muted);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(102, 112, 133, 0.28);
+  }
+  .font-help-link:hover,
+  .font-help-link:focus-visible {
+    color: var(--accent);
+    border-color: rgba(var(--accent-rgb), 0.35);
+    outline: none;
+  }
+
   .sidebar-panel-fonts .compact-select {
     font-size: 0.92rem;
   }
@@ -2694,7 +2723,7 @@
   }
 
   .cw-renderer {
-    --cw-lyrics-font: "BIZ UDPGothic", sans-serif;
+    --cw-lyrics-font: "BIZ UDGothic", sans-serif;
     --cw-chord-font: "JetBrains Mono", monospace;
     --cw-lyrics-size: 1.1rem;
     --cw-chord-size: 1.15rem;
@@ -2860,6 +2889,26 @@
   .cw-slash-bass {
     position: relative;
     top: 0.15em;
+  }
+  .cw-renderer.is-musejazz-chord-font .cw-chord {
+    font-weight: 400;
+    letter-spacing: normal;
+  }
+  .cw-renderer.is-musejazz-chord-font .cw-paren,
+  .cw-renderer.is-musejazz-chord-font .cw-symbol,
+  .cw-renderer.is-musejazz-chord-font .cw-tight-symbol,
+  .cw-renderer.is-musejazz-chord-font .cw-triangle {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .cw-renderer.is-musejazz-chord-font .cw-symbol,
+  .cw-renderer.is-musejazz-chord-font .cw-triangle {
+    top: 0;
+    font-size: 1em;
+  }
+  .cw-renderer.is-musejazz-chord-font .cw-symbol-flat,
+  .cw-renderer.is-musejazz-chord-font .cw-symbol-sharp {
+    transform: none;
   }
 
   @media (max-width: 1180px) {
@@ -3194,7 +3243,7 @@
     const SETLISTS_STORE = 'setlists';
 
     window.__PCV_FONT_PRESETS__ = window.__PCV_FONT_PRESETS__ || [
-      { label: 'BIZ UDPGothic', value: 'bizudpgothic', stack: '"BIZ UDPGothic", sans-serif' },
+      { label: 'BIZ UDGothic', value: 'bizudgothic', stack: '"BIZ UDGothic", sans-serif' },
       { label: 'LINE Seed JP', value: 'lineseedjp', stack: '"LINE Seed JP", sans-serif' },
       { label: 'M PLUS Rounded 1c', value: 'mplusrounded1c', stack: '"M PLUS Rounded 1c", sans-serif' },
       { label: 'Libre Franklin', value: 'librefranklin', stack: '"Libre Franklin", sans-serif' },
@@ -3203,10 +3252,11 @@
       { label: 'Source Serif 4', value: 'sourceserif4', stack: '"Source Serif 4", serif' },
       { label: 'Lora', value: 'lora', stack: '"Lora", serif' },
       { label: 'Klee One', value: 'kleeone', stack: '"Klee One", cursive' },
-      { label: 'Comic Neue', value: 'comicneue', stack: '"Comic Neue", cursive' },
-      { label: 'JetBrains Mono', value: 'jetbrainsmono', stack: '"JetBrains Mono", "BIZ UDPGothic", monospace' },
-      { label: 'IBM Plex Mono', value: 'ibmplexmono', stack: '"IBM Plex Mono", "BIZ UDPGothic", monospace' },
-      { label: 'Space Mono', value: 'spacemono', stack: '"Space Mono", "BIZ UDPGothic", monospace' }
+      { label: 'Patrick Hand', value: 'patrickhand', stack: '"Patrick Hand", cursive' },
+      { label: 'JetBrains Mono', value: 'jetbrainsmono', stack: '"JetBrains Mono", "BIZ UDGothic", monospace' },
+      { label: 'IBM Plex Mono', value: 'ibmplexmono', stack: '"IBM Plex Mono", "BIZ UDGothic", monospace' },
+      { label: 'Space Mono', value: 'spacemono', stack: '"Space Mono", "BIZ UDGothic", monospace' },
+      { label: 'MuseJazz Text (local)', value: 'musejazztextlocal', stack: '"MuseJazz Text Local", "MuseJazz Text", "MuseJazzText", "BIZ UDGothic", cursive' }
     ];
     const DEFAULT_FONTS = window.__PCV_FONT_PRESETS__;
 
@@ -4257,7 +4307,8 @@
         return renderDisplaySymbol(part, 'cw-symbol');
       }
       if ((!options || options.symbols !== false) && part === '\u25b3') {
-        return '<span class="cw-triangle">' + escapeHtml(part) + '</span>';
+        const triangleChar = options && options.museJazzChordSymbols ? '\uE18A' : part;
+        return '<span class="cw-triangle">' + escapeHtml(triangleChar) + '</span>';
       }
       if ((!options || options.suffixes !== false) && /^(add|sus|aug|dim|alt|6\/9)$/i.test(part)) {
         return '<span class="cw-suffix">' + escapeHtml(part) + '</span>';
@@ -4467,6 +4518,10 @@
     return result;
   }
 
+  function isMuseJazzChordFont(chordFont) {
+    return /MuseJazz/i.test(String(chordFont || ''));
+  }
+
   function renderChordPro(content, options) {
     const text = String(content || '');
     const lines = text.split('\n');
@@ -4475,6 +4530,8 @@
     const lyricsFont = options && options.lyricsFont ? options.lyricsFont : '"M PLUS Rounded 1c", sans-serif';
     const chordFont = options && options.chordFont ? options.chordFont : '"JetBrains Mono", monospace';
     const formatOptions = normalizeFormatOptions(options && options.formatOptions);
+    const isMuseJazzChord = isMuseJazzChordFont(chordFont);
+    const chordRenderOptions = Object.assign({}, formatOptions, { museJazzChordSymbols: isMuseJazzChord });
 
     const fontSizeScale = { 1: '0.92rem', 2: '1rem', 3: '1.1rem', 4: '1.22rem', 5: '1.36rem' };
     const chordScale = { 1: '0.92rem', 2: '1.04rem', 3: '1.16rem', 4: '1.28rem', 5: '1.4rem' };
@@ -4489,7 +4546,7 @@
         if (key === 'title' || key === 't' || key === 'subtitle' || key === 'st') return '';
         if (key === 'comment' || key === 'c') return '<div class="cw-comment cw-directive-line">' + renderTempoAwareComment(val, formatOptions) + '</div>';
         if (key === 'comment_italic' || key === 'ci') return '<div class="cw-comment-italic cw-directive-line">' + renderTempoAwareComment(val, formatOptions) + '</div>';
-        if (key === 'key' || key === 'k') return '<div class="cw-directive cw-directive-line">Key: ' + renderTransposedChord(transposeChord(val, transpose, notation, formatOptions), formatOptions) + '</div>';
+        if (key === 'key' || key === 'k') return '<div class="cw-directive cw-directive-line">Key: ' + renderTransposedChord(transposeChord(val, transpose, notation, formatOptions), chordRenderOptions) + '</div>';
         return '';
       }
 
@@ -4513,7 +4570,7 @@
       const displaySegments = applyAutoLyricSpacing(segments);
       return '<div class="cw-line">' + displaySegments.map(function(seg) {
         const chordHtml = seg.chord
-          ? renderBarAwareHtml(renderTransposedChord(transposeChord(seg.chord, transpose, notation, formatOptions), formatOptions))
+          ? renderBarAwareHtml(renderTransposedChord(transposeChord(seg.chord, transpose, notation, formatOptions), chordRenderOptions))
           : '';
         const displayLyricText = seg.text || '​';
         return [
@@ -4525,8 +4582,10 @@
       }).join('') + '</div>';
     }).join('');
 
+    const chordFontClass = isMuseJazzChord ? ' is-musejazz-chord-font' : '';
+
     return [
-      '<div class="cw-renderer"',
+      '<div class="cw-renderer', chordFontClass, '"',
       ' data-lyrics-font="', escapeHtml(encodeDataValue(lyricsFont)), '"',
       ' data-chord-font="', escapeHtml(encodeDataValue(chordFont)), '"',
       ' data-lyrics-size="', escapeHtml(lyricsSize), '"',
@@ -4545,7 +4604,9 @@
       const chordFont = safeDecodeDataValue(root.getAttribute('data-chord-font')) || '"JetBrains Mono", monospace';
       const lyricsSize = root.getAttribute('data-lyrics-size') || '1.1rem';
       const chordSize = root.getAttribute('data-chord-size') || '1.15rem';
+      const isMuseJazzChord = isMuseJazzChordFont(chordFont);
 
+      root.classList.toggle('is-musejazz-chord-font', isMuseJazzChord);
       root.style.setProperty('--cw-lyrics-font', lyricsFont);
       root.style.setProperty('--cw-chord-font', chordFont);
       root.style.setProperty('--cw-lyrics-size', lyricsSize);
@@ -7004,6 +7065,12 @@ function loadCurrentSongNotes(options) {
                       '<select class="select compact-select" data-app-change="lyrics-font">',
                         App.getAvailableFonts().map(function(font) { return optionHtml(font.value, font.label, state.lyricsFont); }).join(''),
                       '</select>',
+                    '</div>',
+                  '</div>',
+                  '<div class="setting-row setting-row-stack">',
+                    '<div class="setting-label"></div>',
+                    '<div class="field-wrap compact-field">',
+                      '<a class="font-help-link" href="https://github.com/musescore/MuseScore/blob/master/fonts/musejazz/MuseJazzText.otf" target="_blank" rel="noopener noreferrer">Install MuseJazz Text</a>',
                     '</div>',
                   '</div>',
                 '</div>',
