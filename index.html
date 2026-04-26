@@ -4424,12 +4424,24 @@
     const next = String(nextText || '');
     if (!previous || !next) return false;
     if (/\s$/.test(previous) || /^\s/.test(next)) return false;
-    return /[A-Za-z0-9]$/.test(previous) && /^[A-Za-z0-9]/.test(next);
+    if (/[A-Za-z0-9]$/.test(previous) && /^[A-Za-z0-9]/.test(next)) return true;
+    return /[,.!?;:]$/.test(previous) && /^[A-Za-z0-9]/.test(next);
+  }
+
+  function shouldInsertSpaceAfterLeadingPunctuation(previousText, nextText) {
+    const previous = String(previousText || '');
+    const next = String(nextText || '');
+    if (!previous || !next) return false;
+    return /[A-Za-z0-9]$/.test(previous) && /^[,.!?;:][A-Za-z0-9]/.test(next);
   }
 
   function getAutoSpacedLyricText(previousText, currentText) {
     const text = String(currentText || '');
-    return shouldInsertAutoLyricSpace(previousText, text) ? ' ' + text : text;
+    if (shouldInsertAutoLyricSpace(previousText, text)) return ' ' + text;
+    if (shouldInsertSpaceAfterLeadingPunctuation(previousText, text)) {
+      return text.replace(/^([,.!?;:])(?=[A-Za-z0-9])/, '$1 ');
+    }
+    return text;
   }
 
   function renderChordPro(content, options) {
