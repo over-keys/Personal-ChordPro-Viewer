@@ -4428,20 +4428,41 @@
     return /[,.!?;:]$/.test(previous) && /^[A-Za-z0-9]/.test(next);
   }
 
-  function shouldInsertSpaceAfterLeadingPunctuation(previousText, nextText) {
+  function getLeadingPunctuationSpacingMatch(previousText, nextText) {
     const previous = String(previousText || '');
     const next = String(nextText || '');
-    if (!previous || !next) return false;
-    return /[A-Za-z0-9]$/.test(previous) && /^[,.!?;:][A-Za-z0-9]/.test(next);
+    if (!previous || !next) return null;
+    if (!/[A-Za-z0-9]$/.test(previous)) return null;
+    return next.match(/^([,.!?;:])\s*(?=[A-Za-z0-9])/);
   }
 
-  function getAutoSpacedLyricText(previousText, currentText) {
-    const text = String(currentText || '');
-    if (shouldInsertAutoLyricSpace(previousText, text)) return ' ' + text;
-    if (shouldInsertSpaceAfterLeadingPunctuation(previousText, text)) {
-      return text.replace(/^([,.!?;:])(?=[A-Za-z0-9])/, '$1 ');
+  function applyAutoLyricSpacing(segments) {
+    const result = segments.map(function(seg) {
+      return {
+        chord: seg.chord,
+        text: String(seg.text || '')
+      };
+    });
+    let previousLyricText = '';
+    let previousTextIndex = -1;
+    for (let i = 0; i < result.length; i++) {
+      const seg = result[i];
+      if (seg.chord !== null) {
+        const punctMatch = getLeadingPunctuationSpacingMatch(previousLyricText, seg.text);
+        if (punctMatch && previousTextIndex >= 0) {
+          const movedText = punctMatch[1] + ' ';
+          result[previousTextIndex].text += movedText;
+          previousLyricText += movedText;
+          seg.text = seg.text.slice(punctMatch[0].length);
+        } else if (shouldInsertAutoLyricSpace(previousLyricText, seg.text) && previousTextIndex >= 0) {
+          result[previousTextIndex].text += ' ';
+          previousLyricText += ' ';
+        }
+      }
+      previousLyricText += seg.text;
+      if (seg.text) previousTextIndex = i;
     }
-    return text;
+    return result;
   }
 
   function renderChordPro(content, options) {
@@ -4487,17 +4508,12 @@
       const hasChords = segments.some(function(seg) { return seg.chord !== null; });
       if (!hasChords) return '<div class="cw-plain-line">' + renderBarAwareText(line) + '</div>';
 
-      let previousLyricText = '';
-      return '<div class="cw-line">' + segments.map(function(seg) {
+      const displaySegments = applyAutoLyricSpacing(segments);
+      return '<div class="cw-line">' + displaySegments.map(function(seg) {
         const chordHtml = seg.chord
           ? renderBarAwareHtml(renderTransposedChord(transposeChord(seg.chord, transpose, notation, formatOptions), formatOptions))
           : '';
-        const rawLyricText = seg.text || '';
-        const lyricText = seg.chord !== null
-          ? getAutoSpacedLyricText(previousLyricText, rawLyricText)
-          : rawLyricText;
-        const displayLyricText = lyricText || '​';
-        previousLyricText += lyricText;
+        const displayLyricText = seg.text || '​';
         return [
           '<div class="cw-segment">',
           '<span class="cw-chord">', chordHtml, '</span>',
