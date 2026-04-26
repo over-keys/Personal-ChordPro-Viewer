@@ -4419,6 +4419,19 @@
     return String(html || '').replace(/\|/g, '<span class="cw-barline">|</span>');
   }
 
+  function shouldInsertAutoLyricSpace(previousText, nextText) {
+    const previous = String(previousText || '');
+    const next = String(nextText || '');
+    if (!previous || !next) return false;
+    if (/\s$/.test(previous) || /^\s/.test(next)) return false;
+    return /[A-Za-z0-9]$/.test(previous) && /^[A-Za-z0-9]/.test(next);
+  }
+
+  function getAutoSpacedLyricText(previousText, currentText) {
+    const text = String(currentText || '');
+    return shouldInsertAutoLyricSpace(previousText, text) ? ' ' + text : text;
+  }
+
   function renderChordPro(content, options) {
     const text = String(content || '');
     const lines = text.split('\n');
@@ -4462,14 +4475,21 @@
       const hasChords = segments.some(function(seg) { return seg.chord !== null; });
       if (!hasChords) return '<div class="cw-plain-line">' + renderBarAwareText(line) + '</div>';
 
+      let previousLyricText = '';
       return '<div class="cw-line">' + segments.map(function(seg) {
         const chordHtml = seg.chord
           ? renderBarAwareHtml(renderTransposedChord(transposeChord(seg.chord, transpose, notation, formatOptions), formatOptions))
           : '';
+        const rawLyricText = seg.text || '';
+        const lyricText = seg.chord !== null
+          ? getAutoSpacedLyricText(previousLyricText, rawLyricText)
+          : rawLyricText;
+        const displayLyricText = lyricText || '​';
+        previousLyricText += lyricText;
         return [
           '<div class="cw-segment">',
           '<span class="cw-chord">', chordHtml, '</span>',
-          '<span class="cw-lyrics">', renderBarAwareText(seg.text || '​'), '</span>',
+          '<span class="cw-lyrics">', renderBarAwareText(displayLyricText), '</span>',
           '</div>'
         ].join('');
       }).join('') + '</div>';
