@@ -36,17 +36,6 @@
   }
 
   * { box-sizing: border-box; }
-  @font-face {
-    font-family: "MuseJazz Text Local";
-    src:
-      local("MuseJazz Text"),
-      local("MuseJazzText"),
-      local("MuseJazz Text Regular");
-    font-weight: 400;
-    font-style: normal;
-    font-display: swap;
-  }
-
   html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
@@ -972,24 +961,6 @@
     flex: 0 0 auto;
     display: inline-block;
   }
-  .font-help-link {
-    display: inline-flex;
-    align-items: center;
-    width: fit-content;
-    margin-top: 2px;
-    font-size: 0.74rem;
-    line-height: 1.2;
-    color: var(--muted);
-    text-decoration: none;
-    border-bottom: 1px solid rgba(102, 112, 133, 0.28);
-  }
-  .font-help-link:hover,
-  .font-help-link:focus-visible {
-    color: var(--accent);
-    border-color: rgba(var(--accent-rgb), 0.35);
-    outline: none;
-  }
-
   .sidebar-panel-fonts .compact-select {
     font-size: 0.92rem;
   }
@@ -3235,8 +3206,7 @@
       { label: 'Patrick Hand', value: 'patrickhand', stack: '"Patrick Hand", cursive' },
       { label: 'JetBrains Mono', value: 'jetbrainsmono', stack: '"JetBrains Mono", "BIZ UDGothic", monospace' },
       { label: 'IBM Plex Mono', value: 'ibmplexmono', stack: '"IBM Plex Mono", "BIZ UDGothic", monospace' },
-      { label: 'Space Mono', value: 'spacemono', stack: '"Space Mono", "BIZ UDGothic", monospace' },
-      { label: 'MuseJazz Text (local)', value: 'musejazztextlocal', stack: '"MuseJazz Text Local", "MuseJazz Text", "MuseJazzText", "BIZ UDGothic", cursive' }
+      { label: 'Space Mono', value: 'spacemono', stack: '"Space Mono", "BIZ UDGothic", monospace' }
     ];
     const DEFAULT_FONTS = window.__PCV_FONT_PRESETS__;
 
@@ -7034,12 +7004,6 @@ function loadCurrentSongNotes(options) {
                       '<select class="select compact-select" data-app-change="lyrics-font">',
                         App.getAvailableFonts().map(function(font) { return optionHtml(font.value, font.label, state.lyricsFont); }).join(''),
                       '</select>',
-                    '</div>',
-                  '</div>',
-                  '<div class="setting-row setting-row-stack">',
-                    '<div class="setting-label"></div>',
-                    '<div class="field-wrap compact-field">',
-                      '<a class="font-help-link" href="https://github.com/musescore/MuseScore/blob/master/fonts/musejazz/MuseJazzText.otf" target="_blank" rel="noopener noreferrer">Install MuseJazz Text</a>',
                     '</div>',
                   '</div>',
                 '</div>',
