@@ -4793,7 +4793,13 @@
       lastAdaptiveSpeedAdjustAt = 0;
     }
 
-    function markManualScrollIntent() {
+    function isSidebarInteraction(event) {
+      const target = event && event.target;
+      return !!(target && target.closest && target.closest('#viewer-sidebar-scroll'));
+    }
+
+    function markManualScrollIntent(event) {
+      if (isSidebarInteraction(event)) return;
       const now = performance.now();
       manualScrollIntentUntil = now + 800;
       if (App && App.state && App.state.page === 'view' && App.state.scroll && App.state.scroll.isPlaying) {
@@ -6364,17 +6370,17 @@ function loadCurrentSongNotes(options) {
         els.scrollPane.addEventListener('scroll', function() {
           handleScrollPositionChange(els);
         }, { passive: true });
-        els.scrollPane.addEventListener('wheel', function() {
-          markManualScrollIntent();
+        els.scrollPane.addEventListener('wheel', function(event) {
+          markManualScrollIntent(event);
         }, { passive: true });
-        els.scrollPane.addEventListener('touchstart', function() {
-          markManualScrollIntent();
+        els.scrollPane.addEventListener('touchstart', function(event) {
+          markManualScrollIntent(event);
         }, { passive: true });
-        els.scrollPane.addEventListener('touchmove', function() {
-          markManualScrollIntent();
+        els.scrollPane.addEventListener('touchmove', function(event) {
+          markManualScrollIntent(event);
         }, { passive: true });
-        els.scrollPane.addEventListener('pointerdown', function() {
-          markManualScrollIntent();
+        els.scrollPane.addEventListener('pointerdown', function(event) {
+          markManualScrollIntent(event);
         }, { passive: true });
       }
       if (!windowScrollBound) {
@@ -6382,17 +6388,17 @@ function loadCurrentSongNotes(options) {
         window.addEventListener('scroll', function() {
           handleScrollPositionChange();
         }, { passive: true });
-        window.addEventListener('wheel', function() {
-          markManualScrollIntent();
+        window.addEventListener('wheel', function(event) {
+          markManualScrollIntent(event);
         }, { passive: true });
-        window.addEventListener('touchstart', function() {
-          markManualScrollIntent();
+        window.addEventListener('touchstart', function(event) {
+          markManualScrollIntent(event);
         }, { passive: true });
-        window.addEventListener('touchmove', function() {
-          markManualScrollIntent();
+        window.addEventListener('touchmove', function(event) {
+          markManualScrollIntent(event);
         }, { passive: true });
-        window.addEventListener('pointerdown', function() {
-          markManualScrollIntent();
+        window.addEventListener('pointerdown', function(event) {
+          markManualScrollIntent(event);
         }, { passive: true });
       }
     }
