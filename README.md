@@ -41,7 +41,7 @@ This app is designed for personal use and is intended only for data that users a
 
 ## Font attribution
 
-This project uses **MuseJazz Text** for chord symbol rendering.  
-MuseJazz Text is part of the MuseJazz font family from the MuseScore project and is distributed under the **SIL Open Font License 1.1 (OFL-1.1)**.
+This project uses MuseJazz Text for chord symbol rendering.  
+MuseJazz Text is part of the MuseJazz font family from the MuseScore project and is distributed under the SIL Open Font License 1.1 (OFL-1.1).
 
 See `font/OFL.txt` for the font license.
