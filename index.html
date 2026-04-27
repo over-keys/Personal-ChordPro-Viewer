@@ -41,7 +41,8 @@
     src:
       local("MuseJazz Text"),
       local("MuseJazzText"),
-      local("MuseJazz Text Regular");
+      local("MuseJazz Text Regular"),
+      url("https://over-keys.github.io/Personal-ChordPro-Viewer/font/MuseJazzText.otf") format("opentype");
     font-weight: 400;
     font-style: normal;
     font-display: swap;
@@ -2723,8 +2724,8 @@
   }
 
   .cw-renderer {
-    --cw-lyrics-font: "BIZ UDGothic", sans-serif;
-    --cw-chord-font: "JetBrains Mono", monospace;
+    --cw-lyrics-font: "LINE Seed JP", sans-serif;
+    --cw-chord-font: "MuseJazz Text Local", "JetBrains Mono", monospace;
     --cw-lyrics-size: 1.1rem;
     --cw-chord-size: 1.15rem;
     line-height: 1.6;
@@ -3256,7 +3257,7 @@
       { label: 'JetBrains Mono', value: 'jetbrainsmono', stack: '"JetBrains Mono", "BIZ UDGothic", monospace' },
       { label: 'IBM Plex Mono', value: 'ibmplexmono', stack: '"IBM Plex Mono", "BIZ UDGothic", monospace' },
       { label: 'Space Mono', value: 'spacemono', stack: '"Space Mono", "BIZ UDGothic", monospace' },
-      { label: 'MuseJazz Text (local)', value: 'musejazztextlocal', stack: '"MuseJazz Text Local", "MuseJazz Text", "MuseJazzText", "BIZ UDGothic", cursive' }
+      { label: 'MuseJazz Text', value: 'musejazztextlocal', stack: '"MuseJazz Text Local", "JetBrains Mono", monospace' }
     ];
     const DEFAULT_FONTS = window.__PCV_FONT_PRESETS__;
 
@@ -4202,6 +4203,7 @@
     }
 
     if (!options || options.symbols !== false) {
+      transposed = transposed.replace(/[\u0394\uE18A]/g, '\u25b3');
       transposed = transposed.replace(/maj/gi, '\u25b3');
       transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)\+/g, '$1aug');
       transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)-/g, '$1m');
@@ -4298,7 +4300,7 @@
 
   function renderChordPart(chordStr, options) {
     if (!chordStr) return '';
-    const parts = String(chordStr).split(/(\([^)]+\))|([#b\u266f\u266d])|([\u25b3]|add|sus|aug|dim|alt|6\/9)/i);
+    const parts = String(chordStr).split(/(\([^)]+\))|([#b\u266f\u266d])|([\u25b3\u0394\uE18A]|add|sus|aug|dim|alt|6\/9)/i);
     return parts.map(function(part) {
       if (!part) return '';
       if (part.startsWith('(') && part.endsWith(')')) {
@@ -4307,8 +4309,8 @@
       if ((!options || options.symbols !== false) && (part === '#' || part === 'b' || part === '\u266f' || part === '\u266d')) {
         return renderDisplaySymbol(part, 'cw-symbol');
       }
-      if ((!options || options.symbols !== false) && part === '\u25b3') {
-        const triangleChar = options && options.museJazzChordSymbols ? '\uE18A' : part;
+      if ((!options || options.symbols !== false) && (part === '\u25b3' || part === '\u0394' || part === '\uE18A')) {
+        const triangleChar = options && options.museJazzChordSymbols ? '\uE18A' : '\u25b3';
         return '<span class="cw-triangle">' + escapeHtml(triangleChar) + '</span>';
       }
       if ((!options || options.suffixes !== false) && /^(add|sus|aug|dim|alt|6\/9)$/i.test(part)) {
@@ -4528,8 +4530,8 @@
     const lines = text.split('\n');
     const transpose = options && typeof options.transpose === 'number' ? options.transpose : 0;
     const notation = options && options.notation ? options.notation : 'default';
-    const lyricsFont = options && options.lyricsFont ? options.lyricsFont : '"M PLUS Rounded 1c", sans-serif';
-    const chordFont = options && options.chordFont ? options.chordFont : '"JetBrains Mono", monospace';
+    const lyricsFont = options && options.lyricsFont ? options.lyricsFont : '"LINE Seed JP", sans-serif';
+    const chordFont = options && options.chordFont ? options.chordFont : '"MuseJazz Text Local", "JetBrains Mono", monospace';
     const formatOptions = normalizeFormatOptions(options && options.formatOptions);
     const isMuseJazzChord = isMuseJazzChordFont(chordFont);
     const chordRenderOptions = Object.assign({}, formatOptions, { museJazzChordSymbols: isMuseJazzChord });
@@ -4601,8 +4603,8 @@
     const scope = container || document;
     const roots = scope.querySelectorAll ? scope.querySelectorAll('.cw-renderer') : [];
     roots.forEach(function(root) {
-      const lyricsFont = safeDecodeDataValue(root.getAttribute('data-lyrics-font')) || '"M PLUS Rounded 1c", sans-serif';
-      const chordFont = safeDecodeDataValue(root.getAttribute('data-chord-font')) || '"JetBrains Mono", monospace';
+      const lyricsFont = safeDecodeDataValue(root.getAttribute('data-lyrics-font')) || '"LINE Seed JP", sans-serif';
+      const chordFont = safeDecodeDataValue(root.getAttribute('data-chord-font')) || '"MuseJazz Text Local", "JetBrains Mono", monospace';
       const lyricsSize = root.getAttribute('data-lyrics-size') || '1.1rem';
       const chordSize = root.getAttribute('data-chord-size') || '1.15rem';
       const isMuseJazzChord = isMuseJazzChordFont(chordFont);
@@ -7071,7 +7073,7 @@ function loadCurrentSongNotes(options) {
                   '<div class="setting-row setting-row-stack">',
                     '<div class="setting-label"></div>',
                     '<div class="field-wrap compact-field">',
-                      '<a class="font-help-link" href="https://github.com/musescore/MuseScore/blob/master/fonts/musejazz/MuseJazzText.otf" target="_blank" rel="noopener noreferrer">Install MuseJazz Text</a>',
+                      '<a class="font-help-link" href="https://over-keys.github.io/Personal-ChordPro-Viewer/font/MuseJazzText.otf" target="_blank" rel="noopener noreferrer">MuseJazz Text font</a>',
                     '</div>',
                   '</div>',
                 '</div>',
@@ -7389,11 +7391,13 @@ function renderFloatingPlayer(song) {
     const presets = FONT_PRESETS;
     const raw = String(storedValue || '').trim();
     const normalized = raw;
-    if (!normalized) return presets[0] ? presets[0].value : '';
+    const defaultToken = kind === 'chord' ? 'musejazztextlocal' : (kind === 'lyrics' ? 'lineseedjp' : '');
+    const fallback = presets.find(function(item) { return item.value === defaultToken; }) || presets[0];
+    if (!normalized) return fallback ? fallback.value : '';
     const matched = presets.find(function(item) {
       return item.value === normalized || item.stack === normalized;
     });
-    return matched ? matched.value : (presets[0] ? presets[0].value : normalized);
+    return matched ? matched.value : (fallback ? fallback.value : normalized);
   }
 
   function getFontStack(kind, token) {
@@ -7646,8 +7650,8 @@ function renderFloatingPlayer(song) {
       fontSizeLevel: loadStoredLevel(STORAGE_KEYS.fontSizeLevel, 3),
       chordSizeLevel: loadStoredLevel(STORAGE_KEYS.chordSizeLevel, 3),
       formatOptions: normalizeFormatOptions(loadStoredJson(STORAGE_KEYS.formatOptions, { symbols: true, tensions: true, slashChords: true, suffixes: true, bpmBlinkColor: 'red' })),
-      lyricsFont: normalizeFontToken('lyrics', loadStoredString(STORAGE_KEYS.lyricsFont, 'mplusrounded1c')),
-      chordFont: normalizeFontToken('chord', loadStoredString(STORAGE_KEYS.chordFont, 'jetbrainsmono')),
+      lyricsFont: normalizeFontToken('lyrics', loadStoredString(STORAGE_KEYS.lyricsFont, 'lineseedjp')),
+      chordFont: normalizeFontToken('chord', loadStoredString(STORAGE_KEYS.chordFont, 'musejazztextlocal')),
       accentColor: normalizeAccentColor(loadStoredString(STORAGE_KEYS.accentColor, 'blue')),
       noteColor: normalizeNoteColor(loadStoredString(STORAGE_KEYS.noteColor, 'yellow')),
       viewerSidebarWidth: loadStoredInteger(STORAGE_KEYS.viewerSidebarWidth, 300, 160, 520),
