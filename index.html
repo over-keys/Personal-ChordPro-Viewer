@@ -4206,6 +4206,7 @@
       transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)\+/g, '$1aug');
       transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)-/g, '$1m');
       transposed = transposed.replace(/mM(?=[0-9()/\u25b3]|$)/g, 'm\u25b3');
+      transposed = transposed.replace(/([aA][uU][gG])M(?=[0-9()/\u25b3]|$)/g, '$1\u25b3');
       transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)M(?=[0-9()/\u25b3]|$)/g, '$1\u25b3');
       transposed = transposed.replace(/[-\u2013]([0-9])/g, '\u266d$1');
       transposed = transposed.replace(/b([0-9])/g, '\u266d$1');
