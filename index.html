@@ -4302,7 +4302,7 @@
 
   function renderChordPart(chordStr, options) {
     if (!chordStr) return '';
-    const parts = String(chordStr).split(/(\([^)]+\))|([#b\u266f\u266d])|([\u25b3\u0394\uE18A]|add|sus|aug|dim|alt|6\/9)/i);
+    const parts = String(chordStr).split(/(\([^)]+\))|([#b\u266f\u266d])|([\u25b3\u0394\uE18A]|add|sus|aug|dim|alt|omit|6\/9)/i);
     return parts.map(function(part) {
       if (!part) return '';
       if (part.startsWith('(') && part.endsWith(')')) {
@@ -4315,7 +4315,7 @@
         const triangleChar = options && options.museJazzChordSymbols ? '\uE18A' : '\u25b3';
         return '<span class="cw-triangle">' + escapeHtml(triangleChar) + '</span>';
       }
-      if ((!options || options.suffixes !== false) && /^(add|sus|aug|dim|alt|6\/9)$/i.test(part)) {
+      if ((!options || options.suffixes !== false) && /^(add|sus|aug|dim|alt|omit|6\/9)$/i.test(part)) {
         return '<span class="cw-suffix">' + escapeHtml(part) + '</span>';
       }
       return escapeHtml(part);
