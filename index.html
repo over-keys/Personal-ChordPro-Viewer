@@ -1806,6 +1806,7 @@
     user-select: none;
     caret-color: transparent;
   }
+  .view-mode-body .viewer-content .sheet-stage,
   .view-mode-body .sheet-stage,
   .view-mode-body .sheet-stage .cw-sheet,
   .view-mode-body .sheet-stage .cw-sheet * {
@@ -4207,8 +4208,11 @@
     if (!options || options.symbols !== false) {
       transposed = transposed.replace(/[\u0394\uE18A]/g, '\u25b3');
       transposed = transposed.replace(/maj/gi, '\u25b3');
+      transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)ma(?=[0-9()/\u25b3]|$)/gi, '$1\u25b3');
       transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)\+/g, '$1aug');
       transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)-/g, '$1m');
+      transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)min(?=[0-9()/\u25b3]|$)/gi, '$1m');
+      transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)mi(?=[0-9()/\u25b3]|$)/gi, '$1m');
       transposed = transposed.replace(/mM(?=[0-9()/\u25b3]|$)/g, 'm\u25b3');
       transposed = transposed.replace(/([aA][uU][gG])M(?=[0-9()/\u25b3]|$)/g, '$1\u25b3');
       transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)M(?=[0-9()/\u25b3]|$)/g, '$1\u25b3');
@@ -4302,7 +4306,7 @@
 
   function renderChordPart(chordStr, options) {
     if (!chordStr) return '';
-    const parts = String(chordStr).split(/(\([^)]+\))|([#b\u266f\u266d])|([\u25b3\u0394\uE18A]|add|sus|aug|dim|alt|omit|6\/9)/i);
+    const parts = String(chordStr).split(/(\([^)]+\))|([#b\u266f\u266d])|([\u25b3\u0394\uE18A]|add|sus|aug|dim|alt|6\/9)/i);
     return parts.map(function(part) {
       if (!part) return '';
       if (part.startsWith('(') && part.endsWith(')')) {
@@ -4315,7 +4319,7 @@
         const triangleChar = options && options.museJazzChordSymbols ? '\uE18A' : '\u25b3';
         return '<span class="cw-triangle">' + escapeHtml(triangleChar) + '</span>';
       }
-      if ((!options || options.suffixes !== false) && /^(add|sus|aug|dim|alt|omit|6\/9)$/i.test(part)) {
+      if ((!options || options.suffixes !== false) && /^(add|sus|aug|dim|alt|6\/9)$/i.test(part)) {
         return '<span class="cw-suffix">' + escapeHtml(part) + '</span>';
       }
       return escapeHtml(part);
@@ -6701,7 +6705,8 @@ function loadCurrentSongNotes(options) {
       if (!active || active === document.body) return;
       const tagName = active.tagName ? String(active.tagName).toLowerCase() : '';
       const isInteractive = tagName === 'input' || tagName === 'textarea' || tagName === 'select' || tagName === 'button' || active.isContentEditable;
-      if (!isInteractive) return;
+      const isViewerFocus = !!(active.closest && active.closest('#viewer-content'));
+      if (!isInteractive && !isViewerFocus) return;
       if (typeof active.blur === 'function') active.blur();
     }
 
