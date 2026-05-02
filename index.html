@@ -2761,6 +2761,10 @@
     background: #fef2f2;
     color: #b91c1c;
   }
+  .status-box.warning {
+    background: #fffbeb;
+    color: #92400e;
+  }
   .empty-state {
     padding: 30px 20px;
     text-align: center;
@@ -5224,8 +5228,14 @@ function loadCurrentSongNotes(options) {
     }
 
     function setSongNoteStatus(type, message) {
-      if (App && typeof App.setStatus === 'function') {
+      if (!App) return;
+      if (type === 'info' && typeof App.flashStatus === 'function') {
+        App.flashStatus(type, message, 2200);
+        return;
+      }
+      if (typeof App.setStatus === 'function') {
         App.setStatus(type, message);
+        if (typeof App.render === 'function') App.render();
       }
     }
 
@@ -5246,6 +5256,10 @@ function loadCurrentSongNotes(options) {
         return false;
       }
       const notes = getCurrentSongNotesForExport();
+      if (!notes.length) {
+        setSongNoteStatus('info', 'No sticky notes to export.');
+        return false;
+      }
       downloadSongNoteJson(getCurrentSongNoteFileBaseName() + '.json', {
         type: 'personal-chordpro-viewer-notes',
         version: 1,
@@ -5258,7 +5272,7 @@ function loadCurrentSongNotes(options) {
           notes: notes
         }
       });
-      setSongNoteStatus('info', notes.length ? 'Song notes exported.' : 'Empty song note file exported.');
+      setSongNoteStatus('info', 'Song notes exported.');
       return false;
     }
 
@@ -5269,19 +5283,28 @@ function loadCurrentSongNotes(options) {
         setSongNoteStatus('error', 'Failed to read stored notes.');
         return false;
       }
+      const exportEntries = entries.map(function(entry) {
+        return {
+          slug: entry.slug,
+          notes: normalizeSongNoteList(entry.notes).filter(function(note) {
+            return note.text.length > 0;
+          })
+        };
+      }).filter(function(entry) {
+        return entry.slug && entry.notes.length > 0;
+      });
+      if (!exportEntries.length) {
+        setSongNoteStatus('info', 'No sticky notes to export.');
+        return false;
+      }
       downloadSongNoteJson('personal-chordpro-viewer-notes-all.json', {
         type: 'personal-chordpro-viewer-notes',
         version: 1,
         scope: 'all',
         exportedAt: new Date().toISOString(),
-        songs: entries.map(function(entry) {
-          return {
-            slug: entry.slug,
-            notes: entry.notes
-          };
-        })
+        songs: exportEntries
       });
-      setSongNoteStatus('info', entries.length ? ('All notes exported for ' + entries.length + ' song(s).') : 'Empty all-song note file exported.');
+      setSongNoteStatus('info', 'All notes exported for ' + exportEntries.length + ' song(s).');
       return false;
     }
 
@@ -5442,7 +5465,7 @@ function loadCurrentSongNotes(options) {
       if (missingSlugs.length) {
         statusMessage += ' Skipped missing slug(s): ' + missingSlugs.join(', ') + '.';
       }
-      setSongNoteStatus('info', statusMessage);
+      setSongNoteStatus(missingSlugs.length ? 'warning' : 'info', statusMessage);
     }
 
     function handleSongNoteImportChange(event, scope) {
@@ -6964,7 +6987,7 @@ function loadCurrentSongNotes(options) {
             '<div class="panel viewer-body pane-scroll" id="viewer-scroll-pane">',
               '<div class="viewer-content" id="viewer-content">',
                 App.renderSetlistPlaybackBar(),
-                App.status.message ? '<div class="status-box viewer-status' + (App.status.type === 'error' ? ' error' : '') + '">' + escapeHtml(App.status.message) + '</div>' : '',
+                App.status.message ? '<div class="status-box viewer-status' + (App.status.type === 'error' ? ' error' : (App.status.type === 'warning' ? ' warning' : '')) + '">' + escapeHtml(App.status.message) + '</div>' : '',
                 '<div class="song-header">',
                   '<div class="song-header-main">',
                     '<h2>' + escapeHtml(song.title) + '</h2>',
@@ -7351,7 +7374,7 @@ function renderFloatingPlayer(song) {
               '<button class="btn soft-accent" type="button" data-app-action="save-current-song">Save</button>',
             '</div>',
           '</div>',
-          App.status.message ? '<div class="status-box' + (App.status.type === 'error' ? ' error' : '') + '">' + escapeHtml(App.status.message) + '</div>' : '',
+          App.status.message ? '<div class="status-box' + (App.status.type === 'error' ? ' error' : (App.status.type === 'warning' ? ' warning' : '')) + '">' + escapeHtml(App.status.message) + '</div>' : '',
           '<div class="editor-grid">',
             '<div class="panel pad">',
               '<div class="form-stack">',
@@ -9003,7 +9026,7 @@ function renderFloatingPlayer(song) {
       this.beginBusy('Saving setlist…');
       google.script.run
         .withSuccessHandler(function(result) {
-          App.setStatus('info', 'Setlist saved.');
+          App.flashStatus('info', 'Setlist saved.', 2200);
           App.loadSetlists(function() {
             App.openSetlistEditor(result && result.id ? result.id : payload.id, { skipBusy: true, endBusyOnDone: true, keepStatus: true, editMode: false });
           }, { skipBusy: true });
@@ -9023,7 +9046,7 @@ function renderFloatingPlayer(song) {
       this.beginBusy('Deleting setlist…');
       google.script.run
         .withSuccessHandler(function() {
-          App.setStatus('info', 'Setlist deleted.');
+          App.flashStatus('info', 'Setlist deleted.', 2200);
           App.loadSetlists(function() {
             App.showSetlists({ skipBusy: true, endBusyOnDone: true, keepStatus: true });
           }, { skipBusy: true });
@@ -9039,7 +9062,7 @@ function renderFloatingPlayer(song) {
     openSong: function(slug, options) {
       options = options || {};
       Viewer.stopAutoScroll({ skipRender: true, resetProgress: true });
-      this.clearStatus();
+      if (!options.keepStatus) this.clearStatus();
       if (!options.skipBusy) this.beginBusy(options.busyMessage || 'Opening song…');
       google.script.run
         .withSuccessHandler(function(song) {
@@ -9214,12 +9237,16 @@ function renderFloatingPlayer(song) {
           } catch (error) {
             cleanupWarning = 'Saved, but failed to move sticky notes: ' + String(error && error.message || error);
           }
-          App.setStatus(cleanupWarning ? 'error' : 'info', cleanupWarning || 'Saved.');
+          if (cleanupWarning) {
+            App.setStatus('error', cleanupWarning);
+          } else {
+            App.flashStatus('info', 'Saved.', 2200);
+          }
           App.state.editorReturn = null;
           App.setBusyMessage('Refreshing list…');
           App.loadSongs(function() {
             App.setBusyMessage('Opening song…');
-            App.openSong(result.slug, { skipBusy: true, endBusyOnDone: true });
+            App.openSong(result.slug, { skipBusy: true, endBusyOnDone: true, keepStatus: true });
           }, { skipBusy: true });
         })
         .withFailureHandler(function(err) {
@@ -9257,7 +9284,11 @@ function renderFloatingPlayer(song) {
           } catch (error) {
             cleanupWarning = 'Deleted song, but failed to delete sticky notes: ' + String(error && error.message || error);
           }
-          App.setStatus(cleanupWarning ? 'error' : 'info', cleanupWarning || 'Deleted.');
+          if (cleanupWarning) {
+            App.setStatus('error', cleanupWarning);
+          } else {
+            App.flashStatus('info', 'Deleted.', 2200);
+          }
           App.state.editorReturn = null;
           App.setBusyMessage('Refreshing list…');
           App.loadSongs(function() {
@@ -9354,8 +9385,7 @@ function renderFloatingPlayer(song) {
           }
           App.closeYouTubePlayback();
           App.endBusy();
-          App.setStatus('info', 'YouTube link saved.');
-          App.render();
+          App.flashStatus('info', 'YouTube link saved.', 2200);
         })
         .catch(function(err) {
           App.endBusy();
@@ -9455,6 +9485,7 @@ function renderFloatingPlayer(song) {
     flashStatus: function(type, message, durationMs) {
       this.setStatus(type, message);
       this.render();
+      if (type === 'error' || type === 'warning') return;
       var expectedMessage = message;
       this._statusTimer = window.setTimeout(function() {
         if (App.status && App.status.message === expectedMessage) {
@@ -9982,8 +10013,7 @@ function renderFloatingPlayer(song) {
             App.captureViewerSongControlsBaseline();
           }
           App.endBusy();
-          App.setStatus('info', 'Song controls saved.');
-          App.render();
+          App.flashStatus('info', 'Song controls saved.', 2200);
         })
         .withFailureHandler(function(err) {
           App.endBusy();
@@ -10303,7 +10333,7 @@ function renderFloatingPlayer(song) {
           App.beginBusy('Importing setlists…');
           ChordProStorage.importSetlists(setlists)
             .then(function(result) {
-              App.setStatus('info', 'Imported ' + ((result && result.count) || setlists.length) + ' setlist(s).');
+              App.flashStatus('info', 'Imported ' + ((result && result.count) || setlists.length) + ' setlist(s).', 2400);
               App.showSetlists({ endBusyOnDone: true, keepStatus: true });
             })
             .catch(function(err) {
@@ -10532,7 +10562,7 @@ function renderFloatingPlayer(song) {
               '<button class="btn primary" data-app-action="new-setlist">Add Setlist</button>',
             '</div>',
           '</div>',
-          this.status.message ? '<div class="status-box' + (this.status.type === 'error' ? ' error' : '') + '">' + escapeHtml(this.status.message) + '</div>' : '',
+          this.status.message ? '<div class="status-box' + (this.status.type === 'error' ? ' error' : (this.status.type === 'warning' ? ' warning' : '')) + '">' + escapeHtml(this.status.message) + '</div>' : '',
           '<div class="panel pad">',
             '<div class="song-list">' + this.renderSetlistListHtml(this.state.setlists) + '</div>',
             '<input id="setlist-import-input" type="file" accept="application/json,.json" data-app-change="setlist-import" hidden>',
@@ -10612,7 +10642,7 @@ function renderFloatingPlayer(song) {
                 : '<button class="btn" data-app-action="show-setlists">← Back</button><span class="setlist-page-action-group"><button class="btn" data-app-action="export-current-setlist">Export</button><button class="btn danger" data-app-action="delete-setlist" data-setlist-id="' + escapeHtml(setlist.id) + '"' + (setlist.id ? '' : ' disabled') + '>Delete</button><button class="btn soft-accent" data-app-action="enter-setlist-edit">Edit</button></span>',
             '</div>',
           '</div>',
-          this.status.message ? '<div class="status-box' + (this.status.type === 'error' ? ' error' : '') + '">' + escapeHtml(this.status.message) + '</div>' : '',
+          this.status.message ? '<div class="status-box' + (this.status.type === 'error' ? ' error' : (this.status.type === 'warning' ? ' warning' : '')) + '">' + escapeHtml(this.status.message) + '</div>' : '',
           '<div class="panel pad">',
             '<div class="form-stack">',
               isEditing
@@ -10698,7 +10728,7 @@ function renderFloatingPlayer(song) {
               '<button class="btn primary" data-app-action="open-editor">Add Song</button>',
             '</div>',
           '</div>',
-          this.status.message ? '<div class="status-box' + (this.status.type === 'error' ? ' error' : '') + '">' + escapeHtml(this.status.message) + '</div>' : '',
+          this.status.message ? '<div class="status-box' + (this.status.type === 'error' ? ' error' : (this.status.type === 'warning' ? ' warning' : '')) + '">' + escapeHtml(this.status.message) + '</div>' : '',
           '<div class="panel pad">',
             '<div class="search-row">',
               '<input id="list-search-input" class="field" placeholder="Search title / artist / tags" value="' + escapeHtml(this.state.searchDraft) + '" data-app-input="search" data-app-keydown="search" data-app-composition="search">',
