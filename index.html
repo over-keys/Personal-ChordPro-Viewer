@@ -6989,11 +6989,13 @@ function loadCurrentSongNotes(options) {
                     '<h2>' + escapeHtml(song.title) + '</h2>',
                     '<div class="song-detail-row song-header-detail-row"><p>' + escapeHtml(song.artist) + '</p>' + (tags ? '<div class="tag-row tag-row-inline">' + tags + '</div>' : '') + '</div>',
                   '</div>',
-                  '<div class="inline-actions song-header-actions">',
-                    state.currentSetlist ? '' : '<button class="btn" type="button" data-app-action="show-list">← Back</button>',
-                    '<button class="btn" type="button" data-app-action="sync-current-song-to-gas">Sync to GAS</button>',
-                    state.currentSetlist ? '' : '<button class="btn soft-accent" type="button" data-app-action="open-editor" data-song-slug="' + escapeHtml(song.slug) + '">Edit</button>',
-                  '</div>',
+                  state.currentSetlist ? '' : [
+                    '<div class="inline-actions song-header-actions">',
+                      '<button class="btn" type="button" data-app-action="show-list">← Back</button>',
+                      '<button class="btn" type="button" data-app-action="sync-current-song-to-gas">Sync to GAS</button>',
+                      '<button class="btn soft-accent" type="button" data-app-action="open-editor" data-song-slug="' + escapeHtml(song.slug) + '">Edit</button>',
+                    '</div>'
+                  ].join(''),
                 '</div>',
                 '<div class="sheet-stage" id="sheet-stage">',
                   '<div class="autoscroll-lane" aria-hidden="true">',
@@ -8169,8 +8171,9 @@ function renderFloatingPlayer(song) {
           case 'delete-current-song': App.deleteCurrentSong(); break;
           case 'save-current-song': App.saveCurrentSong(); break;
           case 'export-all-songs': App.exportAllSongs(); break;
-          case 'sync-library-to-gas': App.syncLibraryToGas(); break;
-          case 'sync-current-song-to-gas': App.syncCurrentSongToGas(); break;
+          case 'sync-library-to-gas': App.syncLibraryToGas({ forceUrlPrompt: !!event.shiftKey }); break;
+          case 'sync-current-song-to-gas': App.syncCurrentSongToGas({ forceUrlPrompt: !!event.shiftKey }); break;
+          case 'sync-current-setlist-to-gas': App.syncCurrentSetlistToGas({ forceUrlPrompt: !!event.shiftKey }); break;
           case 'import-all-songs': App.openSongLibraryImportDialog(); break;
           case 'export-current-song': App.exportCurrentEditorSong(); break;
           case 'open-editor': {
@@ -10052,6 +10055,33 @@ function renderFloatingPlayer(song) {
       }
     },
 
+    forgetGasSyncEditPassword: function() {
+      try {
+        sessionStorage.removeItem(STORAGE_KEYS.gasSyncEditPasswordSession);
+      } catch (err) {}
+    },
+
+    getGasSyncUrl: function(options) {
+      options = options || {};
+      const forcePrompt = !!options.forcePrompt;
+      const rememberedUrl = loadStoredString(STORAGE_KEYS.gasSyncUrl, '');
+      let syncUrl = this.normalizeGasSyncUrl(rememberedUrl);
+      if (!forcePrompt && syncUrl) return syncUrl;
+      const promptMessage = syncUrl
+        ? 'Replace saved GAS web app URL:'
+        : 'Paste the GAS web app URL.';
+      const enteredUrl = window.prompt(promptMessage, syncUrl || rememberedUrl || '');
+      if (enteredUrl === null) return null;
+      const normalizedUrl = this.normalizeGasSyncUrl(enteredUrl);
+      if (!normalizedUrl) {
+        this.flashStatus('error', 'Enter a valid GAS web app URL.', 2600);
+        return null;
+      }
+      if (!saveStoredString(STORAGE_KEYS.gasSyncUrl, normalizedUrl)) this.notifyStorageUnavailable();
+      if (forcePrompt) this.forgetGasSyncEditPassword();
+      return normalizedUrl;
+    },
+
     getGasSyncEditPassword: function(syncUrl) {
       const key = STORAGE_KEYS.gasSyncEditPasswordSession;
       const normalizedUrl = String(syncUrl || '').trim();
@@ -10100,6 +10130,7 @@ function renderFloatingPlayer(song) {
         appendField('openAfterSync', '1', false);
         appendField('openPage', options.openPage || 'view', false);
         appendField('openSlug', options.openSlug || '', false);
+        appendField('openId', options.openId || '', false);
         appendField('openKey', typeof options.openKey === 'undefined' ? '' : options.openKey, false);
         appendField('openSign', options.openSign || 'default', false);
       }
@@ -10109,19 +10140,10 @@ function renderFloatingPlayer(song) {
       document.body.removeChild(form);
     },
 
-    syncLibraryToGas: function() {
-      const rememberedUrl = loadStoredString(STORAGE_KEYS.gasSyncUrl, '');
-      let syncUrl = this.normalizeGasSyncUrl(rememberedUrl);
-      if (!syncUrl) {
-        const enteredUrl = window.prompt('Paste the GAS web app URL.', rememberedUrl);
-        if (enteredUrl === null) return false;
-        syncUrl = this.normalizeGasSyncUrl(enteredUrl);
-        if (!syncUrl) {
-          this.flashStatus('error', 'Enter a valid GAS web app URL.', 2600);
-          return false;
-        }
-        if (!saveStoredString(STORAGE_KEYS.gasSyncUrl, syncUrl)) this.notifyStorageUnavailable();
-      }
+    syncLibraryToGas: function(options) {
+      options = options || {};
+      const syncUrl = this.getGasSyncUrl({ forcePrompt: !!options.forceUrlPrompt });
+      if (!syncUrl) return false;
       const editPassword = this.getGasSyncEditPassword(syncUrl);
       if (editPassword === null) return false;
 
@@ -10145,24 +10167,16 @@ function renderFloatingPlayer(song) {
       return false;
     },
 
-    syncCurrentSongToGas: function() {
+    syncCurrentSongToGas: function(options) {
+      options = options || {};
       const currentSong = this.state && this.state.currentSong ? this.state.currentSong : null;
       const slug = String(currentSong && currentSong.slug || '').trim();
       if (!slug) {
         this.flashStatus('error', 'Song not found.', 2200);
         return false;
       }
-      let syncUrl = this.normalizeGasSyncUrl(loadStoredString(STORAGE_KEYS.gasSyncUrl, ''));
-      if (!syncUrl) {
-        const enteredUrl = window.prompt('Paste the GAS web app URL.', '');
-        if (enteredUrl === null) return false;
-        syncUrl = this.normalizeGasSyncUrl(enteredUrl);
-        if (!syncUrl) {
-          this.flashStatus('error', 'Enter a valid GAS web app URL.', 2600);
-          return false;
-        }
-        if (!saveStoredString(STORAGE_KEYS.gasSyncUrl, syncUrl)) this.notifyStorageUnavailable();
-      }
+      const syncUrl = this.getGasSyncUrl({ forcePrompt: !!options.forceUrlPrompt });
+      if (!syncUrl) return false;
       const editPassword = this.getGasSyncEditPassword(syncUrl);
       if (editPassword === null) return false;
 
@@ -10199,6 +10213,56 @@ function renderFloatingPlayer(song) {
         });
       return false;
     },
+
+    syncCurrentSetlistToGas: function(options) {
+      options = options || {};
+      const setlist = normalizeSetlistForApp(this.state && this.state.setlistEditor ? this.state.setlistEditor : {});
+      if (!setlist.id) {
+        this.flashStatus('error', 'Setlist not found.', 2200);
+        return false;
+      }
+      const syncUrl = this.getGasSyncUrl({ forcePrompt: !!options.forceUrlPrompt });
+      if (!syncUrl) return false;
+      const editPassword = this.getGasSyncEditPassword(syncUrl);
+      if (editPassword === null) return false;
+
+      const slugs = [];
+      const seen = Object.create(null);
+      setlist.items.forEach(function(item) {
+        const slug = String(item && item.slug || '').trim();
+        if (!slug || seen[slug]) return;
+        seen[slug] = true;
+        slugs.push(slug);
+      });
+
+      this.beginBusy('Preparing GAS sync...');
+      Promise.all(slugs.map(function(slug) {
+        return ChordProStorage.getSong(slug).catch(function() { return null; });
+      })).then(function(songResults) {
+        const songs = (Array.isArray(songResults) ? songResults : []).filter(function(song) {
+          return !!(song && song.slug);
+        });
+        const missingCount = Math.max(0, slugs.length - songs.length);
+        const setlistForSync = Object.assign({}, setlist, {
+          updatedAt: new Date().toISOString()
+        });
+        App.endBusy();
+        const confirmMessage = 'Send this setlist and ' + songs.length + ' song(s) to GAS? Matching slug / id data in GAS will be overwritten, and all other GAS data will be kept.'
+          + (missingCount ? ' ' + missingCount + ' missing song(s) will remain as missing entries.' : '');
+        if (!window.confirm(confirmMessage)) return;
+        App.submitGasLibrarySyncForm(syncUrl, songs, [setlistForSync], editPassword, '_self', {
+          openAfterSync: true,
+          openPage: 'setlist-edit',
+          openId: setlistForSync.id
+        });
+      }).catch(function(err) {
+        App.endBusy();
+        App.setStatus('error', String(err && err.message || err || 'Failed to prepare GAS sync.'));
+        App.render();
+      });
+      return false;
+    },
+
     openSongLibraryImportDialog: function() {
       const input = document.getElementById('list-song-import-input');
       if (!input) {
@@ -10660,7 +10724,7 @@ function renderFloatingPlayer(song) {
             '<div class="actions setlist-page-actions">',
               isEditing
                 ? '<button class="btn" data-app-action="cancel-setlist-edit">Cancel</button><button class="btn soft-accent" data-app-action="save-setlist">Save</button>'
-                : '<button class="btn" data-app-action="show-setlists">← Back</button><span class="setlist-page-action-group"><button class="btn" data-app-action="export-current-setlist">Export</button><button class="btn danger" data-app-action="delete-setlist" data-setlist-id="' + escapeHtml(setlist.id) + '"' + (setlist.id ? '' : ' disabled') + '>Delete</button><button class="btn soft-accent" data-app-action="enter-setlist-edit">Edit</button></span>',
+                : '<button class="btn" data-app-action="show-setlists">← Back</button><span class="setlist-page-action-group"><button class="btn" data-app-action="sync-current-setlist-to-gas"' + (setlist.id ? '' : ' disabled') + '>Sync to GAS</button><button class="btn" data-app-action="export-current-setlist">Export</button><button class="btn danger" data-app-action="delete-setlist" data-setlist-id="' + escapeHtml(setlist.id) + '"' + (setlist.id ? '' : ' disabled') + '>Delete</button><button class="btn soft-accent" data-app-action="enter-setlist-edit">Edit</button></span>',
             '</div>',
           '</div>',
           this.status.message ? '<div class="status-box' + (this.status.type === 'error' ? ' error' : (this.status.type === 'warning' ? ' warning' : '')) + '">' + escapeHtml(this.status.message) + '</div>' : '',
