@@ -3369,6 +3369,9 @@
     }
 
     window.__PCV_SHARED_NORMALIZERS__ = window.__PCV_SHARED_NORMALIZERS__ || {};
+    window.__PCV_SHARED_NORMALIZERS__.normalizeStoredPercent = normalizeStoredPercent;
+    window.__PCV_SHARED_NORMALIZERS__.normalizeStoredDuration = normalizeStoredDuration;
+    window.__PCV_SHARED_NORMALIZERS__.normalizeYouTubeSelection = normalizeYouTubeSelection;
     window.__PCV_SHARED_NORMALIZERS__.normalizeStoredTranspose = normalizeStoredTranspose;
     window.__PCV_SHARED_NORMALIZERS__.normalizeStoredNotation = normalizeStoredNotation;
 
@@ -3466,7 +3469,7 @@
         title: finalTitle,
         artist: finalArtist,
         tags: Array.isArray(source.tags) ? source.tags.map(String) : parseTags(source.tags),
-        youtube: Array.isArray(source.youtube) ? source.youtube : parseYouTubeInput(source.youtube),
+        youtube: Array.isArray(source.youtube) ? normalizeYouTubeSelection(source.youtube) : parseYouTubeInput(source.youtube),
         chordPro: chordPro,
         createdAt: String(source.createdAt || ''),
         updatedAt: String(source.updatedAt || ''),
@@ -3574,9 +3577,19 @@
           rawId = item;
         }
         var id = extractYouTubeId(rawId);
+        if (!id && typeof rawId === 'string') id = extractYouTubeId(rawId.split(/[?&]/)[0]);
+        var rawStart = 0;
+        if (typeof rawId === 'string') {
+          var timeMatch = rawId.match(/[?&](?:t|start)=([^&#]+)/i);
+          if (timeMatch) rawStart = parseYouTubeTime(timeMatch[1]);
+        }
+        var explicitStart = item && typeof item === 'object' ? item.start : null;
+        var start = explicitStart == null || explicitStart === ''
+          ? rawStart
+          : Math.max(0, parseInt(explicitStart, 10) || 0);
         return {
           id: id,
-          start: Math.max(0, parseInt(item && item.start, 10) || 0)
+          start: Math.max(0, start || 0)
         };
       }).filter(function(item) { return !!item.id; });
     }
@@ -4207,6 +4220,9 @@
     'G': 7, 'G#': 8, 'Ab': 8, 'A': 9, 'A#': 10, 'Bb': 10, 'B': 11, 'Cb': 11, 'E#': 5, 'B#': 0, 'Fb': 4
   };
 
+  var normalizeStoredPercent = window.__PCV_SHARED_NORMALIZERS__.normalizeStoredPercent;
+  var normalizeStoredDuration = window.__PCV_SHARED_NORMALIZERS__.normalizeStoredDuration;
+  var normalizeYouTubeSelection = window.__PCV_SHARED_NORMALIZERS__.normalizeYouTubeSelection;
   var normalizeStoredTranspose = window.__PCV_SHARED_NORMALIZERS__.normalizeStoredTranspose;
   var normalizeStoredNotation = window.__PCV_SHARED_NORMALIZERS__.normalizeStoredNotation;
 
@@ -5043,13 +5059,6 @@
       };
     }
 
-    function getObservedRangeProgress() {
-      const geometry = observedScrollGeometrySnapshot;
-      if (!geometry || geometry.travelDistance <= 0) return 0;
-      const progress = (exactScrollTop - geometry.startScrollTop) / geometry.travelDistance;
-      return Math.max(0, Math.min(1, progress));
-    }
-
     function maybeCaptureObservedScrollDuration() {
       if (!App || !App.state || !App.state.scroll) return;
       if (App._viewerRerenderInProgress) return;
@@ -5595,19 +5604,6 @@ function loadCurrentSongNotes(options) {
         xPercent: Math.max(bounds.minX, Math.min(bounds.maxX, Number.isFinite(xPercent) ? xPercent : note.xPercent)),
         yPercent: Math.max(bounds.minY, Math.min(bounds.maxY, Number.isFinite(yPercent) ? yPercent : note.yPercent))
       };
-    }
-
-    function updateSongNotePosition(noteId, xPercent, yPercent, options) {
-      options = options || {};
-      const note = findSongNoteById(noteId);
-      const stage = options.stage || cacheElements().sheetStage;
-      if (!note || !stage) return;
-      const clamped = clampSongNotePosition(note, stage, xPercent, yPercent, options);
-      if (note.xPercent === clamped.xPercent && note.yPercent === clamped.yPercent) return;
-      note.xPercent = clamped.xPercent;
-      note.yPercent = clamped.yPercent;
-      if (!options.skipSave) saveCurrentSongNotes();
-      if (!options.skipRender) renderSingleSongNote(noteId);
     }
 
     function getSongNotePixelPosition(note, stage, options) {
@@ -7440,11 +7436,7 @@ function renderFloatingPlayer(song) {
       const tags = Array.isArray(raw.tags)
         ? raw.tags.map(String).map(function(v) { return v.trim(); }).filter(Boolean)
         : String(raw.tags || '').split(/[\n,]/).map(function(v) { return String(v || '').trim(); }).filter(Boolean);
-      const youtube = Array.isArray(raw.youtube)
-        ? raw.youtube.map(function(item) {
-            return { id: String(item && item.id || '').trim(), start: Math.max(0, parseInt(item && item.start, 10) || 0) };
-          }).filter(function(item) { return item.id; })
-        : [];
+      const youtube = normalizeYouTubeSelection(raw.youtube);
       const scrollStartPercent = parseFloat(raw.scrollStartPercent);
       const scrollEndPercent = parseFloat(raw.scrollEndPercent);
       const safeScrollStartPercent = Number.isFinite(scrollStartPercent) ? Math.max(0, Math.min(1, scrollStartPercent)) : 0;
@@ -7493,7 +7485,8 @@ function renderFloatingPlayer(song) {
     accentColor: 'personal_chordpro_viewer_accentColor',
     noteColor: 'personal_chordpro_viewer_noteColor',
     viewerSidebarWidth: 'personal_chordpro_viewer_viewerSidebarWidth',
-    gasSyncUrl: 'personal_chordpro_viewer_gasSyncUrl'
+    gasSyncUrl: 'personal_chordpro_viewer_gasSyncUrl',
+    gasSyncEditPasswordSession: 'personal_chordpro_viewer_gasSyncEditPasswordSession'
   };
 
   function normalizeFontToken(kind, storedValue) {
@@ -7651,12 +7644,7 @@ function renderFloatingPlayer(song) {
         ? record.tags.map(function(item) { return String(item || '').trim(); }).filter(Boolean)
         : String(record.tags || ''),
       youtube: Array.isArray(record.youtube)
-        ? record.youtube.map(function(item) {
-            return {
-              id: String(item && item.id || '').trim(),
-              start: Math.max(0, parseInt(item && item.start, 10) || 0)
-            };
-          }).filter(function(item) { return item.id; })
+        ? normalizeYouTubeSelection(record.youtube)
         : String(record.youtube || ''),
       chordPro: String(record.chordPro || ''),
       createdAt: String(record.createdAt || ''),
@@ -8749,12 +8737,6 @@ function renderFloatingPlayer(song) {
       })[0] || null;
     },
 
-    getSetlistSummaryById: function(id) {
-      const normalizedId = String(id || '').trim();
-      return (this.state.setlists || []).filter(function(setlist) {
-        return String(setlist && setlist.id || '') === normalizedId;
-      })[0] || null;
-    },
 
     openSetlist: function(id, options) {
       this.openSetlistEditor(id, Object.assign({ editMode: false }, options || {}));
@@ -9578,9 +9560,6 @@ function renderFloatingPlayer(song) {
       list.innerHTML = this.renderSongListHtml(this.state.filteredSongs);
     },
 
-    queueViewerInputFocus: function(inputId) {
-      this._pendingViewerInputFocus = { id: String(inputId || '') };
-    },
 
     restoreViewerInputFocusIfNeeded: function() {
       const pending = this._pendingViewerInputFocus;
@@ -9670,17 +9649,6 @@ function renderFloatingPlayer(song) {
       return true;
     },
 
-    applyPendingObservedScrollDuration: function() {
-      if (!this.state.scroll.isObservedDurationPending) return false;
-      const next = Math.max(1, parseInt(this.state.scroll.pendingObservedDurationSec, 10) || 0);
-      if (!next) {
-        this.clearPendingObservedScrollDuration();
-        return false;
-      }
-      this.state.scroll.durationSec = next;
-      this.clearPendingObservedScrollDuration();
-      return true;
-    },
 
     getDisplayedScrollDurationSec: function() {
       if (this.state.scroll.isObservedDurationPending) {
@@ -9876,26 +9844,7 @@ function renderFloatingPlayer(song) {
       this.render();
     },
 
-    setScrollPercent: function(which, value) {
-      const num = Math.max(0, Math.min(100, parseInt(value, 10) || 0)) / 100;
-      if (which === 'start') {
-        this.state.scroll.startPercent = Math.min(num, this.state.scroll.endPercent);
-      } else {
-        this.state.scroll.endPercent = Math.max(num, this.state.scroll.startPercent);
-      }
-      if (typeof Viewer !== 'undefined' && typeof Viewer.handleScrollBoundsChange === 'function') {
-        Viewer.handleScrollBoundsChange(which);
-      }
-      this.closeYouTubePlayback();
-      this.render();
-    },
 
-    setScrollDuration: function(value) {
-      this.clearPendingObservedScrollDuration();
-      this.state.scroll.durationSec = Math.max(1, parseInt(value, 10) || 240);
-      this.closeYouTubePlayback();
-      this.render();
-    },
 
     commitScrollMinutesInputValue: function(value) {
       if (this.state.scroll.isObservedDurationPending) return;
@@ -9953,23 +9902,12 @@ function renderFloatingPlayer(song) {
       return Math.floor(Math.max(1, parseInt(this.state.scroll.durationSec, 10) || 240) / 60);
     },
 
-    getDisplayedScrollMinutesValue: function() {
-      return Math.floor(this.getDisplayedScrollDurationSec() / 60);
-    },
 
     getScrollSecondsValue: function() {
       return Math.max(1, parseInt(this.state.scroll.durationSec, 10) || 240) % 60;
     },
 
-    getDisplayedScrollSecondsValue: function() {
-      return this.getDisplayedScrollDurationSec() % 60;
-    },
 
-    setScrollSpeed: function(value) {
-      this.state.scroll.speedMult = Math.max(0.1, parseFloat(value) || 1);
-      this.closeYouTubePlayback();
-      this.render();
-    },
 
     playYouTube: function(index) {
       const song = this.state && this.state.currentSong ? this.state.currentSong : null;
@@ -10032,13 +9970,6 @@ function renderFloatingPlayer(song) {
         });
     },
 
-    handleSongItemKey: function(event, slug) {
-      const key = event && event.key;
-      if (key === 'Enter' || key === ' ') {
-        event.preventDefault();
-        this.openSong(slug);
-      }
-    },
 
     updateUrl: function(params) {
       const query = new URLSearchParams();
@@ -10112,13 +10043,35 @@ function renderFloatingPlayer(song) {
       if (!raw) return '';
       try {
         const url = new URL(raw);
-        if (url.protocol !== 'https:' && url.protocol !== 'http:') return '';
+        if (url.protocol !== 'https:') return '';
         url.search = '';
         url.hash = '';
         return url.toString();
       } catch (err) {
         return '';
       }
+    },
+
+    getGasSyncEditPassword: function(syncUrl) {
+      const key = STORAGE_KEYS.gasSyncEditPasswordSession;
+      const normalizedUrl = String(syncUrl || '').trim();
+      try {
+        const cached = sessionStorage.getItem(key);
+        if (cached !== null) {
+          try {
+            const parsed = JSON.parse(cached);
+            if (parsed && parsed.syncUrl === normalizedUrl) return String(parsed.editPassword || '');
+          } catch (parseErr) {
+            sessionStorage.removeItem(key);
+          }
+        }
+      } catch (err) {}
+      const editPassword = window.prompt('If edit lock is enabled, enter the Unlock edit password. Leave blank if not used. This will be remembered until this tab is closed.', '');
+      if (editPassword === null) return null;
+      try {
+        sessionStorage.setItem(key, JSON.stringify({ syncUrl: normalizedUrl, editPassword: String(editPassword) }));
+      } catch (err) {}
+      return editPassword;
     },
 
     submitGasLibrarySyncForm: function(syncUrl, songs, setlists, editPassword, targetName, options) {
@@ -10169,7 +10122,7 @@ function renderFloatingPlayer(song) {
         }
         if (!saveStoredString(STORAGE_KEYS.gasSyncUrl, syncUrl)) this.notifyStorageUnavailable();
       }
-      const editPassword = window.prompt('If edit lock is enabled, enter the Unlock edit password. Leave blank if not used.', '');
+      const editPassword = this.getGasSyncEditPassword(syncUrl);
       if (editPassword === null) return false;
 
       this.beginBusy('Preparing GAS sync...');
@@ -10210,7 +10163,7 @@ function renderFloatingPlayer(song) {
         }
         if (!saveStoredString(STORAGE_KEYS.gasSyncUrl, syncUrl)) this.notifyStorageUnavailable();
       }
-      const editPassword = window.prompt('If edit lock is enabled, enter the Unlock edit password. Leave blank if not used.', '');
+      const editPassword = this.getGasSyncEditPassword(syncUrl);
       if (editPassword === null) return false;
 
       this.beginBusy('Preparing GAS sync...');
@@ -10222,12 +10175,21 @@ function renderFloatingPlayer(song) {
             App.render();
             return;
           }
-          App.submitGasLibrarySyncForm(syncUrl, [song], [], editPassword, '_self', {
+          const scroll = App.state.scroll || {};
+          const songForSync = Object.assign({}, song, {
+            scrollStartPercent: normalizeStoredPercent(scroll.startPercent, song.scrollStartPercent),
+            scrollEndPercent: normalizeStoredPercent(scroll.endPercent, song.scrollEndPercent),
+            scrollDurationSec: normalizeStoredDuration(App.getDisplayedScrollDurationSec(), song.scrollDurationSec),
+            transpose: normalizeStoredTranspose(App.state.transpose, song.transpose),
+            notation: normalizeStoredNotation(App.state.notation, song.notation || 'default'),
+            updatedAt: new Date().toISOString()
+          });
+          App.submitGasLibrarySyncForm(syncUrl, [songForSync], [], editPassword, '_self', {
             openAfterSync: true,
             openPage: 'view',
-            openSlug: song.slug,
-            openKey: App.state.transpose,
-            openSign: App.state.notation || 'default'
+            openSlug: songForSync.slug,
+            openKey: songForSync.transpose,
+            openSign: songForSync.notation || 'default'
           });
         })
         .catch(function(err) {
