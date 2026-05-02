@@ -6995,6 +6995,7 @@ function loadCurrentSongNotes(options) {
                   '</div>',
                   '<div class="inline-actions song-header-actions">',
                     state.currentSetlist ? '' : '<button class="btn" type="button" data-app-action="show-list">← Back</button>',
+                    '<button class="btn" type="button" data-app-action="sync-current-song-to-gas">Sync to GAS</button>',
                     state.currentSetlist ? '' : '<button class="btn soft-accent" type="button" data-app-action="open-editor" data-song-slug="' + escapeHtml(song.slug) + '">Edit</button>',
                   '</div>',
                 '</div>',
@@ -8181,6 +8182,7 @@ function renderFloatingPlayer(song) {
           case 'save-current-song': App.saveCurrentSong(); break;
           case 'export-all-songs': App.exportAllSongs(); break;
           case 'sync-library-to-gas': App.syncLibraryToGas(); break;
+          case 'sync-current-song-to-gas': App.syncCurrentSongToGas(); break;
           case 'import-all-songs': App.openSongLibraryImportDialog(); break;
           case 'export-current-song': App.exportCurrentEditorSong(); break;
           case 'open-editor': {
@@ -10119,7 +10121,8 @@ function renderFloatingPlayer(song) {
       }
     },
 
-    submitGasLibrarySyncForm: function(syncUrl, songs, setlists, editPassword, targetName) {
+    submitGasLibrarySyncForm: function(syncUrl, songs, setlists, editPassword, targetName, options) {
+      options = options || {};
       const form = document.createElement('form');
       form.method = 'post';
       form.action = syncUrl;
@@ -10140,6 +10143,13 @@ function renderFloatingPlayer(song) {
       appendField('editPassword', editPassword || '', false);
       appendField('songsJson', JSON.stringify(Array.isArray(songs) ? songs : []), true);
       appendField('setlistsJson', JSON.stringify(Array.isArray(setlists) ? setlists : []), true);
+      if (options.openAfterSync) {
+        appendField('openAfterSync', '1', false);
+        appendField('openPage', options.openPage || 'view', false);
+        appendField('openSlug', options.openSlug || '', false);
+        appendField('openKey', typeof options.openKey === 'undefined' ? '' : options.openKey, false);
+        appendField('openSign', options.openSign || 'default', false);
+      }
 
       document.body.appendChild(form);
       form.submit();
@@ -10148,14 +10158,17 @@ function renderFloatingPlayer(song) {
 
     syncLibraryToGas: function() {
       const rememberedUrl = loadStoredString(STORAGE_KEYS.gasSyncUrl, '');
-      const enteredUrl = window.prompt('Paste the GAS web app URL.', rememberedUrl);
-      if (enteredUrl === null) return false;
-      const syncUrl = this.normalizeGasSyncUrl(enteredUrl);
+      let syncUrl = this.normalizeGasSyncUrl(rememberedUrl);
       if (!syncUrl) {
-        this.flashStatus('error', 'Enter a valid GAS web app URL.', 2600);
-        return false;
+        const enteredUrl = window.prompt('Paste the GAS web app URL.', rememberedUrl);
+        if (enteredUrl === null) return false;
+        syncUrl = this.normalizeGasSyncUrl(enteredUrl);
+        if (!syncUrl) {
+          this.flashStatus('error', 'Enter a valid GAS web app URL.', 2600);
+          return false;
+        }
+        if (!saveStoredString(STORAGE_KEYS.gasSyncUrl, syncUrl)) this.notifyStorageUnavailable();
       }
-      if (!saveStoredString(STORAGE_KEYS.gasSyncUrl, syncUrl)) this.notifyStorageUnavailable();
       const editPassword = window.prompt('If edit lock is enabled, enter the Unlock edit password. Leave blank if not used.', '');
       if (editPassword === null) return false;
 
@@ -10176,6 +10189,52 @@ function renderFloatingPlayer(song) {
         App.setStatus('error', String(err && err.message || err || 'Failed to prepare GAS sync.'));
         App.render();
       });
+      return false;
+    },
+
+    syncCurrentSongToGas: function() {
+      const currentSong = this.state && this.state.currentSong ? this.state.currentSong : null;
+      const slug = String(currentSong && currentSong.slug || '').trim();
+      if (!slug) {
+        this.flashStatus('error', 'Song not found.', 2200);
+        return false;
+      }
+      let syncUrl = this.normalizeGasSyncUrl(loadStoredString(STORAGE_KEYS.gasSyncUrl, ''));
+      if (!syncUrl) {
+        const enteredUrl = window.prompt('Paste the GAS web app URL.', '');
+        if (enteredUrl === null) return false;
+        syncUrl = this.normalizeGasSyncUrl(enteredUrl);
+        if (!syncUrl) {
+          this.flashStatus('error', 'Enter a valid GAS web app URL.', 2600);
+          return false;
+        }
+        if (!saveStoredString(STORAGE_KEYS.gasSyncUrl, syncUrl)) this.notifyStorageUnavailable();
+      }
+      const editPassword = window.prompt('If edit lock is enabled, enter the Unlock edit password. Leave blank if not used.', '');
+      if (editPassword === null) return false;
+
+      this.beginBusy('Preparing GAS sync...');
+      ChordProStorage.getSong(slug)
+        .then(function(song) {
+          App.endBusy();
+          if (!song || !song.slug) {
+            App.setStatus('error', 'Song not found.');
+            App.render();
+            return;
+          }
+          App.submitGasLibrarySyncForm(syncUrl, [song], [], editPassword, '_self', {
+            openAfterSync: true,
+            openPage: 'view',
+            openSlug: song.slug,
+            openKey: App.state.transpose,
+            openSign: App.state.notation || 'default'
+          });
+        })
+        .catch(function(err) {
+          App.endBusy();
+          App.setStatus('error', String(err && err.message || err || 'Failed to prepare GAS sync.'));
+          App.render();
+        });
       return false;
     },
     openSongLibraryImportDialog: function() {
