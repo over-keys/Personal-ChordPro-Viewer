@@ -493,7 +493,6 @@
   <li>どれかの曲を開いて、Notes の <strong>Export all</strong></li>
 </ol>
 <p>これで、<strong>曲データ</strong>、<strong>セットリスト</strong>、<strong>付箋データ</strong>をバックアップできます。</p>
-<p><strong>Sync to GAS</strong> を使うと、Static版の曲データとセットリストを Google Spreadsheet 版へ送れます。同じ slug / id のデータは更新され、Google Spreadsheet 版にだけある他のデータは残ります。</p>
       <h3>別のPCに移したいとき</h3>
       <ol>
         <li>新しいPCでも <code>https://over-keys.github.io/Personal-ChordPro-Viewer/</code> をブラウザで開く</li>
@@ -505,6 +504,14 @@
         付箋の全曲分 JSON を読み込むときは、<strong>先に曲データを戻しておく</strong>のが安全です。まだ存在しない slug の付箋は、一覧表示されたうえでスキップされます。
       </div>
     </section>
+    <h3>Sync to GAS</h3>
+<p>Sync to GAS を使うと、Static版のデータを Google Spreadsheet 版へ送れます。同じ slug / id のデータは更新され、Google Spreadsheet 版にだけある他のデータは残ります。</p>
+<ul>
+  <li><strong>曲一覧の Sync to GAS</strong>: 曲データ全体とセットリスト全体を送ります。</li>
+  <li><strong>曲画面の Sync to GAS</strong>: 今開いている1曲だけを送り、GAS版でその曲を開きます。</li>
+  <li><strong>セットリスト詳細の Sync to GAS</strong>: そのセットリストと、含まれる曲だけを送り、GAS版でそのセットリストを開きます。</li>
+</ul>
+<p>初回Sync時はGAS Web App URLと、必要な場合のみUnlock edit passwordを入力します。GAS URLはブラウザに保存され、パスワードは現在のタブ内だけで記憶されます。GAS URLを変更したい場合は、Shiftキーを押しながらSync to GASをクリックしてください。</p>
 
     <section class="panel" id="related-files">
       <h2>10. 他のバージョンと譜面共有</h2>
