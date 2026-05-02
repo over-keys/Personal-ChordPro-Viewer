@@ -463,7 +463,6 @@
   .viewer-grid.is-sidebar-compact .sidebar-panel .btn,
   .viewer-grid.is-sidebar-compact .sidebar-panel .btn-segment,
   .viewer-grid.is-sidebar-compact .toggle-item-text,
-  .viewer-grid.is-sidebar-compact .youtube-empty-text,
   .viewer-grid.is-sidebar-compact .section-title-row,
   .viewer-grid.is-sidebar-compact .setting-label {
     white-space: normal;
@@ -520,7 +519,6 @@
   .viewer-grid .sidebar-panel .btn,
   .viewer-grid .sidebar-panel .btn-segment,
   .viewer-grid .toggle-item-text,
-  .viewer-grid .youtube-empty-text,
   .viewer-grid .section-title-row,
   .viewer-grid .setting-label,
   .viewer-grid .viewer-note-toolbar-btn {
@@ -734,7 +732,6 @@
   .viewer-grid.is-sidebar-ultra .sidebar-panel .btn,
   .viewer-grid.is-sidebar-ultra .sidebar-panel .btn-segment,
   .viewer-grid.is-sidebar-ultra .toggle-item-text,
-  .viewer-grid.is-sidebar-ultra .youtube-empty-text,
   .viewer-grid.is-sidebar-ultra .section-title-row,
   .viewer-grid.is-sidebar-ultra .setting-label {
     white-space: normal;
@@ -2015,12 +2012,14 @@
   }
   .btn-segment.is-active {
     background: rgba(var(--accent-rgb), 0.08);
+    background: color-mix(in srgb, var(--accent) 8%, #fff);
     color: var(--accent);
-    box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0.14);
+    box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0.28);
   }
   .btn-segment.is-active:hover:not(:disabled),
   .btn-segment.is-active:focus-visible {
-    background: rgba(var(--accent-rgb), 0.12);
+    background: rgba(var(--accent-rgb), 0.13);
+    background: color-mix(in srgb, var(--accent) 13%, #fff);
     color: var(--accent);
   }
   .segmented-control-sign .btn-segment {
@@ -2152,26 +2151,64 @@
     color: #fff;
     box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.14);
   }
-  .btn-save-autoscroll {
+  .btn-save-autoscroll,
+  .btn-save-youtube {
     min-height: 36px;
     padding: 8px 10px;
     font-size: 0.84rem;
     font-weight: 500;
     white-space: nowrap;
     align-self: flex-start;
+    background: rgba(var(--accent-rgb), 0.035);
+    border-color: rgba(var(--accent-rgb), 0.14);
+    color: rgba(var(--accent-rgb), 0.62);
+    box-shadow: none;
+  }
+  .btn-save-autoscroll.is-dirty,
+  .btn-save-youtube.is-dirty {
     background: rgba(var(--accent-rgb), 0.08);
     border-color: rgba(var(--accent-rgb), 0.28);
     color: var(--accent);
+  }
+  .btn-save-autoscroll:not(.is-dirty) {
+    opacity: 0.45;
+    cursor: default;
+  }
+  .btn-save-autoscroll:not(.is-dirty):hover,
+  .btn-save-autoscroll:not(.is-dirty):focus-visible,
+  .btn-save-autoscroll:not(.is-dirty):active {
+    background: rgba(var(--accent-rgb), 0.035);
+    border-color: rgba(var(--accent-rgb), 0.14);
+    color: rgba(var(--accent-rgb), 0.62);
     box-shadow: none;
   }
   .btn-save-autoscroll:hover:not(:disabled),
-  .btn-save-autoscroll:focus-visible {
+  .btn-save-autoscroll:focus-visible,
+  .btn-save-youtube:hover:not(:disabled),
+  .btn-save-youtube:focus-visible {
+    background: rgba(var(--accent-rgb), 0.055);
+    border-color: rgba(var(--accent-rgb), 0.2);
+    color: rgba(var(--accent-rgb), 0.72);
+    box-shadow: none;
+  }
+  .btn-save-autoscroll.is-dirty:hover:not(:disabled),
+  .btn-save-autoscroll.is-dirty:focus-visible,
+  .btn-save-youtube.is-dirty:hover:not(:disabled),
+  .btn-save-youtube.is-dirty:focus-visible {
     background: rgba(var(--accent-rgb), 0.13);
     border-color: rgba(var(--accent-rgb), 0.36);
     color: var(--accent);
     box-shadow: none;
   }
-  .btn-save-autoscroll:active:not(:disabled) {
+  .btn-save-autoscroll:active:not(:disabled),
+  .btn-save-youtube:active:not(:disabled) {
+    background: rgba(var(--accent-rgb), 0.075);
+    border-color: rgba(var(--accent-rgb), 0.24);
+    color: rgba(var(--accent-rgb), 0.78);
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
+  }
+  .btn-save-autoscroll.is-dirty:active:not(:disabled),
+  .btn-save-youtube.is-dirty:active:not(:disabled) {
     background: rgba(var(--accent-rgb), 0.16);
     border-color: rgba(var(--accent-rgb), 0.42);
     color: var(--accent);
@@ -2302,11 +2339,9 @@
     gap: 8px;
     min-width: 0;
   }
-  .youtube-empty-text {
+  .youtube-link-input {
+    flex: 1 1 auto;
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
   .youtube-save-btn {
     width: auto;
@@ -2314,6 +2349,16 @@
     padding: 3px 8px;
     font-size: 0.72rem;
     line-height: 1;
+  }
+  .sidebar-panel #viewer-youtube-link-input.youtube-link-input {
+    min-height: calc(24px * var(--viewer-sidebar-scale, 1));
+    padding: calc(3px * var(--viewer-sidebar-scale, 1)) calc(8px * var(--viewer-sidebar-scale, 1));
+    font-size: calc(0.72rem * var(--viewer-sidebar-scale, 1));
+    line-height: 1;
+  }
+  .youtube-empty-row .youtube-save-btn,
+  .youtube-empty-row .btn-save-youtube {
+    align-self: center;
   }
   .youtube-auto-pager {
     display: flex;
@@ -2595,11 +2640,28 @@
     justify-content: flex-end;
     gap: 10px;
     flex: 0 0 auto;
+    min-width: 0;
     margin-left: auto;
   }
   .setlist-playbar-count {
     color: var(--muted);
     font-weight: 700;
+    white-space: nowrap;
+  }
+  .setlist-playbar-next {
+    justify-content: flex-start;
+    min-width: 0;
+    max-width: min(22rem, 50vw);
+  }
+  .setlist-playbar-next-prefix {
+    flex: 0 0 auto;
+  }
+  .setlist-playbar-next-title {
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
   }
   .busy-overlay {
@@ -3112,6 +3174,11 @@
       flex: 1 1 100%;
       gap: 8px;
       margin-left: 0;
+      min-width: 0;
+    }
+    .view-mode-body .setlist-playbar-next {
+      flex: 1 1 auto;
+      max-width: none;
     }
     .view-mode-body .setlist-playbar-count {
       font-size: 0.9rem;
@@ -3345,9 +3412,7 @@
       var videoId = '';
       var start = 0;
       if (/^https?:\/\//i.test(raw)) {
-        var shortMatch = raw.match(/youtu\.be\/([^?&#]+)/i);
-        var watchMatch = raw.match(/[?&]v=([^&#]+)/i);
-        videoId = shortMatch ? shortMatch[1] : (watchMatch ? watchMatch[1] : '');
+        videoId = extractYouTubeId(raw);
         var timeMatch = raw.match(/[?&](?:t|start)=([^&#]+)/i);
         if (timeMatch) start = parseYouTubeTime(timeMatch[1]);
       } else {
@@ -3489,7 +3554,7 @@
       } else if (value && typeof value === 'object') {
         list = [value];
       } else if (typeof value === 'string') {
-        list = [{ id: value, start: 0 }];
+        list = parseYouTubeInput(value);
       } else {
         return [];
       }
@@ -6358,6 +6423,9 @@ function loadCurrentSongNotes(options) {
         els.scrollPane.classList.toggle('is-autoscrolling', !!App.state.scroll.isPlaying);
       }
       syncAutoscrollButtonUi();
+      if (App && typeof App.syncViewerSongControlsSaveButtons === 'function') {
+        App.syncViewerSongControlsSaveButtons();
+      }
     }
 
     function syncAutoscrollButtonUi() {
@@ -6885,6 +6953,7 @@ function loadCurrentSongNotes(options) {
       const noteBaseFontScale = { 1: '0.92rem', 2: '1.04rem', 3: '1.16rem', 4: '1.28rem', 5: '1.4rem' };
       const noteBaseFontSize = noteBaseFontScale[state.fontSizeLevel] || noteBaseFontScale[3];
       const noteLayerStyle = '--viewer-note-font-family:' + App.getLyricsFontStack() + ';--viewer-note-base-size:' + noteBaseFontSize + ';';
+      const saveDirtyClass = App.isViewerSongControlsDirty() ? ' is-dirty' : '';
       const tags = (song.tags || []).map(function(tag) {
         return '<span class="tag">' + escapeHtml(tag) + '</span>';
       }).join('');
@@ -6954,7 +7023,7 @@ function loadCurrentSongNotes(options) {
                   '<div class="setting-row setting-row-autoscroll">',
                     '<div class="setting-label setting-label-autoscroll">',
                       '<span>Auto Scroll</span>',
-                      '<button class="btn btn-save-autoscroll" type="button" data-app-action="save-scroll-settings">Save</button>',
+                      '<button class="btn btn-save-autoscroll' + saveDirtyClass + '" type="button" data-app-action="save-scroll-settings">Save</button>',
                     '</div>',
                     '<div class="control-group autoscroll-compact">',
                       '<div class="autoscroll-toolbar">',
@@ -6985,7 +7054,7 @@ function loadCurrentSongNotes(options) {
                         '<button class="btn btn-chip" type="button" data-app-action="apply-scroll-preset" data-app-value="240">4:00</button>',
                         '<button class="btn btn-chip" type="button" data-app-action="apply-scroll-preset" data-app-value="300">5:00</button>',
                       '</div>',
-                      '<button class="btn btn-save-autoscroll btn-save-autoscroll-bottom" type="button" data-app-action="save-scroll-settings">Save</button>',
+                      '<button class="btn btn-save-autoscroll btn-save-autoscroll-bottom' + saveDirtyClass + '" type="button" data-app-action="save-scroll-settings">Save</button>',
                     '</div>',
                   '</div>',
                 '</div>',
@@ -7155,10 +7224,13 @@ function renderYouTubePanel(song, state) {
   if (manualItems.length) {
     return renderYouTubeThumbList(manualItems, state) + renderFloatingPlayer(song);
   }
+  const canSaveYouTube = typeof App === 'undefined' || typeof App.canEdit !== 'function' || App.canEdit();
+  const youtubeInputDisabled = canSaveYouTube ? '' : ' disabled';
   return [
     '<div class="youtube-empty-row">',
-      '<div class="small muted youtube-empty-text">No YouTube links.</div>',
+      '<input class="field field-compact youtube-link-input" id="viewer-youtube-link-input" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="No YouTube Links" data-app-input="viewer-youtube-link" aria-label="YouTube link"', youtubeInputDisabled, '>',
       '<button class="btn youtube-save-btn" type="button" data-app-action="search-viewer-youtube" title="Search YouTube in a new tab">Search</button>',
+      canSaveYouTube ? '<button class="btn btn-save-youtube youtube-save-btn" id="viewer-youtube-save-button" type="button" data-app-action="save-viewer-youtube" disabled>Save</button>' : '',
     '</div>'
   ].join('');
 }
@@ -7677,6 +7749,7 @@ function renderFloatingPlayer(song) {
         pendingObservedDurationSec: null,
         isObservedDurationPending: false
       },
+      viewerSongControlsBaseline: null,
       playingYtIdx: null
     },
 
@@ -8122,6 +8195,7 @@ function renderFloatingPlayer(song) {
           case 'scroll-sheet-top': App.scrollViewerToTop(); break;
           case 'search-editor-youtube': App.openEditorYouTubeSearch(); break;
           case 'search-viewer-youtube': App.openViewerYouTubeSearch(); break;
+          case 'save-viewer-youtube': App.saveViewerYouTubeLink(); break;
         }
       });
 
@@ -8154,6 +8228,7 @@ function renderFloatingPlayer(song) {
           case 'transpose': App.handleTransposeInput(target); break;
           case 'scroll-minutes': App.handleScrollMinutesInput(target); break;
           case 'scroll-seconds': App.handleScrollSecondsInput(target); break;
+          case 'viewer-youtube-link': App.syncViewerYouTubeSaveButton(); break;
         }
       });
 
@@ -8752,6 +8827,7 @@ function renderFloatingPlayer(song) {
       this.state.currentSong = null;
       this.state.currentSetlist = this.normalizeSetlistPlaybackContext(options.setlistContext);
       this.state.missingSetlistSong = { slug: String(slug || '').trim() };
+      this.state.viewerSongControlsBaseline = null;
       this.state.page = 'view';
       this.state.playingYtIdx = null;
       this._resetViewerScrollOnNextRender = true;
@@ -8995,6 +9071,7 @@ function renderFloatingPlayer(song) {
           App.state.transpose = hasUrlTranspose && requestedTranspose !== null ? requestedTranspose : savedTranspose;
           App.state.transposeStr = String(App.state.transpose);
           App.state.notation = hasUrlNotation ? requestedNotation : savedNotation;
+          App.captureViewerSongControlsBaseline();
           App.state.page = 'view';
           App.state.playingYtIdx = null;
           App._resetViewerScrollOnNextRender = true;
@@ -9234,6 +9311,60 @@ function renderFloatingPlayer(song) {
         String(song && song.artist || '').trim()
       ].filter(Boolean).join(' ');
       window.open('https://www.youtube.com/results?search_query=' + encodeURIComponent(query), '_blank', 'noopener');
+    },
+
+    syncViewerYouTubeSaveButton: function() {
+      const input = document.getElementById('viewer-youtube-link-input');
+      const button = document.getElementById('viewer-youtube-save-button');
+      if (!button) return;
+      const hasValue = !!String(input && input.value || '').trim();
+      button.disabled = !hasValue;
+      button.classList.toggle('is-dirty', hasValue);
+    },
+
+    restoreViewerYouTubeInputValue: function(value, shouldFocus) {
+      const input = document.getElementById('viewer-youtube-link-input');
+      if (!input) return;
+      input.value = String(value || '');
+      if (shouldFocus && typeof input.focus === 'function') input.focus();
+      this.syncViewerYouTubeSaveButton();
+    },
+
+    saveViewerYouTubeLink: function() {
+      if (typeof this.requireEditUnlocked === 'function' && !this.requireEditUnlocked()) return;
+      const song = this.state && this.state.currentSong ? this.state.currentSong : null;
+      const input = document.getElementById('viewer-youtube-link-input');
+      const value = String(input && input.value || '').trim();
+      if (!song || !song.slug || !value) {
+        this.syncViewerYouTubeSaveButton();
+        return;
+      }
+      this.beginBusy('Saving YouTube link...');
+      ChordProStorage.updateSongYouTubeSelection({ slug: song.slug, youtube: value })
+        .then(function(result) {
+          if (result && result.ok === false) {
+            throw new Error(result.message || 'Failed to save YouTube link.');
+          }
+          const nextYouTube = Array.isArray(result && result.youtube) ? result.youtube : [];
+          if (!nextYouTube.length) {
+            throw new Error('Failed to save YouTube link.');
+          }
+          if (App.state.currentSong && App.state.currentSong.slug === song.slug) {
+            App.state.currentSong.youtube = JSON.parse(JSON.stringify(nextYouTube));
+          }
+          App.closeYouTubePlayback();
+          App.endBusy();
+          App.setStatus('info', 'YouTube link saved.');
+          App.render();
+        })
+        .catch(function(err) {
+          App.endBusy();
+          App.setStatus('error', String(err && err.message || err || 'Failed to save YouTube link.'));
+          App.render();
+          window.requestAnimationFrame(function() {
+            App.restoreViewerYouTubeInputValue(value, true);
+          });
+        });
     },
 
     collectEditorPayload: function() {
@@ -9526,6 +9657,39 @@ function renderFloatingPlayer(song) {
       return Math.max(1, parseInt(this.state.scroll.durationSec, 10) || 240);
     },
 
+    getViewerSongControlsSnapshot: function() {
+      const scroll = this.state.scroll || {};
+      return {
+        transpose: normalizeStoredTranspose(this.state.transpose, 0),
+        notation: normalizeStoredNotation(this.state.notation, 'default'),
+        scrollStartPercent: Math.round((parseFloat(scroll.startPercent) || 0) * 1000000) / 1000000,
+        scrollEndPercent: Math.round((parseFloat(scroll.endPercent) || 0) * 1000000) / 1000000,
+        scrollDurationSec: Math.max(1, parseInt(this.getDisplayedScrollDurationSec(), 10) || 240)
+      };
+    },
+
+    captureViewerSongControlsBaseline: function() {
+      this.state.viewerSongControlsBaseline = this.getViewerSongControlsSnapshot();
+    },
+
+    isViewerSongControlsDirty: function() {
+      const baseline = this.state.viewerSongControlsBaseline;
+      if (!baseline || !this.state.currentSong) return false;
+      const current = this.getViewerSongControlsSnapshot();
+      return current.transpose !== baseline.transpose
+        || current.notation !== baseline.notation
+        || current.scrollStartPercent !== baseline.scrollStartPercent
+        || current.scrollEndPercent !== baseline.scrollEndPercent
+        || current.scrollDurationSec !== baseline.scrollDurationSec;
+    },
+
+    syncViewerSongControlsSaveButtons: function() {
+      const isDirty = this.isViewerSongControlsDirty();
+      Array.from(document.querySelectorAll('.btn-save-autoscroll')).forEach(function(button) {
+        button.classList.toggle('is-dirty', isDirty);
+      });
+    },
+
     handleTransposeInput: function(input) {
       if (!input) return;
       const cleaned = this.sanitizeIntegerText(input.value, true);
@@ -9815,6 +9979,7 @@ function renderFloatingPlayer(song) {
             App.state.currentSong.scrollDurationSec = savedDurationSec;
             App.state.currentSong.transpose = App.state.transpose;
             App.state.currentSong.notation = App.state.notation;
+            App.captureViewerSongControlsBaseline();
           }
           App.endBusy();
           App.setStatus('info', 'Song controls saved.');
@@ -10496,6 +10661,13 @@ function renderFloatingPlayer(song) {
       const context = this.state.currentSetlist;
       if (!context || !Array.isArray(context.items) || !context.items.length) return '';
       const index = Math.max(0, Math.min(context.items.length - 1, parseInt(context.index, 10) || 0));
+      const hasNext = index < context.items.length - 1;
+      const nextItem = hasNext ? context.items[index + 1] : null;
+      const nextSong = nextItem ? this.getSongSummaryBySlug(nextItem.slug) : null;
+      const nextTitle = nextSong ? (nextSong.title || nextItem.slug || 'Untitled song') : (nextItem && nextItem.slug ? nextItem.slug : '(Missing song)');
+      const nextButtonLabel = hasNext
+        ? '<span class="setlist-playbar-next-prefix">Next:</span><span class="setlist-playbar-next-title">' + escapeHtml(nextTitle) + '</span>'
+        : 'End';
       return [
         '<div class="setlist-playbar">',
           '<button class="btn" type="button" data-app-action="setlist-back">← Back</button>',
@@ -10503,7 +10675,7 @@ function renderFloatingPlayer(song) {
           '<div class="setlist-playbar-controls">',
             '<div class="setlist-playbar-count">' + (index + 1) + ' / ' + context.items.length + '</div>',
             '<button class="btn" type="button" data-app-action="setlist-prev"' + (index <= 0 ? ' disabled' : '') + '>Prev</button>',
-            '<button class="btn" type="button" data-app-action="setlist-next"' + (index >= context.items.length - 1 ? ' disabled' : '') + '>Next</button>',
+            '<button class="btn setlist-playbar-next" type="button" data-app-action="setlist-next"' + (!hasNext ? ' disabled' : '') + '>' + nextButtonLabel + '</button>',
           '</div>',
         '</div>'
       ].join('');
