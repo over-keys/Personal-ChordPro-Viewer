@@ -1672,7 +1672,7 @@
   .setlist-page-action-group {
     display: inline-flex;
     flex: 0 0 auto;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: flex-end;
     gap: 8px;
     min-width: 0;
@@ -10724,7 +10724,7 @@ function renderFloatingPlayer(song) {
             '<div class="actions setlist-page-actions">',
               isEditing
                 ? '<button class="btn" data-app-action="cancel-setlist-edit">Cancel</button><button class="btn soft-accent" data-app-action="save-setlist">Save</button>'
-                : '<button class="btn" data-app-action="show-setlists">← Back</button><span class="setlist-page-action-group"><button class="btn" data-app-action="sync-current-setlist-to-gas"' + (setlist.id ? '' : ' disabled') + '>Sync to GAS</button><button class="btn" data-app-action="export-current-setlist">Export</button><button class="btn danger" data-app-action="delete-setlist" data-setlist-id="' + escapeHtml(setlist.id) + '"' + (setlist.id ? '' : ' disabled') + '>Delete</button><button class="btn soft-accent" data-app-action="enter-setlist-edit">Edit</button></span>',
+                : '<span class="setlist-page-action-group"><button class="btn" data-app-action="show-setlists">← Back</button><button class="btn" data-app-action="sync-current-setlist-to-gas"' + (setlist.id ? '' : ' disabled') + '>Sync to GAS</button></span><span class="setlist-page-action-group"><button class="btn" data-app-action="export-current-setlist">Export</button><button class="btn danger" data-app-action="delete-setlist" data-setlist-id="' + escapeHtml(setlist.id) + '"' + (setlist.id ? '' : ' disabled') + '>Delete</button><button class="btn soft-accent" data-app-action="enter-setlist-edit">Edit</button></span>',
             '</div>',
           '</div>',
           this.status.message ? '<div class="status-box' + (this.status.type === 'error' ? ' error' : (this.status.type === 'warning' ? ' warning' : '')) + '">' + escapeHtml(this.status.message) + '</div>' : '',
