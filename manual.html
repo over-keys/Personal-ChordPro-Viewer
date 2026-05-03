@@ -268,15 +268,15 @@
       <p>初めてのときは、次の順番がいちばん簡単です。</p>
       <ol class="steps">
         <li>トップページ右上の <strong>Add Song</strong> を押します。</li>
-        <li><strong>Slug</strong> を入れます。短く、重複しにくい文字列にしてください。使えるのは英数字とハイフンのみです。例: <code>hot-chili-love-song</code></li>
-        <li><strong>ChordPro</strong> 欄に譜面を入力します。</li>
-        <li><strong>Title</strong> と <strong>Artist</strong> を確認します。</li>
+        <li><strong>ChordPro</strong> 欄に譜面を貼り付けます。</li>
+        <li><strong>Title</strong> と <strong>Artist</strong> が自動で反映されていることを確認します。</li>
+        <li><strong>Slug</strong>（曲を識別するための短いID）を確認し、分かりやすくしたい場合は手動で変更します。使えるのは英数字とハイフンのみです。例: <code>hot-chili-love-song</code></li>
         <li>必要なら <strong>Tags</strong> と <strong>YouTube links</strong> を入れます。</li>
         <li><strong>Save</strong> を押します。</li>
       </ol>
       <div class="tip">
-        いちばんのコツは、<strong>Title や Artist を先に手入力するより、まず ChordPro を入力する</strong>ことです。<br>
-        ChordPro に <code>{title: 曲名}</code> と <code>{subtitle: アーティスト名}</code> が入っていれば、Title と Artist は自動で反映されます。<strong>Slug が自動で候補入力されるのは、Title が英語・ローマ字など半角英数字ベースのときだけ</strong>です。日本語タイトルでは自動では入らないので、Slug は手動で入力してください。
+        いちばんのコツは、まず <strong>ChordPro</strong> を入力することです。<br>
+        ChordPro に <code>{title: 曲名}</code> と <code>{subtitle: アーティスト名}</code> が入っていれば、Title と Artist が自動で反映されます。Slug は Title から自動生成され、日本語タイトルでは <code>jp-</code> で始まる重複しにくい英数字になります。必要に応じて手動で分かりやすく変更できます.
       </div>
       <h3>入力例</h3>
       <div class="sample-card">
