@@ -3375,15 +3375,30 @@
     window.__PCV_SHARED_NORMALIZERS__.normalizeStoredTranspose = normalizeStoredTranspose;
     window.__PCV_SHARED_NORMALIZERS__.normalizeStoredNotation = normalizeStoredNotation;
 
+    function hashStringToBase36(value) {
+      let hash = 2166136261;
+      const source = String(value || '');
+      for (let index = 0; index < source.length; index += 1) {
+        hash ^= source.charCodeAt(index);
+        hash = Math.imul(hash, 16777619);
+      }
+      return (hash >>> 0).toString(36);
+    }
+
     function buildSlug(value) {
-      return String(value || '')
-        .trim()
+      const source = String(value || '').trim();
+      if (!source) return '';
+      const asciiSlug = source
+        .normalize('NFKD')
         .toLowerCase()
         .replace(/[\s_]+/g, '-')
         .replace(/[^a-z0-9-]/g, '-')
         .replace(/-+/g, '-')
         .replace(/^-|-$/g, '');
+      return asciiSlug || 'jp-' + hashStringToBase36(source).slice(0, 8);
     }
+
+    window.__PCV_SHARED_NORMALIZERS__.buildSlug = buildSlug;
 
     function parseTags(value) {
       if (Array.isArray(value)) {
@@ -3447,7 +3462,7 @@
     }
 
     function extractTitleArtistFromChordPro(content) {
-      var titleMatch = findChordProDirectiveValue(content, ['title', 't']);
+      var titleMatch = findChordProDirectiveValue(content, ['title', 't', 'tittle']);
       var subtitleMatch = findChordProDirectiveValue(content, ['subtitle', 'st']);
       return {
         title: titleMatch,
@@ -7359,6 +7374,9 @@ function renderFloatingPlayer(song) {
             return item.id + (item.start ? '?t=' + item.start : '');
           }).join('\n')
         : String(song && song.youtube || '');
+      const titleAutoSlug = window.__PCV_SHARED_NORMALIZERS__.buildSlug(current.title);
+      const slugIsAuto = !current.slug || (!!titleAutoSlug && current.slug === titleAutoSlug);
+      const slugAttrs = ' data-auto-slug="' + escapeHtml(slugIsAuto ? current.slug : '') + '" data-slug-manual="' + (slugIsAuto ? '0' : '1') + '"';
 
       return [
         '<div class="shell">',
@@ -7378,9 +7396,9 @@ function renderFloatingPlayer(song) {
             '<div class="panel pad">',
               '<div class="form-stack">',
                 '<input id="edit-original-slug" type="hidden" value="' + escapeHtml(current.originalSlug || '') + '">',
-                fieldHtml('Slug', '<input id="edit-slug" class="field" value="' + escapeHtml(current.slug) + '" data-app-input="editor-generic">', { required: true }),
+                fieldHtml('Slug', '<input id="edit-slug" class="field" value="' + escapeHtml(current.slug) + '" data-app-input="editor-slug" data-app-keydown="editor-slug"' + slugAttrs + '>', { required: true }),
                 fieldHtml('ChordPro', '<textarea id="edit-chordpro" class="textarea" style="min-height:380px" data-app-input="editor-chordpro">' + escapeHtml(current.chordPro || '') + '</textarea>', { required: true }),
-                fieldHtml('Title', '<input id="edit-title" class="field" value="' + escapeHtml(current.title) + '" data-app-input="editor-generic">', { required: true }),
+                fieldHtml('Title', '<input id="edit-title" class="field" value="' + escapeHtml(current.title) + '" data-app-input="editor-title">', { required: true }),
                 fieldHtml('Artist', '<input id="edit-artist" class="field" value="' + escapeHtml(current.artist) + '" data-app-input="editor-generic">', { required: true }),
                 fieldHtml('Tags', '<input id="edit-tags" class="field" value="' + escapeHtml(current.tags.join(', ')) + '" data-app-input="editor-generic">'),
                 fieldHtml('YouTube links', '<textarea id="edit-youtube" class="textarea" style="min-height:120px" data-app-input="editor-generic">' + escapeHtml(youtubeText) + '</textarea><div class="inline-actions' + (String(youtubeText || '').trim() ? ' hidden' : '') + '" id="edit-youtube-search-wrap" style="margin-top:8px"><button class="btn" type="button" id="edit-youtube-search-button" data-app-action="search-editor-youtube" title="Search YouTube in a new tab">Search</button></div>'),
@@ -8237,6 +8255,8 @@ function renderFloatingPlayer(song) {
         if (!inputAction) return;
         switch (inputAction) {
           case 'editor-generic': App.editorInputChanged(); break;
+          case 'editor-slug': App.editorSlugChanged(); break;
+          case 'editor-title': App.editorTitleChanged(); break;
           case 'editor-chordpro': App.editorChordProChanged(); break;
           case 'search': App.handleSearchInput(event, target); break;
           case 'setlist-title': App.handleSetlistTitleInput(target); break;
@@ -8286,6 +8306,9 @@ function renderFloatingPlayer(song) {
         if (!keydownAction) return;
         if (keydownAction === 'search') {
           App.handleSearchKeyDown(event, target);
+        } else if (keydownAction === 'editor-slug' && event.key === 'Enter') {
+          event.preventDefault();
+          App.saveCurrentSong();
         }
       });
 
@@ -9426,31 +9449,50 @@ function renderFloatingPlayer(song) {
       }
     },
 
-    editorChordProChanged: function() {
-      const chordProEl = document.getElementById('edit-chordpro');
-      if (!chordProEl) return;
-      const chordPro = chordProEl.value;
-      const titleValue = findChordProDirectiveValue(chordPro, ['title', 't']);
-      const subtitleValue = findChordProDirectiveValue(chordPro, ['subtitle', 'st']);
-      const titleEl = document.getElementById('edit-title');
-      const artistEl = document.getElementById('edit-artist');
+    editorSlugChanged: function() {
       const slugEl = document.getElementById('edit-slug');
-      if (titleValue && titleEl) titleEl.value = titleValue;
-      if (subtitleValue && artistEl) artistEl.value = subtitleValue;
-      if (slugEl && !slugEl.value && titleValue) {
-        slugEl.value = this.slugify(titleValue);
+      if (slugEl) {
+        slugEl.setAttribute('data-slug-manual', '1');
+        slugEl.removeAttribute('data-auto-slug');
       }
       this.editorInputChanged();
     },
 
+    editorTitleChanged: function() {
+      const titleEl = document.getElementById('edit-title');
+      this.syncEditorSlugFromTitle(titleEl ? titleEl.value : '');
+      this.editorInputChanged();
+    },
+
+    syncEditorSlugFromTitle: function(titleValue) {
+      const slugEl = document.getElementById('edit-slug');
+      if (!slugEl || slugEl.getAttribute('data-slug-manual') === '1') return;
+      const nextSlug = this.slugify(titleValue);
+      if (!nextSlug) return;
+      const previousAutoSlug = slugEl.getAttribute('data-auto-slug') || '';
+      if (!slugEl.value || slugEl.value === previousAutoSlug) {
+        slugEl.value = nextSlug;
+        slugEl.setAttribute('data-auto-slug', nextSlug);
+        slugEl.setAttribute('data-slug-manual', '0');
+      }
+    },
+
+    editorChordProChanged: function() {
+      const chordProEl = document.getElementById('edit-chordpro');
+      if (!chordProEl) return;
+      const chordPro = chordProEl.value;
+      const titleValue = findChordProDirectiveValue(chordPro, ['title', 't', 'tittle']);
+      const subtitleValue = findChordProDirectiveValue(chordPro, ['subtitle', 'st']);
+      const titleEl = document.getElementById('edit-title');
+      const artistEl = document.getElementById('edit-artist');
+      if (titleValue && titleEl) titleEl.value = titleValue;
+      if (subtitleValue && artistEl) artistEl.value = subtitleValue;
+      if (titleValue) this.syncEditorSlugFromTitle(titleValue);
+      this.editorInputChanged();
+    },
+
     slugify: function(value) {
-      return String(value || '')
-        .trim()
-        .toLowerCase()
-        .replace(/[\s_]+/g, '-')
-        .replace(/[^a-z0-9-]/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
+      return window.__PCV_SHARED_NORMALIZERS__.buildSlug(value);
     },
 
     setStatus: function(type, message) {
