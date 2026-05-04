@@ -7382,12 +7382,12 @@ function renderFloatingPlayer(song) {
         '<div class="shell">',
           '<div class="topbar">',
             '<div class="title-block">',
-              '<h1>' + (current.slug ? 'Edit Song' : 'Add Song') + '</h1>',
+              '<h1>' + (current.originalSlug ? 'Edit Song' : 'Add Song') + '</h1>',
             '</div>',
             '<div class="actions">',
               '<button class="btn" type="button" data-app-action="cancel-editor">Cancel</button>',
               '<button class="btn" type="button" data-app-action="export-current-song">Export</button>',
-              current.slug ? '<button class="btn danger" type="button" data-app-action="delete-current-song">Delete</button>' : '',
+              current.originalSlug ? '<button class="btn danger" type="button" data-app-action="delete-current-song">Delete</button>' : '',
               '<button class="btn soft-accent" type="button" data-app-action="save-current-song">Save</button>',
             '</div>',
           '</div>',
@@ -9269,7 +9269,7 @@ function renderFloatingPlayer(song) {
 
     deleteCurrentSong: function() {
       const payload = this.collectEditorPayload();
-      const slug = String(payload.originalSlug || payload.slug || '').trim();
+      const slug = String(payload.originalSlug || '').trim();
       if (!slug) {
         this.setStatus('error', 'Delete is available only for saved songs.');
         this.render();
