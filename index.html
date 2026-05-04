@@ -10922,8 +10922,8 @@ function renderFloatingPlayer(song) {
           '<button class="btn" type="button" data-app-action="setlist-back">← Back</button>',
           '<div class="setlist-playbar-title">' + escapeHtml(context.title || 'Untitled setlist') + '</div>',
           '<div class="setlist-playbar-controls">',
-            '<div class="setlist-playbar-count">' + (index + 1) + ' / ' + context.items.length + '</div>',
             '<button class="btn" type="button" data-app-action="setlist-prev"' + (index <= 0 ? ' disabled' : '') + '>Prev</button>',
+            '<div class="setlist-playbar-count">' + (index + 1) + ' / ' + context.items.length + '</div>',
             '<button class="btn setlist-playbar-next" type="button" data-app-action="setlist-next"' + (!hasNext ? ' disabled' : '') + '>' + nextButtonLabel + '</button>',
           '</div>',
         '</div>'
