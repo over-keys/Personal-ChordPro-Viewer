@@ -8667,7 +8667,7 @@ function renderFloatingPlayer(song) {
         event.preventDefault();
       }, { passive: false, capture: true });
 
-      document.addEventListener('touchend', function(event) {
+      function handleSetlistTouchEndOrCancel(event) {
         const drag = App._setlistTouchDrag;
         if (drag && drag.inputType === 'touch') {
           const touch = findMatchingTouch(event.changedTouches, drag.pointerId);
@@ -8681,23 +8681,10 @@ function renderFloatingPlayer(song) {
         if (!pending) return;
         if (!findMatchingTouch(event.changedTouches, pending.pointerId)) return;
         clearSetlistTouchPending();
-      }, { passive: false, capture: true });
+      }
 
-      document.addEventListener('touchcancel', function(event) {
-        const drag = App._setlistTouchDrag;
-        if (drag && drag.inputType === 'touch') {
-          const touch = findMatchingTouch(event.changedTouches, drag.pointerId);
-          const clientX = touch ? touch.clientX : drag.lastClientX;
-          const clientY = touch ? touch.clientY : drag.lastClientY;
-          if (!finishSetlistTouchDrag(drag.pointerId, clientX, clientY)) return;
-          event.preventDefault();
-          return;
-        }
-        const pending = App._setlistTouchPending;
-        if (!pending) return;
-        if (!findMatchingTouch(event.changedTouches, pending.pointerId)) return;
-        clearSetlistTouchPending();
-      }, { passive: false, capture: true });
+      document.addEventListener('touchend', handleSetlistTouchEndOrCancel, { passive: false, capture: true });
+      document.addEventListener('touchcancel', handleSetlistTouchEndOrCancel, { passive: false, capture: true });
 
     },
 
