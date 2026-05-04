@@ -3301,45 +3301,49 @@
     }
   }
 
-  /* Keep setlist playback controls inside narrow viewports. */
+  /* Keep setlist playback controls compact inside narrow viewports. */
   @media (max-width: 720px) {
     .view-mode-body .setlist-playbar {
-      display: grid;
-      grid-template-columns: auto minmax(0, 1fr);
+      display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+      gap: 6px;
       width: min(100%, calc(100vw - 40px));
       max-width: calc(100vw - 40px);
       overflow: hidden;
     }
     .view-mode-body .setlist-playbar > .btn[data-app-action="setlist-back"] {
-      grid-column: 1;
+      flex: 0 0 auto;
       min-width: 0;
     }
     .view-mode-body .setlist-playbar-title {
-      grid-column: 2;
+      flex: 1 1 3rem;
       min-width: 0;
       max-width: 100%;
     }
     .view-mode-body .setlist-playbar-controls {
-      grid-column: 1 / -1;
-      display: grid;
-      grid-template-columns: auto auto minmax(0, 1fr);
+      display: flex;
       align-items: center;
-      width: 100%;
+      justify-content: flex-end;
+      flex: 0 1 auto;
+      flex-wrap: nowrap;
+      width: auto;
       min-width: 0;
       max-width: 100%;
-      margin-left: 0;
-      gap: 8px;
+      margin-left: auto;
+      gap: 6px;
     }
     .view-mode-body .setlist-playbar-count,
     .view-mode-body .setlist-playbar-controls > .btn:not(.setlist-playbar-next) {
+      flex: 0 0 auto;
       min-width: 0;
     }
     .view-mode-body .setlist-playbar-next {
-      width: 100%;
+      flex: 0 1 auto;
+      width: auto;
       min-width: 0;
-      max-width: 100%;
+      max-width: min(16rem, 36vw);
       justify-content: flex-start;
       overflow: hidden;
     }
@@ -3361,6 +3365,13 @@
     .view-mode-body .setlist-playbar {
       width: min(100%, calc(100vw - 24px));
       max-width: calc(100vw - 24px);
+      gap: 6px;
+    }
+    .view-mode-body .setlist-playbar-controls {
+      gap: 6px;
+    }
+    .view-mode-body .setlist-playbar-next {
+      max-width: min(14rem, 34vw);
     }
   }
 
