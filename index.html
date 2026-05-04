@@ -263,6 +263,13 @@
     border-color: #b8c3d9;
     box-shadow: 0 6px 18px rgba(37, 99, 235, 0.07);
   }
+  .setlist-add-more-indicator {
+    color: var(--muted);
+    font-weight: 400;
+    pointer-events: none;
+    text-align: left;
+    padding: 2px 0 0;
+  }
   .song-meta {
     min-width: 0;
     flex: 1 1 0;
@@ -10828,12 +10835,14 @@ function renderFloatingPlayer(song) {
 
     renderSetlistAddSongResultsHtml: function() {
       const query = String(this.state.setlistSongSearchText || '').trim().toLowerCase();
-      const songs = (this.state.songs || []).filter(function(song) {
+      const matches = (this.state.songs || []).filter(function(song) {
         if (!query) return true;
         const haystack = [song.title, song.artist].concat(song.tags || []).join(' ').toLowerCase();
         return haystack.indexOf(query) !== -1;
-      }).slice(0, 20);
-      return songs.length ? songs.map(function(song) {
+      });
+      const songs = matches.slice(0, 20);
+      if (!songs.length) return '<div class="empty-state panel">No matching songs.</div>';
+      const html = songs.map(function(song) {
         return [
           '<div class="song-item">',
             '<div class="song-meta">',
@@ -10845,7 +10854,11 @@ function renderFloatingPlayer(song) {
             '</div>',
           '</div>'
         ].join('');
-      }).join('') : '<div class="empty-state panel">No matching songs.</div>';
+      });
+      if (matches.length > songs.length) {
+        html.push('<div class="setlist-add-more-indicator" aria-hidden="true">… more</div>');
+      }
+      return html.join('');
     },
 
     renderSetlistEditorPage: function() {
