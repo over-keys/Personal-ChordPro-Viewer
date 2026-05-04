@@ -3300,6 +3300,70 @@
       gap: 8px;
     }
   }
+
+  /* Keep setlist playback controls inside narrow viewports. */
+  @media (max-width: 720px) {
+    .view-mode-body .setlist-playbar {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: center;
+      gap: 8px;
+      width: min(100%, calc(100vw - 40px));
+      max-width: calc(100vw - 40px);
+      overflow: hidden;
+    }
+    .view-mode-body .setlist-playbar > .btn[data-app-action="setlist-back"] {
+      grid-column: 1;
+      min-width: 0;
+    }
+    .view-mode-body .setlist-playbar-title {
+      grid-column: 2;
+      min-width: 0;
+      max-width: 100%;
+    }
+    .view-mode-body .setlist-playbar-controls {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: auto auto minmax(0, 1fr);
+      align-items: center;
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      margin-left: 0;
+      gap: 8px;
+    }
+    .view-mode-body .setlist-playbar-count,
+    .view-mode-body .setlist-playbar-controls > .btn:not(.setlist-playbar-next) {
+      min-width: 0;
+    }
+    .view-mode-body .setlist-playbar-next {
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      justify-content: flex-start;
+      overflow: hidden;
+    }
+    .view-mode-body .setlist-playbar-next-prefix {
+      flex: 0 0 auto;
+    }
+    .view-mode-body .setlist-playbar-next-title {
+      display: block;
+      flex: 1 1 auto;
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .view-mode-body .setlist-playbar {
+      width: min(100%, calc(100vw - 24px));
+      max-width: calc(100vw - 24px);
+    }
+  }
+
 </style>
   </head>
   <body>
