@@ -3361,6 +3361,19 @@
     }
   }
 
+  @media (max-width: 520px) {
+    .view-mode-body .setlist-playbar-controls {
+      flex: 1 1 100%;
+      width: 100%;
+      margin-left: 0;
+      justify-content: flex-end;
+    }
+    .view-mode-body .setlist-playbar-next {
+      flex: 0 1 auto;
+      max-width: min(28rem, calc(100vw - 9rem));
+    }
+  }
+
   @media (max-width: 420px) {
     .view-mode-body .setlist-playbar {
       width: min(100%, calc(100vw - 24px));
@@ -3371,7 +3384,7 @@
       gap: 6px;
     }
     .view-mode-body .setlist-playbar-next {
-      max-width: min(14rem, 34vw);
+      max-width: min(28rem, calc(100vw - 8.5rem));
     }
   }
 
