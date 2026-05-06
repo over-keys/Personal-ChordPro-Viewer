@@ -3561,7 +3561,7 @@
     }
 
     function extractTitleArtistFromChordPro(content) {
-      var titleMatch = findChordProDirectiveValue(content, ['title', 't', 'tittle']);
+      var titleMatch = findChordProDirectiveValue(content, ['title', 't']);
       var subtitleMatch = findChordProDirectiveValue(content, ['subtitle', 'st']);
       return {
         title: titleMatch,
@@ -9565,7 +9565,7 @@ function renderFloatingPlayer(song) {
       const chordProEl = document.getElementById('edit-chordpro');
       if (!chordProEl) return;
       const chordPro = chordProEl.value;
-      const titleValue = findChordProDirectiveValue(chordPro, ['title', 't', 'tittle']);
+      const titleValue = findChordProDirectiveValue(chordPro, ['title', 't']);
       const subtitleValue = findChordProDirectiveValue(chordPro, ['subtitle', 'st']);
       const titleEl = document.getElementById('edit-title');
       const artistEl = document.getElementById('edit-artist');
