@@ -8893,7 +8893,7 @@ function renderFloatingPlayer(song) {
     },
 
     normalizeDedupeTitleKey: function(song) {
-      return String(song && song.title || '').trim().toLowerCase();
+      return String(song && song.title || '').trim();
     },
 
     getDuplicateTitleSongs: function(songs) {
