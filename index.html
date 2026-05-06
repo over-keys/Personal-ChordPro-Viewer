@@ -5656,14 +5656,12 @@ function loadCurrentSongNotes(options) {
 
     function getSheetStageMetrics(stage) {
       if (!stage) return { width: 1, height: 1 };
-      const rect = stage.getBoundingClientRect();
       const sheet = stage.querySelector ? stage.querySelector('.cw-sheet') : null;
-      const sheetRect = sheet ? sheet.getBoundingClientRect() : null;
       const contentHeight = sheet
-        ? Math.max(sheet.scrollHeight, sheet.offsetHeight, sheetRect ? sheetRect.height : 0, stage.clientHeight, rect.height, 1)
-        : Math.max(stage.scrollHeight, stage.offsetHeight, rect.height, 1);
+        ? Math.max(sheet.scrollHeight, sheet.offsetHeight, stage.clientHeight, 1)
+        : Math.max(stage.scrollHeight, stage.offsetHeight, stage.clientHeight, 1);
       return {
-        width: Math.max(stage.clientWidth, rect.width, 1),
+        width: Math.max(stage.clientWidth, 1),
         height: contentHeight
       };
     }
@@ -10025,8 +10023,13 @@ function renderFloatingPlayer(song) {
     applyScrollPreset: function(totalSeconds) {
       this.clearPendingObservedScrollDuration();
       this.state.scroll.durationSec = Math.max(1, parseInt(totalSeconds, 10) || 240);
-      this.closeYouTubePlayback();
-      this.render();
+      const minutesInput = document.getElementById('scroll-minutes-input');
+      const secondsInput = document.getElementById('scroll-seconds-input');
+      const minutes = this.getScrollMinutesValue();
+      const seconds = this.getScrollSecondsValue();
+      if (minutesInput) minutesInput.value = String(minutes);
+      if (secondsInput) secondsInput.value = String(seconds).padStart(2, '0');
+      this.syncViewerSongControlsSaveButtons();
     },
 
     getScrollMinutesValue: function() {
