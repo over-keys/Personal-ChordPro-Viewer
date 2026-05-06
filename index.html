@@ -7956,6 +7956,7 @@ function renderFloatingPlayer(song) {
       setlistEditMode: false,
       searchText: '',
       searchDraft: '',
+      dedupeMode: false,
       setlistSongSearchText: '',
       setlistSongSearchDraft: '',
       transpose: 0,
@@ -8340,6 +8341,7 @@ function renderFloatingPlayer(song) {
         }
         var songItem = target.closest('.song-item-clickable[data-song-slug]');
         if (!songItem) return;
+        if (target.closest('.song-item .actions')) return;
         if (target.closest('[data-song-edit-slug]')) return;
         var key = event.key;
         if (key === 'Enter' || key === ' ') {
@@ -8386,6 +8388,8 @@ function renderFloatingPlayer(song) {
           case 'delete-current-song': App.deleteCurrentSong(); break;
           case 'save-current-song': App.saveCurrentSong(); break;
           case 'export-all-songs': App.exportAllSongs(); break;
+          case 'toggle-dedupe': App.toggleDedupeMode(); break;
+          case 'delete-song-from-list': App.deleteSongFromList(actionEl.getAttribute('data-song-slug') || ''); break;
           case 'sync-library-to-gas': App.syncLibraryToGas({ forceUrlPrompt: !!event.shiftKey }); break;
           case 'sync-current-song-to-gas': App.syncCurrentSongToGas({ forceUrlPrompt: !!event.shiftKey }); break;
           case 'sync-current-setlist-to-gas': App.syncCurrentSetlistToGas({ forceUrlPrompt: !!event.shiftKey }); break;
@@ -8872,12 +8876,12 @@ function renderFloatingPlayer(song) {
       if (typeof shouldRender === 'undefined') shouldRender = true;
       options = options || {};
       const search = String(this.state.searchText || '').trim().toLowerCase();
+      const baseSongs = this.state.dedupeMode ? this.getDuplicateTitleSongs(this.state.songs) : this.state.songs;
       if (!search) {
-        this.state.filteredSongs = this.state.songs.slice();
+        this.state.filteredSongs = baseSongs.slice();
       } else {
-        this.state.filteredSongs = this.state.songs.filter(function(song) {
-          const haystack = [song.title, song.artist].concat(song.tags || []).join(' ').toLowerCase();
-          return haystack.indexOf(search) !== -1;
+        this.state.filteredSongs = baseSongs.filter(function(song) {
+          return App.matchesSongSearch(song, search);
         });
       }
       if (!shouldRender) return;
@@ -8886,6 +8890,52 @@ function renderFloatingPlayer(song) {
         return;
       }
       this.render();
+    },
+
+    normalizeDedupeTitleKey: function(song) {
+      return String(song && song.title || '').trim().toLowerCase();
+    },
+
+    getDuplicateTitleSongs: function(songs) {
+      songs = Array.isArray(songs) ? songs : [];
+      const counts = Object.create(null);
+      songs.forEach(function(song) {
+        const key = App.normalizeDedupeTitleKey(song);
+        if (!key) return;
+        counts[key] = (counts[key] || 0) + 1;
+      });
+      return songs.filter(function(song) {
+        const key = App.normalizeDedupeTitleKey(song);
+        return key && counts[key] > 1;
+      }).sort(function(a, b) {
+        const titleCompare = App.normalizeDedupeTitleKey(a).localeCompare(App.normalizeDedupeTitleKey(b));
+        if (titleCompare) return titleCompare;
+        const artistCompare = String(a && a.artist || '').localeCompare(String(b && b.artist || ''));
+        if (artistCompare) return artistCompare;
+        return String(a && a.slug || '').localeCompare(String(b && b.slug || ''));
+      });
+    },
+
+    matchesSongSearch: function(song, search) {
+      const haystack = [song && song.title, song && song.artist].concat(song && song.tags || []).join(' ').toLowerCase();
+      return haystack.indexOf(search) !== -1;
+    },
+
+    toggleDedupeMode: function() {
+      this.state.dedupeMode = !this.state.dedupeMode;
+      this.filterSongs(true);
+    },
+
+    getDuplicateTitleSongForPayload: function(payload) {
+      const title = String(payload && payload.title || '').trim();
+      if (!title) return null;
+      const originalSlug = String(payload && payload.originalSlug || '').trim();
+      const nextSlug = String(payload && payload.slug || '').trim();
+      return (this.state.songs || []).filter(function(song) {
+        const slug = String(song && song.slug || '').trim();
+        if (!slug || slug === originalSlug || slug === nextSlug) return false;
+        return String(song && song.title || '').trim() === title;
+      })[0] || null;
     },
 
     showList: function(options) {
@@ -9419,6 +9469,10 @@ function renderFloatingPlayer(song) {
       if (existingSong && !window.confirm('A song with this slug already exists. Overwrite it?')) {
         return;
       }
+      const existingTitleSong = this.getDuplicateTitleSongForPayload(payload);
+      if (existingTitleSong && !window.confirm('A song with this title already exists. Save anyway?\n\nTitle: ' + String(payload.title || '').trim() + '\nExisting slug: ' + String(existingTitleSong.slug || ''))) {
+        return;
+      }
       this.beginBusy('Saving song…');
       google.script.run
         .withSuccessHandler(async function(result) {
@@ -9495,6 +9549,52 @@ function renderFloatingPlayer(song) {
           App.render();
         })
         .deleteSong(slug);
+    },
+
+    deleteSongFromList: function(slug) {
+      const normalizedSlug = String(slug || '').trim();
+      if (!normalizedSlug) {
+        this.setStatus('error', 'Song not found.');
+        this.render();
+        return;
+      }
+      const song = this.getSongSummaryBySlug(normalizedSlug) || { slug: normalizedSlug, title: '' };
+      const title = String(song.title || '(Untitled song)');
+      if (!window.confirm('Delete this song?\n\nTitle: ' + title + '\nSlug: ' + normalizedSlug + '\n\nSticky notes for this song will also be deleted. Setlists will keep a Missing song placeholder.')) return;
+      this.beginBusy('Deleting song...');
+      google.script.run
+        .withSuccessHandler(async function(result) {
+          if (!result || !result.ok) {
+            App.endBusy();
+            App.setStatus('error', result && result.message ? result.message : 'Failed to delete.');
+            App.render();
+            return;
+          }
+          let cleanupWarning = '';
+          try {
+            if (window.ChordProStorage && ChordProStorage.deleteNotesSync) {
+              const cleanupResult = await ChordProStorage.deleteNotesSync(normalizedSlug);
+              if (cleanupResult && cleanupResult.ok === false) cleanupWarning = 'Deleted song, but failed to delete sticky notes.';
+            }
+          } catch (error) {
+            cleanupWarning = 'Deleted song, but failed to delete sticky notes: ' + String(error && error.message || error);
+          }
+          if (cleanupWarning) {
+            App.setStatus('error', cleanupWarning);
+          } else {
+            App.flashStatus('info', 'Deleted.', 2200);
+          }
+          App.setBusyMessage('Refreshing list...');
+          App.loadSongs(function() {
+            App.showList({ endBusyOnDone: true, keepStatus: true });
+          }, { skipBusy: true });
+        })
+        .withFailureHandler(function(err) {
+          App.endBusy();
+          App.setStatus('error', String(err && err.message || err || 'Failed to delete.'));
+          App.render();
+        })
+        .deleteSong(normalizedSlug);
     },
 
     syncEditorYouTubeSearchButton: function() {
@@ -9786,7 +9886,7 @@ function renderFloatingPlayer(song) {
         this.render();
         return;
       }
-      list.innerHTML = this.renderSongListHtml(this.state.filteredSongs);
+      list.innerHTML = this.renderVisibleSongListHtml();
     },
 
 
@@ -10851,6 +10951,33 @@ function renderFloatingPlayer(song) {
       }).join('') : '<div class="empty-state panel">No songs yet.</div>';
     },
 
+    renderDedupeSongListHtml: function(songs) {
+      songs = Array.isArray(songs) ? songs : [];
+      if (!songs.length) return '<div class="empty-state panel">No duplicate titles found.</div>';
+      return songs.map(function(song) {
+        return [
+          '<div class="song-item song-item-clickable" role="button" tabindex="0" data-song-slug="' + escapeHtml(song.slug) + '">',
+            '<div class="song-meta">',
+              '<div class="song-title-row">',
+                '<h3>' + escapeHtml(song.title) + '</h3>',
+              '</div>',
+              App.renderSongDetailHtml(song),
+              '<p>' + escapeHtml(song.slug || '') + '</p>',
+            '</div>',
+            '<div class="actions">',
+              '<button class="btn danger" type="button" data-app-action="delete-song-from-list" data-song-slug="' + escapeHtml(song.slug) + '">Delete</button>',
+            '</div>',
+          '</div>'
+        ].join('');
+      }).join('');
+    },
+
+    renderVisibleSongListHtml: function() {
+      return this.state.dedupeMode
+        ? this.renderDedupeSongListHtml(this.state.filteredSongs)
+        : this.renderSongListHtml(this.state.filteredSongs);
+    },
+
     renderSetlistListHtml: function(setlists) {
       setlists = Array.isArray(setlists) ? setlists : [];
       return setlists.length ? setlists.map(function(setlist) {
@@ -11034,7 +11161,17 @@ function renderFloatingPlayer(song) {
     },
 
     renderListPage: function() {
-      const listHtml = this.renderSongListHtml(this.state.filteredSongs);
+      const listHtml = this.renderVisibleSongListHtml();
+      const actionButtons = this.state.dedupeMode
+        ? '<button class="btn" data-app-action="toggle-dedupe">Cancel</button>'
+        : [
+            '<button class="btn primary setlists-entry-btn" data-app-action="show-setlists">Setlists</button>',
+            '<button class="btn danger" data-app-action="toggle-dedupe">De-dupe</button>',
+            '<button class="btn" data-app-action="sync-library-to-gas">Sync to GAS</button>',
+            '<button class="btn" data-app-action="export-all-songs">Export all</button>',
+            '<button class="btn" data-app-action="import-all-songs">Import</button>',
+            '<button class="btn primary" data-app-action="open-editor">Add Song</button>',
+          ].join('');
 
       return [
         '<div class="shell">',
@@ -11043,11 +11180,7 @@ function renderFloatingPlayer(song) {
               '<h1>Personal ChordPro Viewer</h1>',
             '</div>',
             '<div class="actions list-topbar-actions">',
-              '<button class="btn primary setlists-entry-btn" data-app-action="show-setlists">Setlists</button>',
-              '<button class="btn" data-app-action="sync-library-to-gas">Sync to GAS</button>',
-              '<button class="btn" data-app-action="export-all-songs">Export all</button>',
-              '<button class="btn" data-app-action="import-all-songs">Import</button>',
-              '<button class="btn primary" data-app-action="open-editor">Add Song</button>',
+              actionButtons,
             '</div>',
           '</div>',
           this.status.message ? '<div class="status-box' + (this.status.type === 'error' ? ' error' : (this.status.type === 'warning' ? ' warning' : '')) + '">' + escapeHtml(this.status.message) + '</div>' : '',
