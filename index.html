@@ -4927,6 +4927,8 @@
     const SHEET_AUTOSCROLL_TOGGLE_SUPPRESS_MS = 260;
     const AUTOSCROLL_REFERENCE_OFFSET_PX = 150;
     const MANUAL_SCROLL_OVERRIDE_MS = 180;
+    const KEYBOARD_PAGE_SCROLL_FACTOR = 0.9;
+    const KEYBOARD_LINE_STEP_FALLBACK_PX = 44;
 
     function cacheElements() {
       return {
@@ -4981,6 +4983,11 @@
       const nextTop = clampScrollTop(target, value);
       markProgrammaticScroll(nextTop);
       exactScrollTop = setScrollTop(target, nextTop);
+    }
+
+    function isKeyboardTextEntryTarget(target) {
+      const tagName = target && target.tagName ? String(target.tagName).toLowerCase() : '';
+      return tagName === 'input' || tagName === 'textarea' || tagName === 'select' || !!(target && target.isContentEditable);
     }
 
     function isProgrammaticScrollEvent(currentTop) {
@@ -5042,6 +5049,102 @@
 
     function getEffectiveScrollSpeedMult() {
       return Math.max(0.1, parseFloat(App && App.state && App.state.scroll ? App.state.scroll.speedMult : 1) || 1) * adaptiveSpeedMult;
+    }
+
+    function getElementScrollTopPosition(element, scrollTarget) {
+      const rect = element.getBoundingClientRect();
+      return getScrollTop(scrollTarget) + rect.top - getViewportTop(scrollTarget);
+    }
+
+    function getViewerKeyboardLineStep(els, scrollTarget) {
+      const stage = els && els.sheetStage;
+      if (!stage || !scrollTarget) return KEYBOARD_LINE_STEP_FALLBACK_PX;
+      const lineNodes = Array.prototype.slice.call(stage.querySelectorAll('.cw-line'));
+      const positions = lineNodes.map(function(node) {
+        return getElementScrollTopPosition(node, scrollTarget);
+      }).filter(function(value) {
+        return Number.isFinite(value);
+      }).sort(function(a, b) {
+        return a - b;
+      });
+      const gaps = [];
+      for (let i = 1; i < positions.length; i += 1) {
+        const gap = positions[i] - positions[i - 1];
+        if (gap >= 12 && gap <= 160) gaps.push(gap);
+      }
+      if (gaps.length) {
+        gaps.sort(function(a, b) { return a - b; });
+        return Math.max(12, gaps[Math.floor(gaps.length / 2)]);
+      }
+      const sample = lineNodes[0] || stage.querySelector('.cw-plain-line, .cw-comment, .cw-directive') || stage;
+      const fontSize = parseFloat(window.getComputedStyle(sample).fontSize) || 16;
+      return Math.max(24, Math.min(96, fontSize * 2.6 || KEYBOARD_LINE_STEP_FALLBACK_PX));
+    }
+
+    function rebaseAutoscrollAfterKeyboardScroll(nextTop, affectsAdaptiveSpeed, direction) {
+      if (!App || !App.state || App.state.page !== 'view' || !App.state.scroll || !App.state.scroll.isPlaying) return;
+      if (affectsAdaptiveSpeed) {
+        extendManualScrollOverride();
+        adjustAdaptiveSpeed(direction === 'up' ? 'slower' : 'faster');
+      }
+      const observedGeometry = observedScrollGeometrySnapshot || createObservedGeometrySnapshot(getGeometry());
+      if (observedGeometry) {
+        observedScrollGeometrySnapshot = observedGeometry;
+        rebaseAutoscrollSegment(nextTop, observedGeometry);
+      }
+    }
+
+    function scrollViewerByKeyboard(delta, options) {
+      options = options || {};
+      const els = cacheElements();
+      const scrollTarget = getScrollTarget(els);
+      if (!scrollTarget) return false;
+      const currentTop = getScrollTop(scrollTarget);
+      const nextTop = clampScrollTop(scrollTarget, currentTop + delta);
+      cancelResetScrollAnimation();
+      setProgrammaticScrollTop(scrollTarget, nextTop);
+      if (Math.abs(nextTop - currentTop) >= 1) {
+        if (options.ignoreObservedDuration && App && App.state && App.state.scroll && App.state.scroll.isPlaying) {
+          observedScrollCaptured = true;
+        }
+        rebaseAutoscrollAfterKeyboardScroll(nextTop, !!options.affectsAdaptiveSpeed, delta < 0 ? 'up' : 'down');
+      }
+      return true;
+    }
+
+    function handleViewerNavigationKey(event) {
+      if (!App || !App.state || App.state.page !== 'view') return false;
+      if (!event || event.defaultPrevented) return false;
+      if (event.metaKey || event.ctrlKey || event.altKey) return false;
+      if (isKeyboardTextEntryTarget(event.target)) return false;
+      const key = event.key;
+      let delta = 0;
+      let affectsAdaptiveSpeed = false;
+      const els = cacheElements();
+      const scrollTarget = getScrollTarget(els);
+      if (!scrollTarget) return false;
+      let ignoreObservedDuration = false;
+      if (key === 'PageDown') {
+        delta = getViewportHeight(scrollTarget) * KEYBOARD_PAGE_SCROLL_FACTOR;
+        ignoreObservedDuration = true;
+      } else if (key === 'PageUp') {
+        delta = -getViewportHeight(scrollTarget) * KEYBOARD_PAGE_SCROLL_FACTOR;
+        ignoreObservedDuration = true;
+      } else if (key === 'ArrowDown') {
+        delta = getViewerKeyboardLineStep(els, scrollTarget);
+        affectsAdaptiveSpeed = true;
+      } else if (key === 'ArrowUp') {
+        delta = -getViewerKeyboardLineStep(els, scrollTarget);
+        affectsAdaptiveSpeed = true;
+      } else {
+        return false;
+      }
+      if (event.cancelable) event.preventDefault();
+      scrollViewerByKeyboard(delta, {
+        affectsAdaptiveSpeed: affectsAdaptiveSpeed,
+        ignoreObservedDuration: ignoreObservedDuration
+      });
+      return true;
     }
 
     function handleScrollPositionChange(els) {
@@ -6616,12 +6719,9 @@ function loadCurrentSongNotes(options) {
           toggleNoteCreateMode(false);
           return;
         }
+        if (handleViewerNavigationKey(event)) return;
         if (event.code !== 'Space') return;
-        const target = event.target;
-        const tagName = target && target.tagName ? String(target.tagName).toLowerCase() : '';
-        if (tagName === 'input' || tagName === 'textarea' || tagName === 'select' || (target && target.isContentEditable)) {
-          return;
-        }
+        if (isKeyboardTextEntryTarget(event.target)) return;
         event.preventDefault();
         toggleAutoScrollFromSheet(event);
       });
