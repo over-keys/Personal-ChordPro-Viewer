@@ -252,6 +252,7 @@
         <a href="#related-files">他のバージョンと譜面共有</a>
         <a href="#copyright">著作権と利用上の注意</a>
         <a href="#quick-rules">迷ったときの最短ルール</a>
+        <a href="#main-features">主な新機能</a>
       </div>
     </div>
 
@@ -543,8 +544,27 @@
         <li><strong>1曲だけ持ち出す / 取り込む</strong> → Edit画面の Export、トップページの Import、Notes の Export song / Import</li>
         <li><strong>全部バックアップする</strong> → トップページの Export all、Setlists の Export all、Notes の Export all</li>
       </ul>
-      <p><a class="footer-link" href="index.html">← トップページに戻る</a></p>
     </section>
+
+    <section class="panel" id="main-features">
+      <h2>13. 主な新機能</h2>
+      <ul>
+        <li><strong>2026-04-18: {key:} 表示の移調対応</strong><br>ChordPro内の <code>{key:}</code> / <code>{k:}</code> を譜面上に表示し、Song ControlsのKey / Signに合わせて移調表示できるように追加。</li>
+        <li><strong>2026-04-18: テンポ表示の点滅対応</strong><br>BPMなどのテンポ表示を、演奏時に見やすい点滅表示として使えるように追加。</li>
+        <li><strong>2026-04-18: Setlistモード追加</strong><br>Setlist一覧、Setlist Songs画面、曲順編集、Start、Prev / Next再生を追加。</li>
+        <li><strong>2026-04-19: Import / Export強化</strong><br>曲・Setlistの単体/一括Import・Exportまわりを整理。</li>
+        <li><strong>2026-04-19: 付箋色設定追加</strong><br>Colorsから付箋色を選べる全体設定を追加。</li>
+        <li><strong>2026-04-21: GAS版 Edit Lock追加</strong><br>編集パスワードを設定し、共有リンクでは閲覧のみにできる仕組みを追加。</li>
+        <li><strong>2026-05-02: Static → GAS Sync追加</strong><br>Static版の曲・SetlistをGAS版へ半自動同期できる <strong>Sync to GAS</strong> を追加。</li>
+        <li><strong>2026-05-02: Setlist再生中のNext表示強化</strong><br><strong>Next</strong> ボタンに次の曲名を表示するように追加。</li>
+        <li><strong>2026-05-02: YouTubeリンクの閲覧画面からの保存</strong><br>YouTubeリンク未設定時に入力欄を表示し、閲覧画面からSaveできるように追加。</li>
+        <li><strong>2026-05-06: 日本語タイトルのslug自動生成</strong><br>日本語など英数字slugに変換しにくいタイトルでも、<code>jp-</code> 付きのハッシュslugを自動生成できるように追加。</li>
+        <li><strong>2026-05-06: 譜面閲覧中の手動スクロールキー追加</strong><br>ページターナー用に <code>Page Up</code> / <code>Page Down</code> / 上下キーで譜面を手動スクロールできる機能を追加。</li>
+        <li><strong>2026-05-07: De-dupeモード追加</strong><br>同一タイトルの曲を抽出し、slug確認と個別削除ができる画面を追加。</li>
+        <li><strong>2026-05-07: 曲保存時の同一Title確認追加</strong><br>slug重複だけでなく、Titleが同じ曲がある場合もSave前に確認するように追加。</li>
+      </ul>
+    </section>
+    <p><a class="footer-link" href="index.html">← トップページに戻る</a></p>
   </div>
   <script>
     document.addEventListener('click', function(event) {
