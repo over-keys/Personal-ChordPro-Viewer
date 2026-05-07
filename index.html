@@ -11192,7 +11192,7 @@ function renderFloatingPlayer(song) {
       const hasNext = index < context.items.length - 1;
       const nextItem = hasNext ? context.items[index + 1] : null;
       const nextSong = nextItem ? this.getSongSummaryBySlug(nextItem.slug) : null;
-      const nextTitle = nextSong ? (nextSong.title || nextItem.slug || 'Untitled song') : (nextItem && nextItem.slug ? nextItem.slug : '(Missing song)');
+      const nextTitle = nextSong ? (nextSong.title || nextItem.slug || 'Untitled song') : '(Missing song)';
       const nextButtonLabel = hasNext
         ? '<span class="setlist-playbar-next-prefix">Next:</span><span class="setlist-playbar-next-title">' + escapeHtml(nextTitle) + '</span>'
         : 'End';
