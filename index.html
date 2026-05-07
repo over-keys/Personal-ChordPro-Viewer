@@ -4876,6 +4876,8 @@
     let lastDragClientY = 0;
     let programmaticScrollTop = 0;
     let programmaticScrollUntil = 0;
+    let keyboardScrollRafId = 0;
+    let keyboardScrollAnimationToken = 0;
     let adaptiveSpeedMult = 1;
     let manualScrollIntentUntil = 0;
     let manualScrollOverrideUntil = 0;
@@ -4985,6 +4987,44 @@
       exactScrollTop = setScrollTop(target, nextTop);
     }
 
+    function cancelKeyboardScrollAnimation() {
+      if (keyboardScrollRafId) {
+        cancelAnimationFrame(keyboardScrollRafId);
+        keyboardScrollRafId = 0;
+      }
+      keyboardScrollAnimationToken += 1;
+    }
+
+    function animateKeyboardScrollTo(target, finalTop, durationMs, onDone) {
+      cancelKeyboardScrollAnimation();
+      const token = keyboardScrollAnimationToken + 1;
+      keyboardScrollAnimationToken = token;
+      const startTop = getScrollTop(target);
+      const targetTop = clampScrollTop(target, finalTop);
+      const delta = targetTop - startTop;
+      const duration = Math.max(70, parseInt(durationMs, 10) || 120);
+      if (Math.abs(delta) < 1) {
+        setProgrammaticScrollTop(target, targetTop);
+        if (typeof onDone === 'function') onDone();
+        return;
+      }
+      const startedAt = performance.now();
+      const step = function(now) {
+        if (token !== keyboardScrollAnimationToken) return;
+        const progress = Math.min(1, (now - startedAt) / duration);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setProgrammaticScrollTop(target, startTop + (delta * eased));
+        if (progress < 1) {
+          keyboardScrollRafId = requestAnimationFrame(step);
+          return;
+        }
+        keyboardScrollRafId = 0;
+        setProgrammaticScrollTop(target, targetTop);
+        if (typeof onDone === 'function') onDone();
+      };
+      keyboardScrollRafId = requestAnimationFrame(step);
+    }
+
     function isKeyboardTextEntryTarget(target) {
       const tagName = target && target.tagName ? String(target.tagName).toLowerCase() : '';
       return tagName === 'input' || tagName === 'textarea' || tagName === 'select' || !!(target && target.isContentEditable);
@@ -5010,6 +5050,7 @@
 
     function markManualScrollIntent(event) {
       if (isSidebarInteraction(event)) return;
+      cancelKeyboardScrollAnimation();
       const now = performance.now();
       manualScrollIntentUntil = now + 800;
       if (App && App.state && App.state.page === 'view' && App.state.scroll && App.state.scroll.isPlaying) {
@@ -5102,12 +5143,13 @@
       const currentTop = getScrollTop(scrollTarget);
       const nextTop = clampScrollTop(scrollTarget, currentTop + delta);
       cancelResetScrollAnimation();
-      setProgrammaticScrollTop(scrollTarget, nextTop);
       if (Math.abs(nextTop - currentTop) >= 1) {
         if (options.ignoreObservedDuration && App && App.state && App.state.scroll && App.state.scroll.isPlaying) {
           observedScrollCaptured = true;
         }
-        rebaseAutoscrollAfterKeyboardScroll(nextTop, !!options.affectsAdaptiveSpeed, delta < 0 ? 'up' : 'down');
+        animateKeyboardScrollTo(scrollTarget, nextTop, options.durationMs || 120, function() {
+          rebaseAutoscrollAfterKeyboardScroll(nextTop, !!options.affectsAdaptiveSpeed, delta < 0 ? 'up' : 'down');
+        });
       }
       return true;
     }
@@ -5142,7 +5184,8 @@
       if (event.cancelable) event.preventDefault();
       scrollViewerByKeyboard(delta, {
         affectsAdaptiveSpeed: affectsAdaptiveSpeed,
-        ignoreObservedDuration: ignoreObservedDuration
+        ignoreObservedDuration: ignoreObservedDuration,
+        durationMs: key === 'PageDown' || key === 'PageUp' ? 150 : 105
       });
       return true;
     }
@@ -6887,6 +6930,7 @@ function loadCurrentSongNotes(options) {
 
     function stopAutoScroll(options) {
       options = options || {};
+      cancelKeyboardScrollAnimation();
       pauseAutoScroll({ skipRender: true });
       if (options.resetProgress) {
         hasStarted = false;
