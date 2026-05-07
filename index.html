@@ -4475,23 +4475,28 @@
     const afterSlash = text.substring(lastSlashIndex + 1);
     const beforeSlashChar = text[lastSlashIndex - 1];
     if (beforeSlashChar === '6' && afterSlash === '9') return null;
+    const bassMatch = afterSlash.match(/^([A-G][#b\u266f\u266d]?)([\s\S]*)$/);
+    if (!bassMatch) return null;
     return {
       mainChord: text.substring(0, lastSlashIndex),
-      bassNote: afterSlash
+      bassNote: bassMatch[1],
+      trailingText: bassMatch[2] || ''
     };
   }
 
   function renderSlashChordContent(parts, options) {
     if (!parts || !parts.bassNote) return escapeHtml(parts && parts.mainChord ? parts.mainChord : '');
+    const trailingHtml = parts.trailingText ? renderChordPart(parts.trailingText, options) : '';
     if (!parts.mainChord) {
-      return '/' + '<span class="cw-slash-bass">' + renderChordPart(parts.bassNote, options) + '</span>';
+      return '/' + '<span class="cw-slash-bass">' + renderChordPart(parts.bassNote, options) + '</span>' + trailingHtml;
     }
     return [
       '<span class="cw-slash">',
       '<span class="cw-slash-main">', renderChordPart(parts.mainChord, options), '</span>',
       '<span class="cw-slash-sep">/</span>',
       '<span class="cw-slash-bass">', renderChordPart(parts.bassNote, options), '</span>',
-      '</span>'
+      '</span>',
+      trailingHtml
     ].join('');
   }
 
