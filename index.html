@@ -2757,6 +2757,64 @@
   @keyframes busy-spin {
     to { transform: rotate(360deg); }
   }
+
+  .choice-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    background: rgba(245, 247, 251, 0.72);
+    backdrop-filter: blur(2px);
+  }
+  .choice-dialog {
+    width: min(94vw, 460px);
+    padding: 20px;
+    display: grid;
+    gap: 14px;
+  }
+  .choice-dialog h3 {
+    margin: 0;
+    font-size: 1.08rem;
+    line-height: 1.3;
+  }
+  .choice-dialog p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+  .choice-meta {
+    display: grid;
+    gap: 4px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(var(--accent-rgb), 0.07);
+    color: var(--text);
+    font-size: 0.9rem;
+  }
+  .choice-meta span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .choice-field {
+    display: grid;
+    gap: 6px;
+  }
+  .choice-field label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .choice-field input {
+    width: 100%;
+  }
+  .choice-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
   .player-wrap {
     position: relative;
     padding-top: 56.25%;
@@ -5710,7 +5768,13 @@ function loadCurrentSongNotes(options) {
         setSongNoteStatus('error', 'This note file is for a different song slug: ' + record.slug);
         return;
       }
-      if (!window.confirm('Replace notes for this song with ' + record.notes.length + ' imported note(s)?')) {
+      if (!await App.confirmAction({
+        dialogId: 'import-song-notes-dialog-title',
+        title: 'Replace imported notes?',
+        message: 'Replace notes for this song with ' + record.notes.length + ' imported note(s)?',
+        confirmText: 'Replace',
+        confirmClassName: 'btn soft-accent'
+      })) {
         return;
       }
       const result = await writeSongNotesForSlug(song.slug, record.notes);
@@ -5766,7 +5830,13 @@ function loadCurrentSongNotes(options) {
       if (missingSlugs.length) {
         confirmMessage += '\n\nThese slug(s) do not exist and will be skipped:\n- ' + missingSlugs.join('\n- ');
       }
-      if (!window.confirm(confirmMessage)) {
+      if (!await App.confirmAction({
+        dialogId: 'import-all-song-notes-dialog-title',
+        title: 'Import notes?',
+        message: confirmMessage,
+        confirmText: 'Import',
+        confirmClassName: 'btn soft-accent'
+      })) {
         return;
       }
       for (let i = 0; i < validRecords.length; i += 1) {
@@ -9243,6 +9313,179 @@ function renderFloatingPlayer(song) {
       })[0] || null;
     },
 
+
+    showChoiceDialog: function(options) {
+      options = options || {};
+      const dialogId = String(options.dialogId || 'app-choice-dialog-title');
+      const title = String(options.title || 'Confirm');
+      const message = String(options.message || '');
+      const details = Array.isArray(options.details) ? options.details.filter(function(item) {
+        return item !== null && item !== undefined && String(item).trim() !== '';
+      }) : [];
+      const actions = Array.isArray(options.actions) && options.actions.length ? options.actions : [
+        { value: 'cancel', label: 'Cancel', className: 'btn' },
+        { value: 'ok', label: 'OK', className: 'btn soft-accent' }
+      ];
+      const cancelValue = options.cancelValue !== undefined ? options.cancelValue : 'cancel';
+      const initialFocusValue = options.initialFocusValue !== undefined ? options.initialFocusValue : cancelValue;
+      return new Promise(function(resolve) {
+        const overlay = document.createElement('div');
+        overlay.className = 'choice-overlay';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-labelledby', dialogId);
+        overlay.innerHTML = [
+          '<div class="choice-dialog panel">',
+            '<h3 id="' + escapeHtml(dialogId) + '">' + escapeHtml(title) + '</h3>',
+            message ? '<p>' + escapeHtml(message).replace(/\n/g, '<br>') + '</p>' : '',
+            details.length ? '<div class="choice-meta">' + details.map(function(item) {
+              return '<span>' + escapeHtml(String(item)).replace(/\n/g, '<br>') + '</span>';
+            }).join('') + '</div>' : '',
+            '<div class="choice-actions">' + actions.map(function(action) {
+              const className = String(action && action.className || 'btn').trim() || 'btn';
+              const label = String(action && action.label || action && action.value || '');
+              const value = String(action && action.value || '');
+              return '<button class="' + escapeHtml(className) + '" type="button" data-choice-value="' + escapeHtml(value) + '">' + escapeHtml(label) + '</button>';
+            }).join('') + '</div>',
+          '</div>'
+        ].join('');
+
+        let done = false;
+        const close = function(choice) {
+          if (done) return;
+          done = true;
+          document.removeEventListener('keydown', onKeyDown, true);
+          overlay.remove();
+          resolve(choice);
+        };
+        const onKeyDown = function(event) {
+          if (event.key === 'Escape') close(cancelValue);
+        };
+        overlay.addEventListener('click', function(event) {
+          const button = event.target && event.target.closest ? event.target.closest('[data-choice-value]') : null;
+          if (!button) return;
+          event.preventDefault();
+          close(button.getAttribute('data-choice-value') || cancelValue);
+        });
+        document.addEventListener('keydown', onKeyDown, true);
+        document.body.appendChild(overlay);
+        window.requestAnimationFrame(function() {
+          const initialButton = overlay.querySelector('[data-choice-value="' + String(initialFocusValue).replace(/"/g, '&quot;') + '"]')
+            || overlay.querySelector('[data-choice-value]');
+          if (initialButton && typeof initialButton.focus === 'function') initialButton.focus();
+        });
+      });
+    },
+
+    confirmAction: async function(options) {
+      options = options || {};
+      const confirmClassName = String(options.confirmClassName || 'btn soft-accent').trim() || 'btn soft-accent';
+      const choice = await this.showChoiceDialog({
+        dialogId: options.dialogId || 'confirm-action-dialog-title',
+        title: options.title || 'Confirm',
+        message: options.message || '',
+        details: options.details || [],
+        cancelValue: 'cancel',
+        initialFocusValue: 'cancel',
+        actions: [
+          { value: 'cancel', label: options.cancelText || 'Cancel', className: 'btn' },
+          { value: 'ok', label: options.confirmText || 'OK', className: confirmClassName }
+        ]
+      });
+      return choice === 'ok';
+    },
+
+    showInputDialog: function(options) {
+      options = options || {};
+      const inputId = String(options.inputId || 'app-input-dialog-field');
+      const inputType = options.inputType === 'password' ? 'password' : 'text';
+      const initialValue = String(options.initialValue == null ? '' : options.initialValue);
+      return new Promise(function(resolve) {
+        const overlay = document.createElement('div');
+        overlay.className = 'choice-overlay';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-labelledby', options.dialogId || 'app-input-dialog-title');
+        overlay.innerHTML = [
+          '<div class="choice-dialog panel">',
+            '<h3 id="' + escapeHtml(options.dialogId || 'app-input-dialog-title') + '">' + escapeHtml(options.title || 'Input') + '</h3>',
+            options.message ? '<p>' + escapeHtml(String(options.message)).replace(/\n/g, '<br>') + '</p>' : '',
+            '<div class="choice-field">',
+              '<label for="' + escapeHtml(inputId) + '">' + escapeHtml(options.label || 'Value') + '</label>',
+              '<input class="field" id="' + escapeHtml(inputId) + '" type="' + inputType + '" autocomplete="' + (inputType === 'password' ? 'current-password' : 'url') + '">',
+            '</div>',
+            '<div class="choice-actions">',
+              '<button class="btn" type="button" data-input-choice="cancel">Cancel</button>',
+              '<button class="btn soft-accent" type="button" data-input-choice="ok">' + escapeHtml(options.confirmText || 'OK') + '</button>',
+            '</div>',
+          '</div>'
+        ].join('');
+
+        let done = false;
+        const close = function(choice) {
+          if (done) return;
+          done = true;
+          document.removeEventListener('keydown', onKeyDown, true);
+          const input = overlay.querySelector('#' + (window.CSS && CSS.escape ? CSS.escape(inputId) : inputId));
+          const value = input ? input.value : '';
+          overlay.remove();
+          resolve(choice === 'ok' ? value : null);
+        };
+        const onKeyDown = function(event) {
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            close('cancel');
+          }
+          if (event.key === 'Enter') {
+            const target = event.target;
+            if (target && target.tagName === 'INPUT') {
+              event.preventDefault();
+              close('ok');
+            }
+          }
+        };
+        overlay.addEventListener('click', function(event) {
+          const button = event.target && event.target.closest ? event.target.closest('[data-input-choice]') : null;
+          if (!button) return;
+          event.preventDefault();
+          close(button.getAttribute('data-input-choice') || 'cancel');
+        });
+        document.addEventListener('keydown', onKeyDown, true);
+        document.body.appendChild(overlay);
+        window.requestAnimationFrame(function() {
+          const input = overlay.querySelector('#' + (window.CSS && CSS.escape ? CSS.escape(inputId) : inputId));
+          if (input) {
+            input.value = initialValue;
+            if (typeof input.focus === 'function') input.focus();
+            if (typeof input.select === 'function') input.select();
+          }
+        });
+      });
+    },
+
+    confirmDuplicateTitleSave: function(existingSong, payload) {
+      const song = existingSong || {};
+      const title = String(payload && payload.title || song.title || '').trim();
+      const existingTitle = String(song.title || title || '(No title)').trim();
+      const existingSlug = String(song.slug || '').trim();
+      return this.showChoiceDialog({
+        dialogId: 'duplicate-title-dialog-title',
+        title: 'A song with this title already exists.',
+        message: 'Save anyway to keep both songs, or open the existing song without saving this edit.',
+        details: [
+          'Title: ' + (title || existingTitle),
+          existingSlug ? 'Existing slug: ' + existingSlug : ''
+        ],
+        cancelValue: 'cancel',
+        initialFocusValue: 'cancel',
+        actions: [
+          { value: 'cancel', label: 'Cancel', className: 'btn' },
+          existingSlug ? { value: 'open', label: 'Open existing', className: 'btn' } : null,
+          { value: 'save', label: 'Save anyway', className: 'btn soft-accent' }
+        ].filter(Boolean)
+      });
+    },
+
     showList: function(options) {
       options = options || {};
       Viewer.stopAutoScroll({ skipRender: true, resetProgress: true });
@@ -9588,10 +9831,16 @@ function renderFloatingPlayer(song) {
         .saveSetlist(payload);
     },
 
-    deleteSetlist: function(id) {
+    deleteSetlist: async function(id) {
       const normalizedId = String(id || '').trim();
       if (!normalizedId) return;
-      if (!window.confirm('Delete this setlist?')) return;
+      if (!await this.confirmAction({
+        dialogId: 'delete-setlist-dialog-title',
+        title: 'Delete setlist?',
+        message: 'Delete this setlist?',
+        confirmText: 'Delete',
+        confirmClassName: 'btn danger'
+      })) return;
       this.beginBusy('Deleting setlist…');
       google.script.run
         .withSuccessHandler(function() {
@@ -9766,17 +10015,33 @@ function renderFloatingPlayer(song) {
         .getSong(slug);
     },
 
-    saveCurrentSong: function() {
+    saveCurrentSong: async function() {
       const payload = this.collectEditorPayload();
       const originalSlug = String(payload.originalSlug || '').trim();
       const nextSlug = String(payload.slug || '').trim();
       const existingSong = !originalSlug && nextSlug ? this.getSongSummaryBySlug(nextSlug) : null;
-      if (existingSong && !window.confirm('A song with this slug already exists. Overwrite it?')) {
+      let allowOverwrite = false;
+      let allowDuplicateTitle = false;
+      if (existingSong && !await this.confirmAction({
+        dialogId: 'overwrite-song-slug-dialog-title',
+        title: 'Overwrite existing song?',
+        message: 'A song with this slug already exists. Overwrite it?',
+        details: ['Slug: ' + nextSlug],
+        confirmText: 'Overwrite',
+        confirmClassName: 'btn danger'
+      })) {
         return;
       }
+      if (existingSong) allowOverwrite = true;
       const existingTitleSong = this.getDuplicateTitleSongForPayload(payload);
-      if (existingTitleSong && !window.confirm('A song with this title already exists. Save anyway?\n\nTitle: ' + String(payload.title || '').trim() + '\nExisting slug: ' + String(existingTitleSong.slug || ''))) {
-        return;
+      if (existingTitleSong) {
+        const duplicateChoice = await this.confirmDuplicateTitleSave(existingTitleSong, payload);
+        if (duplicateChoice === 'open') {
+          this.openSong(String(existingTitleSong.slug || '').trim());
+          return;
+        }
+        if (duplicateChoice !== 'save') return;
+        allowDuplicateTitle = true;
       }
       this.beginBusy('Saving song…');
       google.script.run
@@ -9807,10 +10072,13 @@ function renderFloatingPlayer(song) {
           App.setStatus('error', String(err && err.message || err || 'Failed to save.'));
           App.render();
         })
-        .saveSong(payload);
+        .saveSong(Object.assign({}, payload, {
+          allowOverwrite: allowOverwrite === true,
+          allowDuplicateTitle: allowDuplicateTitle === true
+        }));
     },
 
-    deleteCurrentSong: function() {
+    deleteCurrentSong: async function() {
       const payload = this.collectEditorPayload();
       const slug = String(payload.originalSlug || '').trim();
       if (!slug) {
@@ -9818,7 +10086,14 @@ function renderFloatingPlayer(song) {
         this.render();
         return;
       }
-      if (!window.confirm('Delete this song? Sticky notes for this song will also be deleted. Setlists will keep a Missing song placeholder.')) return;
+      if (!await this.confirmAction({
+        dialogId: 'delete-current-song-dialog-title',
+        title: 'Delete song?',
+        message: 'Delete this song?',
+        details: ['Sticky notes for this song will also be deleted.', 'Setlists will keep a Missing song placeholder.'],
+        confirmText: 'Delete',
+        confirmClassName: 'btn danger'
+      })) return;
       this.beginBusy('Deleting song…');
       google.script.run
         .withSuccessHandler(async function(result) {
@@ -9856,7 +10131,7 @@ function renderFloatingPlayer(song) {
         .deleteSong(slug);
     },
 
-    deleteSongFromList: function(slug) {
+    deleteSongFromList: async function(slug) {
       const normalizedSlug = String(slug || '').trim();
       if (!normalizedSlug) {
         this.setStatus('error', 'Song not found.');
@@ -9865,7 +10140,14 @@ function renderFloatingPlayer(song) {
       }
       const song = this.getSongSummaryBySlug(normalizedSlug) || { slug: normalizedSlug, title: '' };
       const title = String(song.title || '(Untitled song)');
-      if (!window.confirm('Delete this song?\n\nTitle: ' + title + '\nSlug: ' + normalizedSlug + '\n\nSticky notes for this song will also be deleted. Setlists will keep a Missing song placeholder.')) return;
+      if (!await this.confirmAction({
+        dialogId: 'delete-song-from-list-dialog-title',
+        title: 'Delete song?',
+        message: 'Delete this song?',
+        details: ['Title: ' + title, 'Slug: ' + normalizedSlug, 'Sticky notes for this song will also be deleted.', 'Setlists will keep a Missing song placeholder.'],
+        confirmText: 'Delete',
+        confirmClassName: 'btn danger'
+      })) return;
       this.beginBusy('Deleting song...');
       google.script.run
         .withSuccessHandler(async function(result) {
@@ -10697,16 +10979,21 @@ function renderFloatingPlayer(song) {
       } catch (err) {}
     },
 
-    getGasSyncUrl: function(options) {
+    getGasSyncUrl: async function(options) {
       options = options || {};
       const forcePrompt = !!options.forcePrompt;
       const rememberedUrl = loadStoredString(STORAGE_KEYS.gasSyncUrl, '');
       let syncUrl = this.normalizeGasSyncUrl(rememberedUrl);
       if (!forcePrompt && syncUrl) return syncUrl;
-      const promptMessage = syncUrl
-        ? 'Replace saved GAS web app URL:'
-        : 'Paste the GAS web app URL.';
-      const enteredUrl = window.prompt(promptMessage, syncUrl || rememberedUrl || '');
+      const enteredUrl = await this.showInputDialog({
+        dialogId: 'gas-sync-url-dialog-title',
+        inputId: 'gas-sync-url-input',
+        title: syncUrl ? 'Replace GAS web app URL' : 'GAS web app URL',
+        message: 'Paste the GAS web app URL.',
+        label: 'GAS web app URL',
+        initialValue: syncUrl || rememberedUrl || '',
+        confirmText: 'Continue'
+      });
       if (enteredUrl === null) return null;
       const normalizedUrl = this.normalizeGasSyncUrl(enteredUrl);
       if (!normalizedUrl) {
@@ -10718,7 +11005,7 @@ function renderFloatingPlayer(song) {
       return normalizedUrl;
     },
 
-    getGasSyncEditPassword: function(syncUrl) {
+    getGasSyncEditPassword: async function(syncUrl) {
       const key = STORAGE_KEYS.gasSyncEditPasswordSession;
       const normalizedUrl = String(syncUrl || '').trim();
       try {
@@ -10732,7 +11019,16 @@ function renderFloatingPlayer(song) {
           }
         }
       } catch (err) {}
-      const editPassword = window.prompt('If edit lock is enabled, enter the Unlock edit password. Leave blank if not used. This will be remembered until this tab is closed.', '');
+      const editPassword = await this.showInputDialog({
+        dialogId: 'gas-sync-password-dialog-title',
+        inputId: 'gas-sync-password-input',
+        inputType: 'password',
+        title: 'Unlock edit password',
+        message: 'If edit lock is enabled, enter the Unlock edit password. Leave blank if not used. This will be remembered until this tab is closed.',
+        label: 'Unlock edit password',
+        initialValue: '',
+        confirmText: 'Continue'
+      });
       if (editPassword === null) return null;
       try {
         sessionStorage.setItem(key, JSON.stringify({ syncUrl: normalizedUrl, editPassword: String(editPassword) }));
@@ -10776,11 +11072,11 @@ function renderFloatingPlayer(song) {
       document.body.removeChild(form);
     },
 
-    syncLibraryToGas: function(options) {
+    syncLibraryToGas: async function(options) {
       options = options || {};
-      const syncUrl = this.getGasSyncUrl({ forcePrompt: !!options.forceUrlPrompt });
+      const syncUrl = await this.getGasSyncUrl({ forcePrompt: !!options.forceUrlPrompt });
       if (!syncUrl) return false;
-      const editPassword = this.getGasSyncEditPassword(syncUrl);
+      const editPassword = await this.getGasSyncEditPassword(syncUrl);
       if (editPassword === null) return false;
 
       this.beginBusy('Preparing GAS sync...');
@@ -10791,10 +11087,20 @@ function renderFloatingPlayer(song) {
         const songs = Array.isArray(results[0]) ? results[0] : [];
         const setlists = (Array.isArray(results[1]) ? results[1] : []).map(normalizeSetlistForApp);
         App.endBusy();
-        if (!window.confirm('Send ' + songs.length + ' song(s) and ' + setlists.length + ' setlist(s) to GAS? Matching slugs / ids in GAS will be overwritten, and all other GAS data will be kept.')) {
-          return;
-        }
-        App.submitGasLibrarySyncForm(syncUrl, songs, setlists, editPassword, '_self');
+        App.confirmAction({
+          dialogId: 'sync-library-to-gas-dialog-title',
+          title: 'Send library to GAS?',
+          message: 'Send ' + songs.length + ' song(s) and ' + setlists.length + ' setlist(s) to GAS?',
+          details: ['Matching slugs / ids in GAS will be overwritten.', 'All other GAS data will be kept.'],
+          confirmText: 'Send',
+          confirmClassName: 'btn soft-accent'
+        }).then(function(confirmed) {
+          if (!confirmed) {
+            return;
+          }
+          App.submitGasLibrarySyncForm(syncUrl, songs, setlists, editPassword, '_self');
+        });
+        return;
       }).catch(function(err) {
         App.endBusy();
         App.setStatus('error', String(err && err.message || err || 'Failed to prepare GAS sync.'));
@@ -10803,7 +11109,7 @@ function renderFloatingPlayer(song) {
       return false;
     },
 
-    syncCurrentSongToGas: function(options) {
+    syncCurrentSongToGas: async function(options) {
       options = options || {};
       const currentSong = this.state && this.state.currentSong ? this.state.currentSong : null;
       const slug = String(currentSong && currentSong.slug || '').trim();
@@ -10811,9 +11117,9 @@ function renderFloatingPlayer(song) {
         this.flashStatus('error', 'Song not found.', 2200);
         return false;
       }
-      const syncUrl = this.getGasSyncUrl({ forcePrompt: !!options.forceUrlPrompt });
+      const syncUrl = await this.getGasSyncUrl({ forcePrompt: !!options.forceUrlPrompt });
       if (!syncUrl) return false;
-      const editPassword = this.getGasSyncEditPassword(syncUrl);
+      const editPassword = await this.getGasSyncEditPassword(syncUrl);
       if (editPassword === null) return false;
 
       this.beginBusy('Preparing GAS sync...');
@@ -10850,16 +11156,16 @@ function renderFloatingPlayer(song) {
       return false;
     },
 
-    syncCurrentSetlistToGas: function(options) {
+    syncCurrentSetlistToGas: async function(options) {
       options = options || {};
       const setlist = normalizeSetlistForApp(this.state && this.state.setlistEditor ? this.state.setlistEditor : {});
       if (!setlist.id) {
         this.flashStatus('error', 'Setlist not found.', 2200);
         return false;
       }
-      const syncUrl = this.getGasSyncUrl({ forcePrompt: !!options.forceUrlPrompt });
+      const syncUrl = await this.getGasSyncUrl({ forcePrompt: !!options.forceUrlPrompt });
       if (!syncUrl) return false;
-      const editPassword = this.getGasSyncEditPassword(syncUrl);
+      const editPassword = await this.getGasSyncEditPassword(syncUrl);
       if (editPassword === null) return false;
 
       const slugs = [];
@@ -10885,11 +11191,19 @@ function renderFloatingPlayer(song) {
         App.endBusy();
         const confirmMessage = 'Send this setlist and ' + songs.length + ' song(s) to GAS? Matching slug / id data in GAS will be overwritten, and all other GAS data will be kept.'
           + (missingCount ? ' ' + missingCount + ' missing song(s) will remain as missing entries.' : '');
-        if (!window.confirm(confirmMessage)) return;
-        App.submitGasLibrarySyncForm(syncUrl, songs, [setlistForSync], editPassword, '_self', {
+        App.confirmAction({
+          dialogId: 'sync-setlist-to-gas-dialog-title',
+          title: 'Send setlist to GAS?',
+          message: confirmMessage,
+          confirmText: 'Send',
+          confirmClassName: 'btn soft-accent'
+        }).then(function(confirmed) {
+          if (!confirmed) return;
+          App.submitGasLibrarySyncForm(syncUrl, songs, [setlistForSync], editPassword, '_self', {
           openAfterSync: true,
           openPage: 'setlist-edit',
           openId: setlistForSync.id
+          });
         });
       }).catch(function(err) {
         App.endBusy();
@@ -10938,7 +11252,14 @@ function renderFloatingPlayer(song) {
             App.flashStatus('error', 'Invalid song JSON file.', 2600);
             return;
           }
-          if (!window.confirm('Import ' + songs.length + ' song(s)? Songs with the same slug will be overwritten, and all other existing songs will be kept.')) {
+          if (!await App.confirmAction({
+            dialogId: 'import-songs-dialog-title',
+            title: 'Import songs?',
+            message: 'Import ' + songs.length + ' song(s)?',
+            details: ['Songs with the same slug will be overwritten.', 'All other existing songs will be kept.'],
+            confirmText: 'Import',
+            confirmClassName: 'btn soft-accent'
+          })) {
             return;
           }
           App.beginBusy('Importing songs…');
@@ -11022,7 +11343,7 @@ function renderFloatingPlayer(song) {
       if (input) input.value = '';
       if (!file) return false;
       const reader = new FileReader();
-      reader.onload = function(loadEvent) {
+      reader.onload = async function(loadEvent) {
         try {
           const raw = loadEvent && loadEvent.target ? String(loadEvent.target.result || '') : '';
           const payload = JSON.parse(raw);
@@ -11048,7 +11369,14 @@ function renderFloatingPlayer(song) {
             App.flashStatus('error', 'Invalid setlist JSON file.', 2600);
             return;
           }
-          if (!window.confirm('Import ' + setlists.length + ' setlist(s)? Setlists with the same id will be overwritten, and all other existing setlists will be kept.')) {
+          if (!await App.confirmAction({
+            dialogId: 'import-setlists-dialog-title',
+            title: 'Import setlists?',
+            message: 'Import ' + setlists.length + ' setlist(s)?',
+            details: ['Setlists with the same id will be overwritten.', 'All other existing setlists will be kept.'],
+            confirmText: 'Import',
+            confirmClassName: 'btn soft-accent'
+          })) {
             return;
           }
           App.beginBusy('Importing setlists…');
@@ -11448,7 +11776,7 @@ function renderFloatingPlayer(song) {
       const hasNext = index < context.items.length - 1;
       const nextItem = hasNext ? context.items[index + 1] : null;
       const nextSong = nextItem ? this.getSongSummaryBySlug(nextItem.slug) : null;
-      const nextTitle = nextSong ? (nextSong.title || nextItem.slug || 'Untitled song') : (nextItem && nextItem.slug ? nextItem.slug : '(Missing song)');
+      const nextTitle = nextSong ? (nextSong.title || nextItem.slug || 'Untitled song') : '(Missing song)';
       const nextButtonLabel = hasNext
         ? '<span class="setlist-playbar-next-prefix">Next:</span><span class="setlist-playbar-next-title">' + escapeHtml(nextTitle) + '</span>'
         : 'End';
