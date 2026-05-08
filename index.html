@@ -9395,6 +9395,28 @@ function renderFloatingPlayer(song) {
       return choice === 'ok';
     },
 
+    confirmDuplicateSlugSave: function(existingSong, payload) {
+      const song = existingSong || {};
+      const slug = String(payload && payload.slug || song.slug || '').trim();
+      const existingTitle = String(song.title || '').trim();
+      return this.showChoiceDialog({
+        dialogId: 'duplicate-slug-dialog-title',
+        title: 'A song with this slug already exists.',
+        message: 'Overwrite it, or open the existing song without saving this edit.',
+        details: [
+          'Slug: ' + slug,
+          existingTitle ? 'Existing title: ' + existingTitle : ''
+        ],
+        cancelValue: 'cancel',
+        initialFocusValue: 'cancel',
+        actions: [
+          { value: 'cancel', label: 'Cancel', className: 'btn' },
+          slug ? { value: 'open', label: 'Open existing', className: 'btn' } : null,
+          { value: 'overwrite', label: 'Overwrite', className: 'btn danger' }
+        ].filter(Boolean)
+      });
+    },
+
     showInputDialog: function(options) {
       options = options || {};
       const inputId = String(options.inputId || 'app-input-dialog-field');
@@ -10022,17 +10044,15 @@ function renderFloatingPlayer(song) {
       const existingSong = !originalSlug && nextSlug ? this.getSongSummaryBySlug(nextSlug) : null;
       let allowOverwrite = false;
       let allowDuplicateTitle = false;
-      if (existingSong && !await this.confirmAction({
-        dialogId: 'overwrite-song-slug-dialog-title',
-        title: 'Overwrite existing song?',
-        message: 'A song with this slug already exists. Overwrite it?',
-        details: ['Slug: ' + nextSlug],
-        confirmText: 'Overwrite',
-        confirmClassName: 'btn danger'
-      })) {
-        return;
+      if (existingSong) {
+        const duplicateSlugChoice = await this.confirmDuplicateSlugSave(existingSong, payload);
+        if (duplicateSlugChoice === 'open') {
+          this.openSong(String(existingSong.slug || nextSlug || '').trim());
+          return;
+        }
+        if (duplicateSlugChoice !== 'overwrite') return;
+        allowOverwrite = true;
       }
-      if (existingSong) allowOverwrite = true;
       const existingTitleSong = this.getDuplicateTitleSongForPayload(payload);
       if (existingTitleSong) {
         const duplicateChoice = await this.confirmDuplicateTitleSave(existingTitleSong, payload);
