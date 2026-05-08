@@ -415,6 +415,55 @@
     background: rgba(148, 163, 184, 0.32);
     box-shadow: none;
   }
+  .viewer-sidebar-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .viewer-sidebar-title .section-title-row {
+    flex: 1 1 auto;
+  }
+  .viewer-sidebar-restore-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--accent);
+    box-shadow: none;
+  }
+  .viewer-sidebar-restore-toggle:hover {
+    background: rgba(var(--accent-rgb), 0.08);
+  }
+  .viewer-sidebar-restore-toggle:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.14);
+  }
+  .viewer-sidebar-restore-toggle .material-symbols-outlined {
+    font-family: "Material Symbols Outlined";
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+    font-size: 20px;
+    line-height: 1;
+  }
+  @media (min-width: 981px) {
+    .song-header .viewer-sidebar-restore-toggle {
+      display: inline-flex;
+    }
+    .viewer-grid.is-sidebar-collapsed {
+      grid-template-columns: minmax(0, 1fr) 0 0;
+      position: relative;
+    }
+    .viewer-grid.is-sidebar-collapsed .viewer-pane-resizer,
+    .viewer-grid.is-sidebar-collapsed .sidebar-stack {
+      display: none;
+    }
+  }
   .sidebar-stack {
     display: grid;
     gap: 14px;
@@ -3014,7 +3063,8 @@
       grid-template-columns: 1fr;
       height: auto;
     }
-    .viewer-pane-resizer {
+    .viewer-pane-resizer,
+    .viewer-sidebar-restore-toggle {
       display: none;
     }
     .viewer-body,
@@ -6639,6 +6689,99 @@ function loadCurrentSongNotes(options) {
       return target.clientHeight;
     }
 
+    function getAutoscrollLineNodes(els) {
+      const stage = els && els.sheetStage;
+      if (!stage) return [];
+      return Array.prototype.slice.call(stage.querySelectorAll(
+        '.cw-renderer > .cw-line, .cw-renderer > .cw-plain-line, .cw-renderer > .cw-empty-line, .cw-renderer > .cw-directive-line'
+      ));
+    }
+
+    function getAutoscrollLineMetrics(els, scrollTarget, stageTop, stageHeight) {
+      const stageBottom = stageTop + Math.max(stageHeight || 1, 1);
+      const lineBoxes = getAutoscrollLineNodes(els).map(function(node) {
+        const rect = node.getBoundingClientRect();
+        const top = getScrollTop(scrollTarget) + rect.top - getViewportTop(scrollTarget);
+        const bottom = getScrollTop(scrollTarget) + rect.bottom - getViewportTop(scrollTarget);
+        return { top: top, bottom: bottom };
+      }).filter(function(box) {
+        return Number.isFinite(box.top) && Number.isFinite(box.bottom) && box.bottom >= box.top;
+      }).sort(function(a, b) {
+        return a.top - b.top;
+      });
+      const boundaries = [];
+      let lastLineBottom = null;
+      lineBoxes.forEach(function(box) {
+        const clampedTop = Math.max(stageTop, Math.min(stageBottom, box.top));
+        const clampedBottom = Math.max(stageTop, Math.min(stageBottom, box.bottom));
+        if (!boundaries.length || Math.abs(clampedTop - boundaries[boundaries.length - 1]) > 0.5) {
+          boundaries.push(clampedTop);
+        }
+        lastLineBottom = lastLineBottom === null ? clampedBottom : Math.max(lastLineBottom, clampedBottom);
+      });
+      if (!boundaries.length) {
+        return {
+          boundaries: [stageTop, stageBottom],
+          lineSlotCount: 0
+        };
+      }
+      const scoreBottom = Math.max(boundaries[boundaries.length - 1] + 1, lastLineBottom === null ? stageBottom : lastLineBottom);
+      if (Math.abs(scoreBottom - boundaries[boundaries.length - 1]) > 0.5) {
+        boundaries.push(scoreBottom);
+      } else {
+        boundaries[boundaries.length - 1] = scoreBottom;
+      }
+      return {
+        boundaries: boundaries,
+        lineSlotCount: Math.max(1, boundaries.length - 1)
+      };
+    }
+
+    function getYForAutoscrollPercent(percent, metrics, stageTop, stageHeight) {
+      const safePercent = Math.max(0, Math.min(1, parseFloat(percent) || 0));
+      if (!metrics || !metrics.lineSlotCount || !metrics.boundaries || metrics.boundaries.length < 2) {
+        return stageTop + (safePercent * Math.max(stageHeight || 1, 1));
+      }
+      const slotCount = metrics.lineSlotCount;
+      if (safePercent >= 1) return metrics.boundaries[slotCount];
+      const scaled = safePercent * slotCount;
+      const slotIndex = Math.max(0, Math.min(slotCount - 1, Math.floor(scaled)));
+      const slotProgress = Math.max(0, Math.min(1, scaled - slotIndex));
+      const from = metrics.boundaries[slotIndex];
+      const to = metrics.boundaries[slotIndex + 1];
+      return from + ((to - from) * slotProgress);
+    }
+
+    function getAutoscrollPercentForY(y, metrics, stageTop, stageHeight) {
+      const safeY = Number(y);
+      if (!Number.isFinite(safeY)) return 0;
+      if (!metrics || !metrics.lineSlotCount || !metrics.boundaries || metrics.boundaries.length < 2) {
+        return Math.max(0, Math.min(1, (safeY - stageTop) / Math.max(stageHeight || 1, 1)));
+      }
+      const slotCount = metrics.lineSlotCount;
+      const first = metrics.boundaries[0];
+      const last = metrics.boundaries[slotCount];
+      const clampedY = Math.max(first, Math.min(last, safeY));
+      if (clampedY <= first) return 0;
+      if (clampedY >= last) return 1;
+      for (let i = 0; i < slotCount; i += 1) {
+        const from = metrics.boundaries[i];
+        const to = metrics.boundaries[i + 1];
+        if (clampedY <= to || i === slotCount - 1) {
+          const span = Math.max(1, to - from);
+          return Math.max(0, Math.min(1, (i + ((clampedY - from) / span)) / slotCount));
+        }
+      }
+      return 1;
+    }
+
+    function getAutoscrollPercentForClientY(clientY) {
+      const geometry = getGeometry();
+      if (!geometry || !geometry.scrollTarget) return 0;
+      const y = getScrollTop(geometry.scrollTarget) + clientY - getViewportTop(geometry.scrollTarget);
+      return getAutoscrollPercentForY(y, geometry.lineMetrics, geometry.stageTop, geometry.stageHeight);
+    }
+
     function getGeometry() {
       const els = cacheElements();
       if (!els.sheetStage) return null;
@@ -6646,13 +6789,16 @@ function loadCurrentSongNotes(options) {
       const stageRect = els.sheetStage.getBoundingClientRect();
       const stageHeight = Math.max(els.sheetStage.offsetHeight, els.sheetStage.scrollHeight, stageRect.height, 1);
       const stageTop = getScrollTop(scrollTarget) + stageRect.top - getViewportTop(scrollTarget);
-      const startY = stageTop + (App.state.scroll.startPercent * stageHeight);
-      const endY = stageTop + (App.state.scroll.endPercent * stageHeight);
+      const lineMetrics = getAutoscrollLineMetrics(els, scrollTarget, stageTop, stageHeight);
+      const startY = getYForAutoscrollPercent(App.state.scroll.startPercent, lineMetrics, stageTop, stageHeight);
+      const endY = getYForAutoscrollPercent(App.state.scroll.endPercent, lineMetrics, stageTop, stageHeight);
       return {
         els: els,
         scrollTarget: scrollTarget,
         stageHeight: stageHeight,
         stageTop: stageTop,
+        lineMetrics: lineMetrics,
+        lineSlotCount: lineMetrics ? lineMetrics.lineSlotCount : 0,
         startY: startY,
         endY: endY,
         distance: Math.max(0, endY - startY),
@@ -6660,14 +6806,17 @@ function loadCurrentSongNotes(options) {
       };
     }
 
-    function getMinMarkerGapPercent(stageHeight) {
+    function getMinMarkerGapPercent(geometry) {
+      if (geometry && geometry.lineSlotCount) {
+        return Math.min(0.25, 1 / Math.max(geometry.lineSlotCount, 1));
+      }
       const minGapPx = 40;
-      return Math.min(0.25, minGapPx / Math.max(stageHeight || 1, 1));
+      return Math.min(0.25, minGapPx / Math.max(geometry && geometry.stageHeight || 1, 1));
     }
 
     function normalizeScrollBounds() {
       const geometry = getGeometry();
-      const minGap = getMinMarkerGapPercent(geometry ? geometry.stageHeight : 0);
+      const minGap = getMinMarkerGapPercent(geometry);
       let startPercent = Math.max(0, Math.min(1, App.state.scroll.startPercent || 0));
       let endPercent = Math.max(0, Math.min(1, App.state.scroll.endPercent || 0));
 
@@ -6690,15 +6839,23 @@ function loadCurrentSongNotes(options) {
     function syncAutoscrollUi() {
       const els = cacheElements();
       normalizeScrollBounds();
+      const geometry = getGeometry();
       const startPercent = Math.max(0, Math.min(1, App.state.scroll.startPercent || 0));
       const endPercent = Math.max(startPercent, Math.min(1, App.state.scroll.endPercent || 0));
+      const startTopPx = geometry ? Math.max(0, getYForAutoscrollPercent(startPercent, geometry.lineMetrics, geometry.stageTop, geometry.stageHeight) - geometry.stageTop) : 0;
+      const endTopPx = geometry ? Math.max(startTopPx, getYForAutoscrollPercent(endPercent, geometry.lineMetrics, geometry.stageTop, geometry.stageHeight) - geometry.stageTop) : startTopPx;
 
       if (els.trackRange) {
-        els.trackRange.style.top = (startPercent * 100) + '%';
-        els.trackRange.style.height = Math.max(0, (endPercent - startPercent) * 100) + '%';
+        if (geometry) {
+          els.trackRange.style.top = startTopPx + 'px';
+          els.trackRange.style.height = Math.max(0, endTopPx - startTopPx) + 'px';
+        } else {
+          els.trackRange.style.top = (startPercent * 100) + '%';
+          els.trackRange.style.height = Math.max(0, (endPercent - startPercent) * 100) + '%';
+        }
       }
-      if (els.startMarker) els.startMarker.style.top = (startPercent * 100) + '%';
-      if (els.endMarker) els.endMarker.style.top = (endPercent * 100) + '%';
+      if (els.startMarker) els.startMarker.style.top = geometry ? (startTopPx + 'px') : ((startPercent * 100) + '%');
+      if (els.endMarker) els.endMarker.style.top = geometry ? (endTopPx + 'px') : ((endPercent * 100) + '%');
       if (els.startInput) els.startInput.value = String(Math.round(startPercent * 100));
       if (els.endInput) els.endInput.value = String(Math.round(endPercent * 100));
       if (els.scrollPane) {
@@ -7124,7 +7281,7 @@ function loadCurrentSongNotes(options) {
     function setMarkerPercent(which, percent, options) {
       options = options || {};
       const geometry = getGeometry();
-      const minGap = getMinMarkerGapPercent(geometry ? geometry.stageHeight : 0);
+      const minGap = getMinMarkerGapPercent(geometry);
       const clamped = Math.max(0, Math.min(1, percent));
       if (which === 'start') {
         App.state.scroll.startPercent = Math.min(clamped, Math.max(0, App.state.scroll.endPercent - minGap));
@@ -7147,9 +7304,7 @@ function loadCurrentSongNotes(options) {
 
       const updateFromClientY = function(clientY) {
         lastDragClientY = clientY;
-        const rect = geometry.els.sheetStage.getBoundingClientRect();
-        const nextPercent = (clientY - rect.top) / Math.max(rect.height, 1);
-        setMarkerPercent(which, nextPercent);
+        setMarkerPercent(which, getAutoscrollPercentForClientY(clientY));
       };
 
       const handleMove = function(moveEvent) {
@@ -7234,6 +7389,8 @@ function loadCurrentSongNotes(options) {
       const noteBaseFontSize = noteBaseFontScale[state.fontSizeLevel] || noteBaseFontScale[3];
       const noteLayerStyle = '--viewer-note-font-family:' + App.getLyricsFontStack() + ';--viewer-note-base-size:' + noteBaseFontSize + ';';
       const saveDirtyClass = App.isViewerSongControlsDirty() ? ' is-dirty' : '';
+      const sidebarToggleIcon = state.viewerSidebarCollapsed ? 'right_panel_open' : 'right_panel_close';
+      const sidebarToggleLabel = state.viewerSidebarCollapsed ? 'Show controls' : 'Hide controls';
       const tags = (song.tags || []).map(function(tag) {
         return '<span class="tag">' + escapeHtml(tag) + '</span>';
       }).join('');
@@ -7250,13 +7407,14 @@ function loadCurrentSongNotes(options) {
                     '<h2>' + escapeHtml(song.title) + '</h2>',
                     '<div class="song-detail-row song-header-detail-row"><p>' + escapeHtml(song.artist) + '</p>' + (tags ? '<div class="tag-row tag-row-inline">' + tags + '</div>' : '') + '</div>',
                   '</div>',
-                  state.currentSetlist ? '' : [
-                    '<div class="inline-actions song-header-actions">',
+                  '<div class="inline-actions song-header-actions">',
+                    state.currentSetlist ? '' : [
                       '<button class="btn" type="button" data-app-action="show-list">← Back</button>',
                       '<button class="btn" type="button" data-app-action="sync-current-song-to-gas">Sync to GAS</button>',
                       '<button class="btn soft-accent" type="button" data-app-action="open-editor" data-song-slug="' + escapeHtml(song.slug) + '">Edit</button>',
-                    '</div>'
-                  ].join(''),
+                    ].join(''),
+                    '<button class="viewer-sidebar-restore-toggle" type="button" data-app-action="toggle-viewer-sidebar" title="' + escapeHtml(sidebarToggleLabel) + '" aria-label="' + escapeHtml(sidebarToggleLabel) + '"><span class="material-symbols-outlined" aria-hidden="true">' + escapeHtml(sidebarToggleIcon) + '</span></button>',
+                  '</div>',
                 '</div>',
                 '<div class="sheet-stage" id="sheet-stage">',
                   '<div class="autoscroll-lane" aria-hidden="true">',
@@ -7475,6 +7633,7 @@ function loadCurrentSongNotes(options) {
       return '<h3 class="section-title"><span class="section-title-row"><span class="material-symbols-outlined section-title-icon" aria-hidden="true">' + escapeHtml(iconName) + '</span><span>' + escapeHtml(label) + '</span></span></h3>';
     }
 
+
     function segmentedButtonHtml(label, active, value) {
       return '<button type="button" class="btn btn-segment' + (active ? ' is-active' : '') + '" data-app-action="set-notation" data-app-value="' + escapeHtml(value) + '">' + label + '</button>';
     }
@@ -7599,6 +7758,22 @@ function renderFloatingPlayer(song) {
           || !!activeNoteResize
           || isDraggingMarker
         );
+      },
+      refreshLayout: function() {
+        const scrollTarget = getScrollTarget();
+        if (scrollTarget) {
+          exactScrollTop = getScrollTop(scrollTarget);
+          setProgrammaticScrollTop(scrollTarget, exactScrollTop);
+        }
+        if (App && App.state && App.state.scroll && App.state.scroll.isPlaying) {
+          const geometry = getGeometry();
+          observedScrollGeometrySnapshot = createObservedGeometrySnapshot(geometry);
+          if (observedScrollGeometrySnapshot) {
+            rebaseAutoscrollSegment(exactScrollTop, observedScrollGeometrySnapshot);
+          }
+        }
+        syncAutoscrollUi();
+        if (!editingNoteId) renderSongNotes();
       },
       getRenderScrollTop: function() {
         const scrollTarget = getScrollTarget();
@@ -7751,6 +7926,7 @@ function renderFloatingPlayer(song) {
     accentColor: 'personal_chordpro_viewer_accentColor',
     noteColor: 'personal_chordpro_viewer_noteColor',
     viewerSidebarWidth: 'personal_chordpro_viewer_viewerSidebarWidth',
+    viewerSidebarCollapsed: 'personal_chordpro_viewer_viewerSidebarCollapsed',
     gasSyncUrl: 'personal_chordpro_viewer_gasSyncUrl',
     gasSyncEditPasswordSession: 'personal_chordpro_viewer_gasSyncEditPasswordSession'
   };
@@ -8019,6 +8195,7 @@ function renderFloatingPlayer(song) {
       accentColor: normalizeAccentColor(loadStoredString(STORAGE_KEYS.accentColor, 'blue')),
       noteColor: normalizeNoteColor(loadStoredString(STORAGE_KEYS.noteColor, 'yellow')),
       viewerSidebarWidth: loadStoredInteger(STORAGE_KEYS.viewerSidebarWidth, 300, 160, 520),
+      viewerSidebarCollapsed: loadStoredString(STORAGE_KEYS.viewerSidebarCollapsed, '') === '1',
       scroll: {
         isPlaying: false,
         durationSec: 240,
@@ -8115,7 +8292,72 @@ function renderFloatingPlayer(song) {
       }
     },
 
+    persistViewerSidebarCollapsed: function() {
+      if (!saveStoredString(STORAGE_KEYS.viewerSidebarCollapsed, this.state.viewerSidebarCollapsed ? '1' : '0')) {
+        this.notifyStorageUnavailable();
+      }
+    },
+
+    syncViewerSidebarToggleButton: function() {
+      const button = document.querySelector('[data-app-action="toggle-viewer-sidebar"]');
+      if (!button) return;
+      const isCollapsed = !!this.state.viewerSidebarCollapsed;
+      const label = isCollapsed ? 'Show controls' : 'Hide controls';
+      const icon = isCollapsed ? 'right_panel_open' : 'right_panel_close';
+      button.setAttribute('title', label);
+      button.setAttribute('aria-label', label);
+      const iconEl = button.querySelector('.material-symbols-outlined');
+      if (iconEl) iconEl.textContent = icon;
+    },
+
+    refreshViewerLayoutAfterReflow: function(options) {
+      const opts = options || {};
+      const refresh = function() {
+        App.syncViewerPaneLayout();
+        if (App.state.page !== 'view' || !App.state.currentSong) return;
+        if (typeof Viewer !== 'undefined' && typeof Viewer.refreshLayout === 'function') {
+          Viewer.refreshLayout();
+        }
+      };
+      if (opts.immediate) refresh();
+      if (this._viewerLayoutRefreshRaf) {
+        window.cancelAnimationFrame(this._viewerLayoutRefreshRaf);
+        this._viewerLayoutRefreshRaf = null;
+      }
+      this._viewerLayoutRefreshRaf = window.requestAnimationFrame(function() {
+        App._viewerLayoutRefreshRaf = null;
+        refresh();
+      });
+      if (this._viewerLayoutRefreshTimer) {
+        window.clearTimeout(this._viewerLayoutRefreshTimer);
+        this._viewerLayoutRefreshTimer = null;
+      }
+      this._viewerLayoutRefreshTimer = window.setTimeout(function() {
+        App._viewerLayoutRefreshTimer = null;
+        refresh();
+      }, 120);
+    },
+
+    refreshViewerLayoutAfterSidebarToggle: function() {
+      this.refreshViewerLayoutAfterReflow({ immediate: true });
+    },
+
+    setViewerSidebarCollapsed: function(collapsed) {
+      const nextValue = !!collapsed;
+      if (this.state.viewerSidebarCollapsed === nextValue) return;
+      this.cancelViewerPaneResize();
+      this.state.viewerSidebarCollapsed = nextValue;
+      this.persistViewerSidebarCollapsed();
+      this.syncViewerSidebarToggleButton();
+      this.refreshViewerLayoutAfterSidebarToggle();
+    },
+
+    toggleViewerSidebarCollapsed: function() {
+      this.setViewerSidebarCollapsed(!this.state.viewerSidebarCollapsed);
+    },
+
     isViewerPaneResizeBlocked: function() {
+      if (this.state.viewerSidebarCollapsed) return true;
       if (this._busyCount > 0) return true;
       if (this.state.page !== 'view' || !this.state.currentSong) return true;
       if (!this.isViewerPaneResizeLandscape()) return true;
@@ -8130,7 +8372,7 @@ function renderFloatingPlayer(song) {
       if (!grid) return;
       const handle = this.getViewerPaneResizeHandleElement();
       if (this.state.page !== 'view' || !this.state.currentSong || !this.isViewerPaneResizeLandscape()) {
-        grid.classList.remove('is-sidebar-compact', 'is-sidebar-tight', 'is-sidebar-ultra', 'is-sidebar-micro', 'is-pane-resize-disabled', 'is-viewer-pane-resizing');
+        grid.classList.remove('is-sidebar-collapsed', 'is-sidebar-compact', 'is-sidebar-tight', 'is-sidebar-ultra', 'is-sidebar-micro', 'is-pane-resize-disabled', 'is-viewer-pane-resizing');
         grid.style.removeProperty('--viewer-sidebar-width');
         if (handle) {
           handle.setAttribute('aria-disabled', 'true');
@@ -8142,6 +8384,16 @@ function renderFloatingPlayer(song) {
         this.state.viewerSidebarWidth = sidebarWidth;
       }
       grid.style.setProperty('--viewer-sidebar-width', sidebarWidth + 'px');
+      const isCollapsed = !!this.state.viewerSidebarCollapsed;
+      grid.classList.toggle('is-sidebar-collapsed', isCollapsed);
+      if (isCollapsed) {
+        grid.classList.remove('is-sidebar-compact', 'is-sidebar-tight', 'is-sidebar-ultra', 'is-sidebar-micro', 'is-viewer-pane-resizing');
+        grid.classList.add('is-pane-resize-disabled');
+        if (handle) {
+          handle.setAttribute('aria-disabled', 'true');
+        }
+        return;
+      }
       const isBlocked = this.isViewerPaneResizeBlocked();
       grid.classList.toggle('is-sidebar-compact', sidebarWidth <= this.getViewerSidebarCompactThreshold());
       grid.classList.toggle('is-sidebar-tight', sidebarWidth <= this.getViewerSidebarTightThreshold());
@@ -8203,6 +8455,7 @@ function renderFloatingPlayer(song) {
       if (nextWidth !== this.state.viewerSidebarWidth) {
         this.state.viewerSidebarWidth = nextWidth;
         this.syncViewerPaneLayout();
+        this.refreshViewerLayoutAfterReflow();
       }
       if (event.cancelable) event.preventDefault();
     },
@@ -8215,6 +8468,7 @@ function renderFloatingPlayer(song) {
       }
       this.persistViewerSidebarWidth();
       this.cancelViewerPaneResize();
+      this.refreshViewerLayoutAfterReflow({ immediate: true });
     },
 
     bindViewerPaneResize: function() {
@@ -8241,6 +8495,7 @@ function renderFloatingPlayer(song) {
           return;
         }
         App.syncViewerPaneLayout();
+        App.refreshViewerLayoutAfterReflow({ immediate: true });
       });
     },
 
@@ -8477,6 +8732,7 @@ function renderFloatingPlayer(song) {
           case 'play-youtube': if (!isNaN(index)) App.playYouTube(index); break;
           case 'stop-youtube': App.stopYouTubePlayback(); break;
           case 'scroll-sheet-top': App.scrollViewerToTop(); break;
+          case 'toggle-viewer-sidebar': App.toggleViewerSidebarCollapsed(); break;
           case 'search-editor-youtube': App.openEditorYouTubeSearch(); break;
           case 'search-viewer-youtube': App.openViewerYouTubeSearch(); break;
           case 'save-viewer-youtube': App.saveViewerYouTubeLink(); break;
@@ -11192,7 +11448,7 @@ function renderFloatingPlayer(song) {
       const hasNext = index < context.items.length - 1;
       const nextItem = hasNext ? context.items[index + 1] : null;
       const nextSong = nextItem ? this.getSongSummaryBySlug(nextItem.slug) : null;
-      const nextTitle = nextSong ? (nextSong.title || nextItem.slug || 'Untitled song') : '(Missing song)';
+      const nextTitle = nextSong ? (nextSong.title || nextItem.slug || 'Untitled song') : (nextItem && nextItem.slug ? nextItem.slug : '(Missing song)');
       const nextButtonLabel = hasNext
         ? '<span class="setlist-playbar-next-prefix">Next:</span><span class="setlist-playbar-next-title">' + escapeHtml(nextTitle) + '</span>'
         : 'End';
