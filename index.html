@@ -5125,7 +5125,7 @@
     const NOTE_FONT_SIZE_LEVEL_DEFAULT = 2;
     const NOTE_FONT_SIZE_FACTORS = [0.64, 0.82, 1.0, 1.1, 1.18];
     const SHEET_AUTOSCROLL_TOGGLE_SUPPRESS_MS = 260;
-    const AUTOSCROLL_REFERENCE_OFFSET_PX = 150;
+    const AUTOSCROLL_REFERENCE_OFFSET_PX = 100;
     const MANUAL_SCROLL_OVERRIDE_MS = 180;
     const KEYBOARD_PAGE_SCROLL_FACTOR = 0.9;
     const KEYBOARD_LINE_STEP_FALLBACK_PX = 44;
@@ -5503,7 +5503,7 @@
       if (!geometry || !geometry.scrollTarget) return null;
       const maxScrollTop = getMaxScrollTop(geometry.scrollTarget);
       const startScrollTop = Math.max(0, Math.min(maxScrollTop, exactScrollTop));
-      const targetEndScrollTop = Math.max(startScrollTop, Math.min(maxScrollTop, Math.max(0, geometry.endY - geometry.viewportHeight)));
+      const targetEndScrollTop = Math.max(startScrollTop, Math.min(maxScrollTop, Math.max(0, geometry.endY - geometry.viewportHeight + AUTOSCROLL_REFERENCE_OFFSET_PX)));
       const travelDistance = Math.max(0, targetEndScrollTop - startScrollTop);
       return {
         startY: geometry.startY,
