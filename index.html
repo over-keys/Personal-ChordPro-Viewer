@@ -2917,21 +2917,42 @@
     top: calc(env(safe-area-inset-top, 0px) + 100px);
     left: 50%;
     z-index: 9500;
-    width: min(520px, calc(100vw - 28px));
+    width: fit-content;
+    max-width: min(520px, calc(100vw - 28px));
     margin: 0;
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
     pointer-events: none;
+    padding-left: 18px;
+    padding-right: 18px;
     transform: translateX(-50%);
-    animation: status-toast-in 160ms ease-out;
+    animation: status-toast-in 240ms cubic-bezier(0.2, 0.85, 0.25, 1.15);
+  }
+  .shell > .status-box.is-hiding,
+  .viewer-content > .status-box.viewer-status.is-hiding {
+    animation: status-toast-out 180ms ease-in forwards;
   }
   @keyframes status-toast-in {
     from {
       opacity: 0;
-      transform: translate(-50%, -6px);
+      transform: translate(-50%, -12px) scale(0.96);
+    }
+    70% {
+      opacity: 1;
+      transform: translate(-50%, 1px) scale(1.01);
     }
     to {
       opacity: 1;
-      transform: translate(-50%, 0);
+      transform: translate(-50%, 0) scale(1);
+    }
+  }
+  @keyframes status-toast-out {
+    from {
+      opacity: 1;
+      transform: translate(-50%, 0) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translate(-50%, -8px) scale(0.98);
     }
   }
   .empty-state {
@@ -5697,7 +5718,7 @@ function loadCurrentSongNotes(options) {
     function setSongNoteStatus(type, message) {
       if (!App) return;
       if (type === 'info' && typeof App.flashStatus === 'function') {
-        App.flashStatus(type, message, 2200);
+        App.flashStatus(type, message);
         return;
       }
       if (typeof App.setStatus === 'function') {
@@ -7556,7 +7577,7 @@ function loadCurrentSongNotes(options) {
             '<div class="panel viewer-body pane-scroll" id="viewer-scroll-pane">',
               '<div class="viewer-content" id="viewer-content">',
                 App.renderSetlistPlaybackBar(),
-                App.status.message ? '<div class="status-box viewer-status' + (App.status.type === 'error' ? ' error' : (App.status.type === 'warning' ? ' warning' : '')) + '">' + escapeHtml(App.status.message) + '</div>' : '',
+                App.status.message ? '<div class="status-box viewer-status' + (App.status.type === 'error' ? ' error' : (App.status.type === 'warning' ? ' warning' : '')) + (App.status.hiding ? ' is-hiding' : '') + '">' + escapeHtml(App.status.message) + '</div>' : '',
                 '<div class="song-header">',
                   '<div class="song-header-main">',
                     '<h2>' + escapeHtml(song.title) + '</h2>',
@@ -7970,7 +7991,7 @@ function renderFloatingPlayer(song) {
               '<button class="btn soft-accent" type="button" data-app-action="save-current-song">Save</button>',
             '</div>',
           '</div>',
-          App.status.message ? '<div class="status-box' + (App.status.type === 'error' ? ' error' : (App.status.type === 'warning' ? ' warning' : '')) + '">' + escapeHtml(App.status.message) + '</div>' : '',
+          App.status.message ? '<div class="status-box' + (App.status.type === 'error' ? ' error' : (App.status.type === 'warning' ? ' warning' : '')) + (App.status.hiding ? ' is-hiding' : '') + '">' + escapeHtml(App.status.message) + '</div>' : '',
           '<div class="editor-grid">',
             '<div class="panel pad">',
               '<div class="form-stack">',
@@ -8330,6 +8351,7 @@ function renderFloatingPlayer(song) {
     _busyMessage: '',
     _pendingSearchFocus: null,
     _statusTimer: null,
+    _statusHideTimer: null,
     _viewerRerenderInProgress: false,
     _resetViewerScrollOnNextRender: false,
     state: {
@@ -8667,7 +8689,7 @@ function renderFloatingPlayer(song) {
     notifyStorageUnavailable: function() {
       if (this._storageWarningShown) return;
       this._storageWarningShown = true;
-      this.flashStatus('error', 'Browser storage is unavailable. Display settings may not persist.', 3200);
+      this.flashStatus('error', 'Browser storage is unavailable. Display settings may not persist.');
     },
 
     init: function() {
@@ -9698,7 +9720,7 @@ function renderFloatingPlayer(song) {
       const normalizedId = String(id || '').trim();
       const requestedIndex = Math.max(0, parseInt(index, 10) || 0);
       if (!normalizedId) {
-        this.flashStatus('error', 'Setlist not found.', 2200);
+        this.flashStatus('error', 'Setlist not found.');
         return;
       }
       if (!options.skipBusy) this.beginBusy(options.busyMessage || 'Opening setlist…');
@@ -9951,7 +9973,7 @@ function renderFloatingPlayer(song) {
       this.beginBusy('Saving setlist…');
       google.script.run
         .withSuccessHandler(function(result) {
-          App.flashStatus('info', 'Setlist saved.', 2200);
+          App.flashStatus('info', 'Setlist saved.');
           App.loadSetlists(function() {
             App.openSetlistEditor(result && result.id ? result.id : payload.id, { skipBusy: true, endBusyOnDone: true, keepStatus: true, editMode: false });
           }, { skipBusy: true });
@@ -9977,7 +9999,7 @@ function renderFloatingPlayer(song) {
       this.beginBusy('Deleting setlist…');
       google.script.run
         .withSuccessHandler(function() {
-          App.flashStatus('info', 'Setlist deleted.', 2200);
+          App.flashStatus('info', 'Setlist deleted.');
           App.loadSetlists(function() {
             App.showSetlists({ skipBusy: true, endBusyOnDone: true, keepStatus: true });
           }, { skipBusy: true });
@@ -10198,7 +10220,7 @@ function renderFloatingPlayer(song) {
           if (cleanupWarning) {
             App.setStatus('error', cleanupWarning);
           } else {
-            App.flashStatus('info', 'Saved.', 2200);
+            App.flashStatus('info', 'Saved.');
           }
           App.state.editorReturn = null;
           App.setBusyMessage('Refreshing list…');
@@ -10257,7 +10279,7 @@ function renderFloatingPlayer(song) {
           if (cleanupWarning) {
             App.setStatus('error', cleanupWarning);
           } else {
-            App.flashStatus('info', 'Deleted.', 2200);
+            App.flashStatus('info', 'Deleted.');
           }
           App.state.editorReturn = null;
           App.setBusyMessage('Refreshing list…');
@@ -10311,7 +10333,7 @@ function renderFloatingPlayer(song) {
           if (cleanupWarning) {
             App.setStatus('error', cleanupWarning);
           } else {
-            App.flashStatus('info', 'Deleted.', 2200);
+            App.flashStatus('info', 'Deleted.');
           }
           App.setBusyMessage('Refreshing list...');
           App.loadSongs(function() {
@@ -10408,7 +10430,7 @@ function renderFloatingPlayer(song) {
           }
           App.closeYouTubePlayback();
           App.endBusy();
-          App.flashStatus('info', 'YouTube link saved.', 2200);
+          App.flashStatus('info', 'YouTube link saved.');
         })
         .catch(function(err) {
           App.endBusy();
@@ -10521,7 +10543,11 @@ function renderFloatingPlayer(song) {
         clearTimeout(this._statusTimer);
         this._statusTimer = null;
       }
-      this.status = { type: type, message: message };
+      if (this._statusHideTimer) {
+        clearTimeout(this._statusHideTimer);
+        this._statusHideTimer = null;
+      }
+      this.status = { type: type, message: message, hiding: false };
     },
 
     clearStatus: function() {
@@ -10529,20 +10555,32 @@ function renderFloatingPlayer(song) {
         clearTimeout(this._statusTimer);
         this._statusTimer = null;
       }
+      if (this._statusHideTimer) {
+        clearTimeout(this._statusHideTimer);
+        this._statusHideTimer = null;
+      }
       this.status = { type: '', message: '' };
     },
 
-    flashStatus: function(type, message, durationMs) {
+    flashStatus: function(type, message) {
       this.setStatus(type, message);
       this.render();
       if (type === 'error' || type === 'warning') return;
       var expectedMessage = message;
       this._statusTimer = window.setTimeout(function() {
+        App._statusTimer = null;
         if (App.status && App.status.message === expectedMessage) {
-          App.clearStatus();
+          App.status.hiding = true;
           App.render();
+          App._statusHideTimer = window.setTimeout(function() {
+            App._statusHideTimer = null;
+            if (App.status && App.status.message === expectedMessage && App.status.hiding) {
+              App.clearStatus();
+              App.render();
+            }
+          }, 180);
         }
-      }, Math.max(800, parseInt(durationMs, 10) || 1800));
+      }, 2000);
     },
 
     startSearchComposition: function() {
@@ -11085,7 +11123,7 @@ function renderFloatingPlayer(song) {
             App.captureViewerSongControlsBaseline();
           }
           App.endBusy();
-          App.flashStatus('info', 'Song controls saved.', 2200);
+          App.flashStatus('info', 'Song controls saved.');
         })
         .withFailureHandler(function(err) {
           App.endBusy();
@@ -11161,7 +11199,7 @@ function renderFloatingPlayer(song) {
             songs: Array.isArray(songs) ? songs : []
           });
           App.endBusy();
-          App.flashStatus('info', (songs && songs.length) ? ('Exported ' + songs.length + ' song(s).') : 'Empty song library exported.', 2200);
+          App.flashStatus('info', (songs && songs.length) ? ('Exported ' + songs.length + ' song(s).') : 'Empty song library exported.');
         })
         .catch(function(err) {
           App.endBusy();
@@ -11208,7 +11246,7 @@ function renderFloatingPlayer(song) {
       if (enteredUrl === null) return null;
       const normalizedUrl = this.normalizeGasSyncUrl(enteredUrl);
       if (!normalizedUrl) {
-        this.flashStatus('error', 'Enter a valid GAS web app URL.', 2600);
+        this.flashStatus('error', 'Enter a valid GAS web app URL.');
         return null;
       }
       if (!saveStoredString(STORAGE_KEYS.gasSyncUrl, normalizedUrl)) this.notifyStorageUnavailable();
@@ -11325,7 +11363,7 @@ function renderFloatingPlayer(song) {
       const currentSong = this.state && this.state.currentSong ? this.state.currentSong : null;
       const slug = String(currentSong && currentSong.slug || '').trim();
       if (!slug) {
-        this.flashStatus('error', 'Song not found.', 2200);
+        this.flashStatus('error', 'Song not found.');
         return false;
       }
       const syncUrl = await this.getGasSyncUrl({ forcePrompt: !!options.forceUrlPrompt });
@@ -11371,7 +11409,7 @@ function renderFloatingPlayer(song) {
       options = options || {};
       const setlist = normalizeSetlistForApp(this.state && this.state.setlistEditor ? this.state.setlistEditor : {});
       if (!setlist.id) {
-        this.flashStatus('error', 'Setlist not found.', 2200);
+        this.flashStatus('error', 'Setlist not found.');
         return false;
       }
       const syncUrl = await this.getGasSyncUrl({ forcePrompt: !!options.forceUrlPrompt });
@@ -11427,7 +11465,7 @@ function renderFloatingPlayer(song) {
     openSongLibraryImportDialog: function() {
       const input = document.getElementById('list-song-import-input');
       if (!input) {
-        this.flashStatus('error', 'Song import input not found.', 2200);
+        this.flashStatus('error', 'Song import input not found.');
         return false;
       }
       input.value = '';
@@ -11456,11 +11494,11 @@ function renderFloatingPlayer(song) {
             App.updateUrl({ page: 'edit' });
             App.clearStatus();
             App.render();
-            App.flashStatus('info', 'Song loaded into the editor. Save to import it.', 2600);
+            App.flashStatus('info', 'Song loaded into the editor. Save to import it.');
             return;
           }
           if (!songs.length) {
-            App.flashStatus('error', 'Invalid song JSON file.', 2600);
+            App.flashStatus('error', 'Invalid song JSON file.');
             return;
           }
           if (!await App.confirmAction({
@@ -11479,7 +11517,7 @@ function renderFloatingPlayer(song) {
               App.clearStatus();
               App.loadSongs(function() {
                 App.showList({ endBusyOnDone: true, keepStatus: true });
-                App.flashStatus('info', 'Imported ' + ((result && result.count) || songs.length) + ' song(s).', 2400);
+                App.flashStatus('info', 'Imported ' + ((result && result.count) || songs.length) + ' song(s).');
               }, { skipBusy: true });
             })
             .catch(function(err) {
@@ -11488,11 +11526,11 @@ function renderFloatingPlayer(song) {
               App.render();
             });
         } catch (err) {
-          App.flashStatus('error', String(err && err.message || err || 'Failed to read song JSON file.'), 2600);
+          App.flashStatus('error', String(err && err.message || err || 'Failed to read song JSON file.'));
         }
       };
       reader.onerror = function() {
-        App.flashStatus('error', 'Failed to read song JSON file.', 2600);
+        App.flashStatus('error', 'Failed to read song JSON file.');
       };
       reader.readAsText(file);
       return false;
@@ -11510,7 +11548,7 @@ function renderFloatingPlayer(song) {
             setlists: (Array.isArray(setlists) ? setlists : []).map(normalizeSetlistForApp)
           });
           App.endBusy();
-          App.flashStatus('info', (setlists && setlists.length) ? ('Exported ' + setlists.length + ' setlist(s).') : 'Empty setlist library exported.', 2200);
+          App.flashStatus('info', (setlists && setlists.length) ? ('Exported ' + setlists.length + ' setlist(s).') : 'Empty setlist library exported.');
         })
         .catch(function(err) {
           App.endBusy();
@@ -11522,7 +11560,7 @@ function renderFloatingPlayer(song) {
     exportCurrentSetlist: function() {
       const setlist = normalizeSetlistForApp(this.state.setlistEditor || this.state.currentSetlist || {});
       if (!setlist.id && !setlist.title && !setlist.items.length) {
-        this.flashStatus('error', 'No setlist to export.', 2200);
+        this.flashStatus('error', 'No setlist to export.');
         return false;
       }
       const fileSlug = this.slugify(setlist.title || setlist.id || 'setlist') || 'setlist';
@@ -11533,14 +11571,14 @@ function renderFloatingPlayer(song) {
         exportedAt: new Date().toISOString(),
         setlist: setlist
       });
-      this.flashStatus('info', 'Setlist exported.', 2200);
+      this.flashStatus('info', 'Setlist exported.');
       return false;
     },
 
     openSetlistImportDialog: function() {
       const input = document.getElementById('setlist-import-input');
       if (!input) {
-        this.flashStatus('error', 'Setlist import input not found.', 2200);
+        this.flashStatus('error', 'Setlist import input not found.');
         return false;
       }
       input.value = '';
@@ -11573,11 +11611,11 @@ function renderFloatingPlayer(song) {
             App.updateUrl({ page: 'setlist-edit' });
             App.clearStatus();
             App.render();
-            App.flashStatus('info', 'Setlist loaded into the editor. Save to import it.', 2600);
+            App.flashStatus('info', 'Setlist loaded into the editor. Save to import it.');
             return;
           }
           if (!setlists.length) {
-            App.flashStatus('error', 'Invalid setlist JSON file.', 2600);
+            App.flashStatus('error', 'Invalid setlist JSON file.');
             return;
           }
           if (!await App.confirmAction({
@@ -11593,7 +11631,7 @@ function renderFloatingPlayer(song) {
           App.beginBusy('Importing setlists…');
           ChordProStorage.importSetlists(setlists)
             .then(function(result) {
-              App.flashStatus('info', 'Imported ' + ((result && result.count) || setlists.length) + ' setlist(s).', 2400);
+              App.flashStatus('info', 'Imported ' + ((result && result.count) || setlists.length) + ' setlist(s).');
               App.showSetlists({ endBusyOnDone: true, keepStatus: true });
             })
             .catch(function(err) {
@@ -11602,11 +11640,11 @@ function renderFloatingPlayer(song) {
               App.render();
             });
         } catch (err) {
-          App.flashStatus('error', String(err && err.message || err || 'Failed to read setlist JSON file.'), 2600);
+          App.flashStatus('error', String(err && err.message || err || 'Failed to read setlist JSON file.'));
         }
       };
       reader.onerror = function() {
-        App.flashStatus('error', 'Failed to read setlist JSON file.', 2600);
+        App.flashStatus('error', 'Failed to read setlist JSON file.');
       };
       reader.readAsText(file);
       return false;
@@ -11618,7 +11656,7 @@ function renderFloatingPlayer(song) {
       const hasContent = [payload.slug, payload.title, payload.artist, payload.tags, payload.youtube, payload.chordPro]
         .some(function(value) { return String(value || '').trim().length > 0; });
       if (!hasContent) {
-        this.flashStatus('error', 'Nothing to export on this edit page.', 2200);
+        this.flashStatus('error', 'Nothing to export on this edit page.');
         return false;
       }
       const fileSlug = String(payload.slug || payload.originalSlug || payload.title || 'song')
@@ -11634,7 +11672,7 @@ function renderFloatingPlayer(song) {
         exportedAt: new Date().toISOString(),
         song: payload
       });
-      this.flashStatus('info', 'Song exported.', 2000);
+      this.flashStatus('info', 'Song exported.');
       return false;
     },
 
@@ -11849,7 +11887,7 @@ function renderFloatingPlayer(song) {
               '<button class="btn primary" data-app-action="new-setlist">Add Setlist</button>',
             '</div>',
           '</div>',
-          this.status.message ? '<div class="status-box' + (this.status.type === 'error' ? ' error' : (this.status.type === 'warning' ? ' warning' : '')) + '">' + escapeHtml(this.status.message) + '</div>' : '',
+          this.status.message ? '<div class="status-box' + (this.status.type === 'error' ? ' error' : (this.status.type === 'warning' ? ' warning' : '')) + (this.status.hiding ? ' is-hiding' : '') + '">' + escapeHtml(this.status.message) + '</div>' : '',
           '<div class="panel pad">',
             '<div class="song-list">' + this.renderSetlistListHtml(this.state.setlists) + '</div>',
             '<input id="setlist-import-input" type="file" accept="application/json,.json" data-app-change="setlist-import" hidden>',
@@ -11935,7 +11973,7 @@ function renderFloatingPlayer(song) {
                 : '<span class="setlist-page-action-group"><button class="btn" data-app-action="show-setlists">← Back</button><button class="btn" data-app-action="sync-current-setlist-to-gas"' + (setlist.id ? '' : ' disabled') + '>Sync to GAS</button></span><span class="setlist-page-action-group"><button class="btn" data-app-action="export-current-setlist">Export</button><button class="btn danger" data-app-action="delete-setlist" data-setlist-id="' + escapeHtml(setlist.id) + '"' + (setlist.id ? '' : ' disabled') + '>Delete</button><button class="btn soft-accent" data-app-action="enter-setlist-edit">Edit</button></span>',
             '</div>',
           '</div>',
-          this.status.message ? '<div class="status-box' + (this.status.type === 'error' ? ' error' : (this.status.type === 'warning' ? ' warning' : '')) + '">' + escapeHtml(this.status.message) + '</div>' : '',
+          this.status.message ? '<div class="status-box' + (this.status.type === 'error' ? ' error' : (this.status.type === 'warning' ? ' warning' : '')) + (this.status.hiding ? ' is-hiding' : '') + '">' + escapeHtml(this.status.message) + '</div>' : '',
           '<div class="panel pad">',
             '<div class="form-stack">',
               isEditing
@@ -12027,7 +12065,7 @@ function renderFloatingPlayer(song) {
               actionButtons,
             '</div>',
           '</div>',
-          this.status.message ? '<div class="status-box' + (this.status.type === 'error' ? ' error' : (this.status.type === 'warning' ? ' warning' : '')) + '">' + escapeHtml(this.status.message) + '</div>' : '',
+          this.status.message ? '<div class="status-box' + (this.status.type === 'error' ? ' error' : (this.status.type === 'warning' ? ' warning' : '')) + (this.status.hiding ? ' is-hiding' : '') + '">' + escapeHtml(this.status.message) + '</div>' : '',
           '<div class="panel pad">',
             '<div class="search-row">',
               '<input id="list-search-input" class="field" placeholder="Search title / artist / tags" value="' + escapeHtml(this.state.searchDraft) + '" data-app-input="search" data-app-keydown="search" data-app-composition="search">',
