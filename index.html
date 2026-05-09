@@ -4055,17 +4055,18 @@
         const notesStore = tx.objectStore(NOTES_STORE);
         const existingByOriginal = originalSlug ? await this._requestToPromise(songStore.get(originalSlug)) : null;
         const existingBySlug = await this._requestToPromise(songStore.get(song.slug));
+        const overwritingDifferentSlug = !!(payload && payload.allowOverwrite === true && existingByOriginal && existingBySlug && existingByOriginal.slug !== existingBySlug.slug);
         const replaceTitleCandidate = replaceTitleSlug && replaceTitleSlug !== originalSlug && replaceTitleSlug !== song.slug
           ? await this._requestToPromise(songStore.get(replaceTitleSlug))
           : null;
-        if (existingByOriginal && existingBySlug && existingByOriginal.slug !== existingBySlug.slug) {
-          throw new Error('Slug already exists.');
+        if (existingByOriginal && existingBySlug && existingByOriginal.slug !== existingBySlug.slug && !overwritingDifferentSlug) {
+          throw new Error('DUPLICATE_SLUG');
         }
         const shouldReplaceTitleSlug = !!(payload && payload.allowReplaceTitle === true && replaceTitleCandidate && String(replaceTitleCandidate.title || '').trim() === String(song.title || '').trim());
         if (payload && payload.allowReplaceTitle === true && !shouldReplaceTitleSlug) {
           throw new Error('DUPLICATE_TITLE');
         }
-        const existing = existingByOriginal || existingBySlug;
+        const existing = overwritingDifferentSlug ? existingBySlug : (existingByOriginal || existingBySlug);
         const now = new Date().toISOString();
         const record = {
           slug: song.slug,
@@ -4085,7 +4086,7 @@
         const slugChanged = !!(originalSlug && originalSlug !== song.slug && existingByOriginal);
         let setlistRefsUpdated = 0;
         let migratedNotes = null;
-        if (slugChanged) {
+        if (slugChanged && !overwritingDifferentSlug) {
           const setlists = await this._requestToPromise(setlistStore.getAll());
           (Array.isArray(setlists) ? setlists : []).forEach(function(setlist) {
             const items = normalizeSetlistItems(setlist && setlist.items);
@@ -4108,6 +4109,12 @@
             else notesStore.delete(song.slug);
             notesStore.delete(originalSlug);
           }
+        } else if (slugChanged && overwritingDifferentSlug) {
+          const oldNotesEntry = await this._requestToPromise(notesStore.get(originalSlug));
+          migratedNotes = notesFromEntry(oldNotesEntry);
+          if (migratedNotes.length) notesStore.put({ slug: song.slug, notes: cloneValue(migratedNotes) });
+          else notesStore.delete(song.slug);
+          notesStore.delete(originalSlug);
         }
         if (originalSlug && originalSlug !== song.slug && existingByOriginal) {
           songStore.delete(originalSlug);
@@ -4125,6 +4132,8 @@
         if (slugChanged && migratedNotes) {
           if (migratedNotes.length) this._noteCache[song.slug] = cloneValue(migratedNotes);
           else delete this._noteCache[song.slug];
+          delete this._noteCache[originalSlug];
+        } else if (slugChanged && overwritingDifferentSlug) {
           delete this._noteCache[originalSlug];
         }
         if (replaceTitleSlug) delete this._noteCache[replaceTitleSlug];
@@ -9462,11 +9471,15 @@ function renderFloatingPlayer(song) {
     confirmDuplicateSlugSave: function(existingSong, payload) {
       const song = existingSong || {};
       const slug = String(payload && payload.slug || song.slug || '').trim();
+      const originalSlug = String(payload && payload.originalSlug || '').trim();
+      const isRenameCollision = !!(originalSlug && slug && originalSlug !== slug);
       const existingTitle = String(song.title || '').trim();
       return this.showChoiceDialog({
         dialogId: 'duplicate-slug-dialog-title',
         title: 'A song with this slug already exists.',
-        message: 'Cancel returns to the Edit screen. Open existing opens the saved song. Overwrite replaces the existing song with the same slug using this edit. Song settings will be overwritten; sticky notes are kept.',
+        message: isRenameCollision
+          ? 'Cancel returns to the Edit screen. Open existing opens the existing song. Overwrite replaces the existing song with this edit. This edit\'s settings and sticky notes are kept; existing song settings and sticky notes will be lost.'
+          : 'Cancel returns to the Edit screen. Open existing opens the existing song. Overwrite replaces the existing song with this edit. Existing song settings and sticky notes will be lost.',
         details: [
           'Slug: ' + slug,
           existingTitle ? 'Existing title: ' + existingTitle : ''
@@ -9558,7 +9571,7 @@ function renderFloatingPlayer(song) {
         dialogId: 'duplicate-title-dialog-title',
         dialogClass: 'choice-dialog-wide-actions',
         title: 'A song with this title already exists.',
-        message: 'Cancel returns to the Edit screen. Open existing opens the saved song. Save anyway keeps both songs. Replace deletes the existing song and saves this edit. Sticky notes and saved settings for the existing song will be lost.',
+        message: 'Cancel returns to the Edit screen. Open existing opens the existing song. Save anyway keeps both songs. Replace deletes the existing song and saves this edit. Existing song settings and sticky notes will be lost.',
         details: [
           'Title: ' + (title || existingTitle),
           existingSlug ? 'Existing slug: ' + existingSlug : ''
@@ -10107,7 +10120,7 @@ function renderFloatingPlayer(song) {
       const payload = this.collectEditorPayload();
       const originalSlug = String(payload.originalSlug || '').trim();
       const nextSlug = String(payload.slug || '').trim();
-      const existingSong = !originalSlug && nextSlug ? this.getSongSummaryBySlug(nextSlug) : null;
+      const existingSong = nextSlug && nextSlug !== originalSlug ? this.getSongSummaryBySlug(nextSlug) : null;
       let allowOverwrite = false;
       let allowDuplicateTitle = false;
       let allowReplaceTitle = false;
