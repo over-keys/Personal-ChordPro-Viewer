@@ -4055,10 +4055,15 @@
         const notesStore = tx.objectStore(NOTES_STORE);
         const existingByOriginal = originalSlug ? await this._requestToPromise(songStore.get(originalSlug)) : null;
         const existingBySlug = await this._requestToPromise(songStore.get(song.slug));
-        const overwritingDifferentSlug = !!(payload && payload.allowOverwrite === true && existingByOriginal && existingBySlug && existingByOriginal.slug !== existingBySlug.slug);
+        const allowOverwrite = !!(payload && payload.allowOverwrite === true);
+        const overwritingDifferentSlug = !!(allowOverwrite && existingByOriginal && existingBySlug && existingByOriginal.slug !== existingBySlug.slug);
+        const overwritingExistingNewSlug = !!(allowOverwrite && !originalSlug && existingBySlug);
         const replaceTitleCandidate = replaceTitleSlug && replaceTitleSlug !== originalSlug && replaceTitleSlug !== song.slug
           ? await this._requestToPromise(songStore.get(replaceTitleSlug))
           : null;
+        if (!originalSlug && existingBySlug && !allowOverwrite) {
+          throw new Error('DUPLICATE_SLUG');
+        }
         if (existingByOriginal && existingBySlug && existingByOriginal.slug !== existingBySlug.slug && !overwritingDifferentSlug) {
           throw new Error('DUPLICATE_SLUG');
         }
@@ -4123,6 +4128,9 @@
           songStore.delete(replaceTitleSlug);
           notesStore.delete(replaceTitleSlug);
         }
+        if (overwritingExistingNewSlug) {
+          notesStore.delete(song.slug);
+        }
         songStore.put(record);
         await new Promise(function(resolve, reject) {
           tx.oncomplete = function() { resolve(); };
@@ -4136,7 +4144,8 @@
         } else if (slugChanged && overwritingDifferentSlug) {
           delete this._noteCache[originalSlug];
         }
-        if (replaceTitleSlug) delete this._noteCache[replaceTitleSlug];
+        if (overwritingExistingNewSlug) delete this._noteCache[song.slug];
+        if (shouldReplaceTitleSlug) delete this._noteCache[replaceTitleSlug];
         return {
           ok: true,
           slug: song.slug,
