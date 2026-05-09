@@ -2815,6 +2815,30 @@
     gap: 8px;
     flex-wrap: wrap;
   }
+  .choice-dialog.choice-dialog-wide-actions {
+    width: min(96vw, 560px);
+  }
+  .choice-dialog.choice-dialog-wide-actions .choice-actions {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+  .choice-dialog.choice-dialog-wide-actions .choice-actions .btn {
+    padding: 8px 10px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+  @media (max-width: 380px) {
+    .choice-dialog.choice-dialog-wide-actions {
+      padding: 16px;
+    }
+    .choice-dialog.choice-dialog-wide-actions .choice-actions {
+      gap: 5px;
+    }
+    .choice-dialog.choice-dialog-wide-actions .choice-actions .btn {
+      padding: 7px 7px;
+      font-size: 0.78rem;
+    }
+  }
   .player-wrap {
     position: relative;
     padding-top: 56.25%;
@@ -2846,6 +2870,11 @@
   .editor-scroll-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .editor-song-control-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
   }
   .sidebar-panel {
@@ -3410,6 +3439,7 @@
   }
 
   @media (max-width: 720px) {
+    .editor-song-control-grid,
     .editor-scroll-grid {
       grid-template-columns: 1fr;
       gap: 8px;
@@ -4018,14 +4048,22 @@
         const song = normalizeSongPayload(payload);
         validateSong(song);
         const originalSlug = String(song.originalSlug || '').trim();
+        const replaceTitleSlug = String(payload && payload.replaceTitleSlug || '').trim();
         const tx = this._db.transaction([SONGS_STORE, SETLISTS_STORE, NOTES_STORE], 'readwrite');
         const songStore = tx.objectStore(SONGS_STORE);
         const setlistStore = tx.objectStore(SETLISTS_STORE);
         const notesStore = tx.objectStore(NOTES_STORE);
         const existingByOriginal = originalSlug ? await this._requestToPromise(songStore.get(originalSlug)) : null;
         const existingBySlug = await this._requestToPromise(songStore.get(song.slug));
+        const replaceTitleCandidate = replaceTitleSlug && replaceTitleSlug !== originalSlug && replaceTitleSlug !== song.slug
+          ? await this._requestToPromise(songStore.get(replaceTitleSlug))
+          : null;
         if (existingByOriginal && existingBySlug && existingByOriginal.slug !== existingBySlug.slug) {
           throw new Error('Slug already exists.');
+        }
+        const shouldReplaceTitleSlug = !!(payload && payload.allowReplaceTitle === true && replaceTitleCandidate && String(replaceTitleCandidate.title || '').trim() === String(song.title || '').trim());
+        if (payload && payload.allowReplaceTitle === true && !shouldReplaceTitleSlug) {
+          throw new Error('DUPLICATE_TITLE');
         }
         const existing = existingByOriginal || existingBySlug;
         const now = new Date().toISOString();
@@ -4074,6 +4112,10 @@
         if (originalSlug && originalSlug !== song.slug && existingByOriginal) {
           songStore.delete(originalSlug);
         }
+        if (shouldReplaceTitleSlug) {
+          songStore.delete(replaceTitleSlug);
+          notesStore.delete(replaceTitleSlug);
+        }
         songStore.put(record);
         await new Promise(function(resolve, reject) {
           tx.oncomplete = function() { resolve(); };
@@ -4085,13 +4127,15 @@
           else delete this._noteCache[song.slug];
           delete this._noteCache[originalSlug];
         }
+        if (replaceTitleSlug) delete this._noteCache[replaceTitleSlug];
         return {
           ok: true,
           slug: song.slug,
           originalSlug: originalSlug,
           slugChanged: slugChanged,
           setlistRefsUpdated: setlistRefsUpdated,
-          notesMigratedInStorage: slugChanged
+          notesMigratedInStorage: slugChanged,
+          replacedTitleSlug: shouldReplaceTitleSlug ? replaceTitleSlug : ''
         };
       },
 
@@ -7868,6 +7912,9 @@ function renderFloatingPlayer(song) {
       const titleAutoSlug = window.__PCV_SHARED_NORMALIZERS__.buildSlug(current.title);
       const slugIsAuto = !current.slug || (!!titleAutoSlug && current.slug === titleAutoSlug);
       const slugAttrs = ' data-auto-slug="' + escapeHtml(slugIsAuto ? current.slug : '') + '" data-slug-manual="' + (slugIsAuto ? '0' : '1') + '"';
+      const durationMinutes = Math.floor(current.scrollDurationSec / 60);
+      const durationSeconds = current.scrollDurationSec % 60;
+      const durationSecondsStr = String(durationSeconds).padStart(2, '0');
 
       return [
         '<div class="shell">',
@@ -7893,11 +7940,14 @@ function renderFloatingPlayer(song) {
                 fieldHtml('Artist', '<input id="edit-artist" class="field" value="' + escapeHtml(current.artist) + '" data-app-input="editor-generic">', { required: true }),
                 fieldHtml('Tags', '<input id="edit-tags" class="field" value="' + escapeHtml(current.tags.join(', ')) + '" data-app-input="editor-generic">'),
                 fieldHtml('YouTube links', '<textarea id="edit-youtube" class="textarea" style="min-height:120px" data-app-input="editor-generic">' + escapeHtml(youtubeText) + '</textarea><div class="inline-actions' + (String(youtubeText || '').trim() ? ' hidden' : '') + '" id="edit-youtube-search-wrap" style="margin-top:8px"><button class="btn" type="button" id="edit-youtube-search-button" data-app-action="search-editor-youtube" title="Search YouTube in a new tab">Search</button></div>'),
-
+                '<div class="editor-song-control-grid">' +
+                  fieldHtml('Key', '<div class="stepper"><button class="btn btn-icon"' + (current.transpose <= -11 ? ' disabled' : '') + ' type="button" data-app-action="editor-change-transpose" data-app-delta="-1">&minus;</button><input class="field stepper-input" id="edit-transpose" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" value="' + escapeHtml(String(current.transpose)) + '" data-app-focus="select" data-app-input="editor-transpose" data-app-change="editor-transpose" data-app-blur="editor-transpose"><button class="btn btn-icon"' + (current.transpose >= 11 ? ' disabled' : '') + ' type="button" data-app-action="editor-change-transpose" data-app-delta="1">+</button></div>') +
+                  fieldHtml('Sign', '<input id="edit-notation" type="hidden" value="' + escapeHtml(current.notation) + '"><div class="segmented-control segmented-control-sign">' + editorSegmentedButtonHtml('Auto', current.notation === 'default', 'default') + editorSegmentedButtonHtml('#', current.notation === 'sharp', 'sharp') + editorSegmentedButtonHtml('&#9837;', current.notation === 'flat', 'flat') + '</div>') +
+                '</div>',
                 '<div class="editor-scroll-grid">' +
                   fieldHtml('Autoscroll start %', '<input id="edit-scroll-start" class="field" type="number" min="0" max="100" step="1" value="' + escapeHtml(String(current.scrollStartPercentDisplay)) + '" data-app-input="editor-generic">') +
                   fieldHtml('Autoscroll end %', '<input id="edit-scroll-end" class="field" type="number" min="0" max="100" step="1" value="' + escapeHtml(String(current.scrollEndPercentDisplay)) + '" data-app-input="editor-generic">') +
-                  fieldHtml('Duration (sec)', '<input id="edit-scroll-duration" class="field" type="number" min="1" step="1" value="' + escapeHtml(String(current.scrollDurationSec)) + '" data-app-input="editor-generic">') +
+                  fieldHtml('Duration', '<div class="autoscroll-time-row"><div class="mini-time-field time-stepper-field"><input id="edit-scroll-minutes" class="field field-compact field-center time-stepper-input" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" value="' + escapeHtml(String(durationMinutes)) + '" data-app-input="editor-generic" data-app-change="editor-scroll-duration" data-app-blur="editor-scroll-duration" aria-label="Minutes"><div class="time-step-buttons" aria-hidden="true"><button class="btn btn-stepper-mini" type="button" data-app-action="editor-step-scroll-minutes" data-app-delta="1" aria-label="Increase minutes">▲</button><button class="btn btn-stepper-mini" type="button" data-app-action="editor-step-scroll-minutes" data-app-delta="-1" aria-label="Decrease minutes">▼</button></div></div><div class="autoscroll-time-sep" aria-hidden="true">:</div><div class="mini-time-field time-stepper-field"><input id="edit-scroll-seconds" class="field field-compact field-center time-stepper-input" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" value="' + escapeHtml(durationSecondsStr) + '" data-app-input="editor-generic" data-app-change="editor-scroll-duration" data-app-blur="editor-scroll-duration" aria-label="Seconds"><div class="time-step-buttons" aria-hidden="true"><button class="btn btn-stepper-mini" type="button" data-app-action="editor-step-scroll-seconds" data-app-delta="10" aria-label="Increase seconds by 10">▲</button><button class="btn btn-stepper-mini" type="button" data-app-action="editor-step-scroll-seconds" data-app-delta="-10" aria-label="Decrease seconds by 10">▼</button></div></div></div>') +
                 '</div>',
               '</div>',
             '</div>',
@@ -7920,8 +7970,8 @@ function renderFloatingPlayer(song) {
           '</div>',
         '</div>',
         renderChordPro(current.chordPro, {
-          transpose: 0,
-          notation: 'default',
+          transpose: current.transpose,
+          notation: current.notation,
           fontSizeLevel: App.state.fontSizeLevel,
           chordSizeLevel: App.state.chordSizeLevel,
           formatOptions: App.state.formatOptions,
@@ -7975,6 +8025,10 @@ function renderFloatingPlayer(song) {
       var opts = options || {};
       var suffix = opts.required ? ' <span aria-hidden="true">*</span>' : '';
       return '<div class="field-wrap"><label class="small muted">' + escapeHtml(label) + suffix + '</label>' + field + '</div>';
+    }
+
+    function editorSegmentedButtonHtml(label, active, value) {
+      return '<button type="button" class="btn btn-segment' + (active ? ' is-active' : '') + '" data-app-action="editor-set-notation" data-app-value="' + escapeHtml(value) + '">' + label + '</button>';
     }
 
     return {
@@ -8784,6 +8838,10 @@ function renderFloatingPlayer(song) {
           }
           case 'change-transpose': App.changeTranspose(delta); break;
           case 'set-notation': App.setNotation(value); break;
+          case 'editor-change-transpose': App.changeEditorTranspose(delta); break;
+          case 'editor-set-notation': App.setEditorNotation(value); break;
+          case 'editor-step-scroll-minutes': App.stepEditorScrollMinutes(delta); break;
+          case 'editor-step-scroll-seconds': App.stepEditorScrollSeconds(delta); break;
           case 'save-scroll-settings': App.saveViewerScrollSettings(); break;
           case 'toggle-autoscroll': Viewer.toggleAutoScroll(); break;
           case 'reset-autoscroll': Viewer.resetAutoScroll(); break;
@@ -8831,6 +8889,7 @@ function renderFloatingPlayer(song) {
         if (!inputAction) return;
         switch (inputAction) {
           case 'editor-generic': App.editorInputChanged(); break;
+          case 'editor-transpose': App.editorInputChanged(); break;
           case 'editor-slug': App.editorSlugChanged(); break;
           case 'editor-title': App.editorTitleChanged(); break;
           case 'editor-chordpro': App.editorChordProChanged(); break;
@@ -8851,6 +8910,8 @@ function renderFloatingPlayer(song) {
         if (!changeAction) return;
         switch (changeAction) {
           case 'transpose': App.commitTranspose(target.value); break;
+          case 'editor-transpose': App.commitEditorTranspose(target.value); break;
+          case 'editor-scroll-duration': App.commitEditorScrollDurationInputs(); break;
           case 'scroll-minutes': App.commitScrollMinutesInputValue(target.value); break;
           case 'scroll-seconds': App.commitScrollSecondsInputValue(target.value); break;
           case 'note-import': Viewer.handleNoteImportChange(event); break;
@@ -8870,6 +8931,8 @@ function renderFloatingPlayer(song) {
         if (!blurAction) return;
         switch (blurAction) {
           case 'transpose': App.commitTranspose(target.value); break;
+          case 'editor-transpose': App.commitEditorTranspose(target.value); break;
+          case 'editor-scroll-duration': App.commitEditorScrollDurationInputs(); break;
           case 'scroll-minutes': App.commitScrollMinutesInputValue(target.value); break;
           case 'scroll-seconds': App.commitScrollSecondsInputValue(target.value); break;
         }
@@ -9319,6 +9382,7 @@ function renderFloatingPlayer(song) {
       const dialogId = String(options.dialogId || 'app-choice-dialog-title');
       const title = String(options.title || 'Confirm');
       const message = String(options.message || '');
+      const dialogClass = String(options.dialogClass || '').trim();
       const details = Array.isArray(options.details) ? options.details.filter(function(item) {
         return item !== null && item !== undefined && String(item).trim() !== '';
       }) : [];
@@ -9335,7 +9399,7 @@ function renderFloatingPlayer(song) {
         overlay.setAttribute('aria-modal', 'true');
         overlay.setAttribute('aria-labelledby', dialogId);
         overlay.innerHTML = [
-          '<div class="choice-dialog panel">',
+          '<div class="choice-dialog panel' + (dialogClass ? ' ' + escapeHtml(dialogClass) : '') + '">',
             '<h3 id="' + escapeHtml(dialogId) + '">' + escapeHtml(title) + '</h3>',
             message ? '<p>' + escapeHtml(message).replace(/\n/g, '<br>') + '</p>' : '',
             details.length ? '<div class="choice-meta">' + details.map(function(item) {
@@ -9402,7 +9466,7 @@ function renderFloatingPlayer(song) {
       return this.showChoiceDialog({
         dialogId: 'duplicate-slug-dialog-title',
         title: 'A song with this slug already exists.',
-        message: 'Overwrite it, or open the existing song without saving this edit.',
+        message: 'Cancel returns to the Edit screen. Open existing opens the saved song. Overwrite replaces the existing song with the same slug using this edit. Song settings will be overwritten; sticky notes are kept.',
         details: [
           'Slug: ' + slug,
           existingTitle ? 'Existing title: ' + existingTitle : ''
@@ -9492,8 +9556,9 @@ function renderFloatingPlayer(song) {
       const existingSlug = String(song.slug || '').trim();
       return this.showChoiceDialog({
         dialogId: 'duplicate-title-dialog-title',
+        dialogClass: 'choice-dialog-wide-actions',
         title: 'A song with this title already exists.',
-        message: 'Save anyway to keep both songs, or open the existing song without saving this edit.',
+        message: 'Cancel returns to the Edit screen. Open existing opens the saved song. Save anyway keeps both songs. Replace deletes the existing song and saves this edit. Sticky notes and saved settings for the existing song will be lost.',
         details: [
           'Title: ' + (title || existingTitle),
           existingSlug ? 'Existing slug: ' + existingSlug : ''
@@ -9503,7 +9568,8 @@ function renderFloatingPlayer(song) {
         actions: [
           { value: 'cancel', label: 'Cancel', className: 'btn' },
           existingSlug ? { value: 'open', label: 'Open existing', className: 'btn' } : null,
-          { value: 'save', label: 'Save anyway', className: 'btn soft-accent' }
+          { value: 'save', label: 'Save anyway', className: 'btn soft-accent' },
+          existingSlug ? { value: 'replace', label: 'Replace', className: 'btn danger' } : null
         ].filter(Boolean)
       });
     },
@@ -10044,6 +10110,8 @@ function renderFloatingPlayer(song) {
       const existingSong = !originalSlug && nextSlug ? this.getSongSummaryBySlug(nextSlug) : null;
       let allowOverwrite = false;
       let allowDuplicateTitle = false;
+      let allowReplaceTitle = false;
+      let replaceTitleSlug = '';
       if (existingSong) {
         const duplicateSlugChoice = await this.confirmDuplicateSlugSave(existingSong, payload);
         if (duplicateSlugChoice === 'open') {
@@ -10053,15 +10121,22 @@ function renderFloatingPlayer(song) {
         if (duplicateSlugChoice !== 'overwrite') return;
         allowOverwrite = true;
       }
-      const existingTitleSong = this.getDuplicateTitleSongForPayload(payload);
+      const existingTitleSong = allowOverwrite ? null : this.getDuplicateTitleSongForPayload(payload);
       if (existingTitleSong) {
         const duplicateChoice = await this.confirmDuplicateTitleSave(existingTitleSong, payload);
         if (duplicateChoice === 'open') {
           this.openSong(String(existingTitleSong.slug || '').trim());
           return;
         }
-        if (duplicateChoice !== 'save') return;
-        allowDuplicateTitle = true;
+        if (duplicateChoice === 'replace') {
+          replaceTitleSlug = String(existingTitleSong.slug || '').trim();
+          if (!replaceTitleSlug) return;
+          allowReplaceTitle = true;
+          allowDuplicateTitle = true;
+        } else {
+          if (duplicateChoice !== 'save') return;
+          allowDuplicateTitle = true;
+        }
       }
       this.beginBusy('Saving song…');
       google.script.run
@@ -10094,7 +10169,9 @@ function renderFloatingPlayer(song) {
         })
         .saveSong(Object.assign({}, payload, {
           allowOverwrite: allowOverwrite === true,
-          allowDuplicateTitle: allowDuplicateTitle === true
+          allowDuplicateTitle: allowDuplicateTitle === true,
+          allowReplaceTitle: allowReplaceTitle === true,
+          replaceTitleSlug: replaceTitleSlug
         }));
     },
 
@@ -10309,11 +10386,19 @@ function renderFloatingPlayer(song) {
       const scrollStartEl = document.getElementById('edit-scroll-start');
       const scrollEndEl = document.getElementById('edit-scroll-end');
       const scrollDurationEl = document.getElementById('edit-scroll-duration');
+      const scrollMinutesEl = document.getElementById('edit-scroll-minutes');
+      const scrollSecondsEl = document.getElementById('edit-scroll-seconds');
+      const transposeEl = document.getElementById('edit-transpose');
+      const notationEl = document.getElementById('edit-notation');
       const scrollStartRaw = scrollStartEl ? parseFloat(scrollStartEl.value) : 0;
       const scrollEndRaw = scrollEndEl ? parseFloat(scrollEndEl.value) : 100;
       const scrollStartPercent = Number.isFinite(scrollStartRaw) ? Math.max(0, Math.min(100, scrollStartRaw)) / 100 : 0;
       const scrollEndPercent = Number.isFinite(scrollEndRaw) ? Math.max(0, Math.min(100, scrollEndRaw)) / 100 : 1;
-      const scrollDurationSec = scrollDurationEl ? Math.max(1, parseInt(scrollDurationEl.value, 10) || 240) : 240;
+      const scrollMinutesRaw = scrollMinutesEl ? parseInt(scrollMinutesEl.value, 10) : NaN;
+      const scrollSecondsRaw = scrollSecondsEl ? parseInt(scrollSecondsEl.value, 10) : NaN;
+      const scrollDurationSec = (scrollMinutesEl || scrollSecondsEl)
+        ? Math.max(1, (Number.isFinite(scrollMinutesRaw) ? Math.max(0, scrollMinutesRaw) : 0) * 60 + (Number.isFinite(scrollSecondsRaw) ? Math.max(0, Math.min(59, scrollSecondsRaw)) : 0))
+        : (scrollDurationEl ? Math.max(1, parseInt(scrollDurationEl.value, 10) || 240) : 240);
       const existing = this.state && this.state.editorSong ? this.state.editorSong : {};
       return {
         title: titleEl ? titleEl.value : '',
@@ -10326,8 +10411,8 @@ function renderFloatingPlayer(song) {
         scrollStartPercent: scrollStartPercent,
         scrollEndPercent: scrollEndPercent,
         scrollDurationSec: scrollDurationSec,
-        transpose: normalizeStoredTranspose(existing.transpose, 0),
-        notation: normalizeStoredNotation(existing.notation, 'default')
+        transpose: normalizeStoredTranspose(transposeEl ? transposeEl.value : existing.transpose, 0),
+        notation: normalizeStoredNotation(notationEl ? notationEl.value : existing.notation, 'default')
       };
     },
 
@@ -10677,6 +10762,67 @@ function renderFloatingPlayer(song) {
       }
       this.closeYouTubePlayback();
       this.render();
+    },
+
+    changeEditorTranspose: function(delta) {
+      if (this.state.page !== 'edit') return;
+      const input = document.getElementById('edit-transpose');
+      const current = this.normalizeTransposeNumber(input ? input.value : this.state.editorSong && this.state.editorSong.transpose);
+      const next = Math.max(-11, Math.min(11, (current === null ? 0 : current) + delta));
+      if (input) input.value = String(next);
+      this.state.editorSong = this.collectEditorPayload();
+      this.render();
+    },
+
+    commitEditorTranspose: function(value) {
+      if (this.state.page !== 'edit') return;
+      const normalized = this.normalizeTransposeNumber(value);
+      const next = normalized === null ? 0 : normalized;
+      const input = document.getElementById('edit-transpose');
+      if (input) input.value = String(next);
+      this.state.editorSong = this.collectEditorPayload();
+      if (typeof Editor !== 'undefined' && typeof Editor.updateLivePreview === 'function') {
+        Editor.updateLivePreview();
+      }
+    },
+
+    setEditorNotation: function(value) {
+      if (this.state.page !== 'edit') return;
+      const input = document.getElementById('edit-notation');
+      if (input) input.value = normalizeStoredNotation(value, 'default');
+      this.state.editorSong = this.collectEditorPayload();
+      this.render();
+    },
+
+    getEditorScrollDurationSecFromInputs: function() {
+      const minutesInput = document.getElementById('edit-scroll-minutes');
+      const secondsInput = document.getElementById('edit-scroll-seconds');
+      const minutes = minutesInput ? this.normalizeMinutesNumber(minutesInput.value) : null;
+      const seconds = secondsInput ? this.normalizeSecondsNumber(secondsInput.value) : null;
+      return Math.max(1, ((minutes === null ? 0 : minutes) * 60) + (seconds === null ? 0 : seconds));
+    },
+
+    setEditorScrollDurationSec: function(totalSeconds) {
+      if (this.state.page !== 'edit') return;
+      const nextTotal = Math.max(1, parseInt(totalSeconds, 10) || 240);
+      this.state.editorSong = Object.assign({}, this.collectEditorPayload(), { scrollDurationSec: nextTotal });
+      this.render();
+    },
+
+    commitEditorScrollDurationInputs: function() {
+      this.setEditorScrollDurationSec(this.getEditorScrollDurationSecFromInputs());
+    },
+
+    stepEditorScrollMinutes: function(delta) {
+      const total = this.getEditorScrollDurationSecFromInputs();
+      const seconds = total % 60;
+      const minutes = Math.max(0, Math.floor(total / 60) + (parseInt(delta, 10) || 0));
+      this.setEditorScrollDurationSec((minutes * 60) + seconds);
+    },
+
+    stepEditorScrollSeconds: function(delta) {
+      const total = this.getEditorScrollDurationSecFromInputs();
+      this.setEditorScrollDurationSec(Math.max(1, total + (parseInt(delta, 10) || 0)));
     },
 
     commitTranspose: function(value) {
