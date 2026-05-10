@@ -9607,7 +9607,7 @@ function renderFloatingPlayer(song) {
       const conflictSongs = this.getSlugConflictSongs(slug, originalSlug, song);
       const details = [
         'Requested slug: ' + slug,
-        'Existing songs sharing this slug base: ' + conflictSongs.length + '.'
+        'Existing related slugs: ' + conflictSongs.length + '.'
       ];
       if (existingSlug) {
         details.push('Target slug: ' + existingSlug);
