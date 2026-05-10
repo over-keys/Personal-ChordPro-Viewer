@@ -9838,7 +9838,7 @@ function renderFloatingPlayer(song) {
           }
           if (!setlist.items.length) {
             if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
-            App.setStatus('error', 'This setlist has no songs.');
+            App.flashStatus('error', 'This setlist has no songs.');
             App.showSetlists({ keepStatus: true });
             return;
           }
@@ -10040,8 +10040,7 @@ function renderFloatingPlayer(song) {
       if (this.state.page !== 'setlist-edit' || !this.state.setlistEditor) return;
       const setlist = normalizeSetlistForApp(this.state.setlistEditor);
       if (!setlist.items.length) {
-        this.setStatus('error', 'This setlist has no songs.');
-        this.render();
+        this.flashStatus('error', 'This setlist has no songs.');
         return;
       }
       this.openSetlistSongAt(0, { returnPage: 'songs' });
@@ -10071,8 +10070,7 @@ function renderFloatingPlayer(song) {
       if (this.state.page !== 'setlist-edit' || !this.state.setlistEditor) return;
       const payload = normalizeSetlistForApp(this.state.setlistEditor);
       if (!payload.title) {
-        this.setStatus('error', 'Setlist title is required.');
-        this.render();
+        this.flashStatus('error', 'Setlist title is required.');
         return;
       }
       this.beginBusy('Saving setlist…');
@@ -10089,7 +10087,12 @@ function renderFloatingPlayer(song) {
         })
         .withFailureHandler(function(err) {
           App.endBusy();
-          App.setStatus('error', String(err && err.message || err || 'Failed to save setlist.'));
+          const message = String(err && err.message || err || 'Failed to save setlist.');
+          if (App.isTransientStatusMessage(message)) {
+            App.flashStatus('error', message);
+            return;
+          }
+          App.setStatus('error', message);
           App.render();
         })
         .saveSetlist(payload);
@@ -10354,7 +10357,12 @@ function renderFloatingPlayer(song) {
         })
         .withFailureHandler(function(err) {
           App.endBusy();
-          App.setStatus('error', String(err && err.message || err || 'Failed to save.'));
+          const message = String(err && err.message || err || 'Failed to save.');
+          if (App.isTransientStatusMessage(message)) {
+            App.flashStatus('error', message);
+            return;
+          }
+          App.setStatus('error', message);
           App.render();
         })
         .saveSong(Object.assign({}, payload, {
@@ -10369,8 +10377,7 @@ function renderFloatingPlayer(song) {
       const payload = this.collectEditorPayload();
       const slug = String(payload.originalSlug || '').trim();
       if (!slug) {
-        this.setStatus('error', 'Delete is available only for saved songs.');
-        this.render();
+        this.flashStatus('error', 'Delete is available only for saved songs.');
         return;
       }
       if (!await this.confirmAction({
@@ -10690,7 +10697,6 @@ function renderFloatingPlayer(song) {
     flashStatus: function(type, message) {
       this.setStatus(type, message);
       this.render();
-      if (type === 'error' || type === 'warning') return;
       var expectedMessage = message;
       this._statusTimer = window.setTimeout(function() {
         App._statusTimer = null;
@@ -10706,6 +10712,11 @@ function renderFloatingPlayer(song) {
           }, 180);
         }
       }, 2000);
+    },
+
+    isTransientStatusMessage: function(message) {
+      const text = String(message || '');
+      return /^(Slug is required|Slug must contain|Title is required|Artist is required|ChordPro is required|Setlist title is required|Delete is available only|This setlist has no songs|Song not found\.|Setlist not found\.)/.test(text);
     },
 
     startSearchComposition: function() {
