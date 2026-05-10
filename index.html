@@ -9612,24 +9612,18 @@ function renderFloatingPlayer(song) {
       const originalSlug = String(payload && payload.originalSlug || '').trim();
       const isRenameCollision = !!(originalSlug && slug && originalSlug !== slug);
       const conflictSongs = this.getSlugConflictSongs(slug, originalSlug, song);
-      const details = [
-        'Requested slug: ' + slug,
-        'Existing related slugs: ' + conflictSongs.length + '.'
-      ];
-      if (existingSlug) {
-        details.push('Target slug: ' + existingSlug);
-      }
+      const details = [];
       conflictSongs.forEach(function(conflictSong) {
         const conflictSlug = String(conflictSong && conflictSong.slug || '').trim() || '(no slug)';
         const conflictTitle = String(conflictSong && conflictSong.title || '').trim() || '(No title)';
-        details.push(conflictSlug + ' — ' + conflictTitle);
+        details.push((existingSlug && conflictSlug === existingSlug ? '*' : '') + conflictSlug + ' — ' + conflictTitle);
       });
       return this.showChoiceDialog({
         dialogId: 'duplicate-slug-dialog-title',
         title: 'A song with this slug already exists.',
         message: isRenameCollision
-          ? 'Cancel returns to the Edit screen. Open existing opens the existing song. Overwrite replaces the existing song with this edit. This edit\'s settings and sticky notes are kept; existing song settings and sticky notes will be lost.'
-          : 'Cancel returns to the Edit screen. Open existing opens the existing song. Overwrite replaces the existing song with this edit. Existing song settings and sticky notes will be lost.',
+          ? 'Cancel returns to Edit. Open existing opens the song marked *. Overwrite replaces the song marked * with this edit. This edit\'s settings and sticky notes are kept; the marked song\'s settings and sticky notes are lost.'
+          : 'Cancel returns to Edit. Open existing opens the song marked *. Overwrite replaces the song marked * with this edit. The marked song\'s settings and sticky notes will be lost.',
         details: details,
         cancelValue: 'cancel',
         initialFocusValue: 'cancel',
@@ -9718,21 +9712,17 @@ function renderFloatingPlayer(song) {
         ? duplicateSongs
         : this.getDuplicateTitleSongsForPayload(payload, song);
       const details = [
-        'Title: ' + (title || existingTitle),
-        conflictSongs.length > 1 ? 'Existing slugs with this title: ' + conflictSongs.length + '.' : 'Existing slug with this title:'
+        'Title: ' + (title || existingTitle)
       ];
-      if (existingSlug) {
-        details.push('Target slug: ' + existingSlug);
-      }
       conflictSongs.forEach(function(conflictSong) {
         const conflictSlug = String(conflictSong && conflictSong.slug || '').trim() || '(no slug)';
-        details.push(conflictSlug);
+        details.push((existingSlug && conflictSlug === existingSlug ? '*' : '') + conflictSlug);
       });
       return this.showChoiceDialog({
         dialogId: 'duplicate-title-dialog-title',
         dialogClass: 'choice-dialog-wide-actions',
         title: 'A song with this title already exists.',
-        message: 'Cancel returns to the Edit screen. Open existing opens the existing song. Save anyway keeps both songs. Replace deletes the existing song and saves this edit. Existing song settings and sticky notes will be lost.',
+        message: 'Cancel returns to Edit. Open existing opens the song marked *. Save anyway keeps both songs. Replace deletes the song marked * and saves this edit. The marked song\'s settings and sticky notes will be lost.',
         details: details,
         cancelValue: 'cancel',
         initialFocusValue: 'cancel',
