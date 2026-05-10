@@ -2787,6 +2787,8 @@
   .choice-meta {
     display: grid;
     gap: 4px;
+    max-height: min(46vh, 360px);
+    overflow: auto;
     padding: 10px 12px;
     border-radius: 12px;
     background: rgba(var(--accent-rgb), 0.07);
@@ -3666,17 +3668,32 @@
       return (hash >>> 0).toString(36);
     }
 
+    function stripTrailingBracketNotesForSlug(source) {
+      let text = String(source || '').trim();
+      if (!/[^\x00-\x7F]/.test(text)) return text;
+      let previous = '';
+      while (text && text !== previous) {
+        previous = text;
+        text = text.replace(/\s*(?:\([^)]*\)|（[^）]*）|\[[^\]]*\]|【[^】]*】)\s*$/g, '').trim();
+      }
+      return text || String(source || '').trim();
+    }
+
     function buildSlug(value) {
       const source = String(value || '').trim();
       if (!source) return '';
-      const asciiSlug = source
+      const baseSource = stripTrailingBracketNotesForSlug(source);
+      if (/[^\x00-\x7F]/.test(baseSource)) {
+        return 'jp-' + hashStringToBase36(baseSource).slice(0, 8);
+      }
+      const asciiSlug = baseSource
         .normalize('NFKD')
         .toLowerCase()
         .replace(/[\s_]+/g, '-')
         .replace(/[^a-z0-9-]/g, '-')
         .replace(/-+/g, '-')
         .replace(/^-|-$/g, '');
-      return asciiSlug || 'jp-' + hashStringToBase36(source).slice(0, 8);
+      return asciiSlug || 'jp-' + hashStringToBase36(baseSource || source).slice(0, 8);
     }
 
     window.__PCV_SHARED_NORMALIZERS__.buildSlug = buildSlug;
@@ -9427,16 +9444,75 @@ function renderFloatingPlayer(song) {
       this.filterSongs(true);
     },
 
-    getDuplicateTitleSongForPayload: function(payload) {
+    getDuplicateTitleSongsForPayload: function(payload, extraSong) {
       const title = String(payload && payload.title || '').trim();
-      if (!title) return null;
+      if (!title) return [];
       const originalSlug = String(payload && payload.originalSlug || '').trim();
       const nextSlug = String(payload && payload.slug || '').trim();
-      return (this.state.songs || []).filter(function(song) {
+      const bySlug = Object.create(null);
+      const addSong = function(song) {
         const slug = String(song && song.slug || '').trim();
-        if (!slug || slug === originalSlug || slug === nextSlug) return false;
-        return String(song && song.title || '').trim() === title;
-      })[0] || null;
+        if (!slug || slug === originalSlug || slug === nextSlug || bySlug[slug]) return;
+        if (String(song && song.title || '').trim() !== title) return;
+        bySlug[slug] = song;
+      };
+      (this.state.songs || []).forEach(addSong);
+      if (this.state.setlistSongSummaries) {
+        Object.keys(this.state.setlistSongSummaries).forEach((summarySlug) => addSong(this.state.setlistSongSummaries[summarySlug]));
+      }
+      addSong(extraSong);
+      return Object.keys(bySlug).map(function(slug) {
+        return bySlug[slug];
+      }).sort(function(a, b) {
+        const artistCompare = String(a && a.artist || '').localeCompare(String(b && b.artist || ''));
+        if (artistCompare) return artistCompare;
+        return String(a && a.slug || '').localeCompare(String(b && b.slug || ''));
+      });
+    },
+
+    getDuplicateTitleSongForPayload: function(payload) {
+      return this.getDuplicateTitleSongsForPayload(payload)[0] || null;
+    },
+
+    getSlugConflictBase: function(slug) {
+      const normalizedSlug = String(slug || '').trim();
+      return normalizedSlug.replace(/-\d+$/, '') || normalizedSlug;
+    },
+
+    getSlugConflictSuffixNumber: function(slug, baseSlug) {
+      const normalizedSlug = String(slug || '').trim();
+      const normalizedBase = String(baseSlug || '').trim();
+      if (!normalizedSlug || !normalizedBase) return 0;
+      if (normalizedSlug === normalizedBase) return 1;
+      const suffix = normalizedSlug.slice(normalizedBase.length + 1);
+      return /^\d+$/.test(suffix) ? parseInt(suffix, 10) : 0;
+    },
+
+    getSlugConflictSongs: function(slug, excludeSlug, extraSong) {
+      const baseSlug = this.getSlugConflictBase(slug);
+      if (!baseSlug) return [];
+      const escapedBase = baseSlug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const matcher = new RegExp('^' + escapedBase + '(?:-(\\d+))?$');
+      const exclude = String(excludeSlug || '').trim();
+      const bySlug = Object.create(null);
+      const addSong = function(song) {
+        const songSlug = String(song && song.slug || '').trim();
+        if (!songSlug || songSlug === exclude || !matcher.test(songSlug) || bySlug[songSlug]) return;
+        bySlug[songSlug] = song;
+      };
+      (this.state.songs || []).forEach(addSong);
+      if (this.state.setlistSongSummaries) {
+        Object.keys(this.state.setlistSongSummaries).forEach((summarySlug) => addSong(this.state.setlistSongSummaries[summarySlug]));
+      }
+      addSong(extraSong);
+      return Object.keys(bySlug).map(function(songSlug) {
+        return bySlug[songSlug];
+      }).sort((a, b) => {
+        const aSuffix = this.getSlugConflictSuffixNumber(a && a.slug, baseSlug);
+        const bSuffix = this.getSlugConflictSuffixNumber(b && b.slug, baseSlug);
+        if (aSuffix !== bSuffix) return aSuffix - bSuffix;
+        return String(a && a.slug || '').localeCompare(String(b && b.slug || ''));
+      });
     },
 
 
@@ -9525,19 +9601,29 @@ function renderFloatingPlayer(song) {
     confirmDuplicateSlugSave: function(existingSong, payload) {
       const song = existingSong || {};
       const slug = String(payload && payload.slug || song.slug || '').trim();
+      const existingSlug = String(song.slug || slug || '').trim();
       const originalSlug = String(payload && payload.originalSlug || '').trim();
       const isRenameCollision = !!(originalSlug && slug && originalSlug !== slug);
-      const existingTitle = String(song.title || '').trim();
+      const conflictSongs = this.getSlugConflictSongs(slug, originalSlug, song);
+      const details = [
+        'Requested slug: ' + slug,
+        'Existing songs sharing this slug base: ' + conflictSongs.length + '.'
+      ];
+      if (existingSlug) {
+        details.push('Target slug: ' + existingSlug);
+      }
+      conflictSongs.forEach(function(conflictSong) {
+        const conflictSlug = String(conflictSong && conflictSong.slug || '').trim() || '(no slug)';
+        const conflictTitle = String(conflictSong && conflictSong.title || '').trim() || '(No title)';
+        details.push(conflictSlug + ' — ' + conflictTitle);
+      });
       return this.showChoiceDialog({
         dialogId: 'duplicate-slug-dialog-title',
         title: 'A song with this slug already exists.',
         message: isRenameCollision
           ? 'Cancel returns to the Edit screen. Open existing opens the existing song. Overwrite replaces the existing song with this edit. This edit\'s settings and sticky notes are kept; existing song settings and sticky notes will be lost.'
           : 'Cancel returns to the Edit screen. Open existing opens the existing song. Overwrite replaces the existing song with this edit. Existing song settings and sticky notes will be lost.',
-        details: [
-          'Slug: ' + slug,
-          existingTitle ? 'Existing title: ' + existingTitle : ''
-        ],
+        details: details,
         cancelValue: 'cancel',
         initialFocusValue: 'cancel',
         actions: [
@@ -9616,20 +9702,31 @@ function renderFloatingPlayer(song) {
       });
     },
 
-    confirmDuplicateTitleSave: function(existingSong, payload) {
+    confirmDuplicateTitleSave: function(existingSong, payload, duplicateSongs) {
       const song = existingSong || {};
       const title = String(payload && payload.title || song.title || '').trim();
       const existingTitle = String(song.title || title || '(No title)').trim();
       const existingSlug = String(song.slug || '').trim();
+      const conflictSongs = Array.isArray(duplicateSongs) && duplicateSongs.length
+        ? duplicateSongs
+        : this.getDuplicateTitleSongsForPayload(payload, song);
+      const details = [
+        'Title: ' + (title || existingTitle),
+        conflictSongs.length > 1 ? 'Existing slugs with this title: ' + conflictSongs.length + '.' : 'Existing slug with this title:'
+      ];
+      if (existingSlug) {
+        details.push('Target slug: ' + existingSlug);
+      }
+      conflictSongs.forEach(function(conflictSong) {
+        const conflictSlug = String(conflictSong && conflictSong.slug || '').trim() || '(no slug)';
+        details.push(conflictSlug);
+      });
       return this.showChoiceDialog({
         dialogId: 'duplicate-title-dialog-title',
         dialogClass: 'choice-dialog-wide-actions',
         title: 'A song with this title already exists.',
         message: 'Cancel returns to the Edit screen. Open existing opens the existing song. Save anyway keeps both songs. Replace deletes the existing song and saves this edit. Existing song settings and sticky notes will be lost.',
-        details: [
-          'Title: ' + (title || existingTitle),
-          existingSlug ? 'Existing slug: ' + existingSlug : ''
-        ],
+        details: details,
         cancelValue: 'cancel',
         initialFocusValue: 'cancel',
         actions: [
@@ -10195,7 +10292,13 @@ function renderFloatingPlayer(song) {
       let allowReplaceTitle = false;
       let replaceTitleSlug = '';
       if (existingSong) {
-        const duplicateSlugChoice = await this.confirmDuplicateSlugSave(existingSong, payload);
+        let existingSlugSong = existingSong;
+        if (!String(existingSlugSong.title || '').trim() && window.ChordProStorage && ChordProStorage.getSong) {
+          try {
+            existingSlugSong = await ChordProStorage.getSong(nextSlug) || existingSlugSong;
+          } catch (lookupError) {}
+        }
+        const duplicateSlugChoice = await this.confirmDuplicateSlugSave(existingSlugSong, payload);
         if (duplicateSlugChoice === 'open') {
           this.openSong(String(existingSong.slug || nextSlug || '').trim());
           return;
@@ -10203,9 +10306,10 @@ function renderFloatingPlayer(song) {
         if (duplicateSlugChoice !== 'overwrite') return;
         allowOverwrite = true;
       }
-      const existingTitleSong = allowOverwrite ? null : this.getDuplicateTitleSongForPayload(payload);
+      const existingTitleSongs = allowOverwrite ? [] : this.getDuplicateTitleSongsForPayload(payload);
+      const existingTitleSong = existingTitleSongs[0] || null;
       if (existingTitleSong) {
-        const duplicateChoice = await this.confirmDuplicateTitleSave(existingTitleSong, payload);
+        const duplicateChoice = await this.confirmDuplicateTitleSave(existingTitleSong, payload, existingTitleSongs);
         if (duplicateChoice === 'open') {
           this.openSong(String(existingTitleSong.slug || '').trim());
           return;
