@@ -10292,8 +10292,46 @@ function renderFloatingPlayer(song) {
         .getSong(slug);
     },
 
+    focusEditorField: function(fieldId) {
+      const field = document.getElementById(fieldId);
+      if (!field || typeof field.focus !== 'function') return;
+      field.focus();
+      if (typeof field.select === 'function') field.select();
+    },
+
+    validateEditorPayloadForSave: function(payload) {
+      const slug = String(payload && payload.slug || '').trim();
+      if (!slug) {
+        this.flashStatus('error', 'Slug is required.');
+        this.focusEditorField('edit-slug');
+        return false;
+      }
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+        this.flashStatus('error', 'Slug must contain only lowercase letters, numbers, and hyphens.');
+        this.focusEditorField('edit-slug');
+        return false;
+      }
+      if (!String(payload && payload.title || '').trim()) {
+        this.flashStatus('error', 'Title is required.');
+        this.focusEditorField('edit-title');
+        return false;
+      }
+      if (!String(payload && payload.artist || '').trim()) {
+        this.flashStatus('error', 'Artist is required.');
+        this.focusEditorField('edit-artist');
+        return false;
+      }
+      if (!String(payload && payload.chordPro || '').trim()) {
+        this.flashStatus('error', 'ChordPro is required.');
+        this.focusEditorField('edit-chordpro');
+        return false;
+      }
+      return true;
+    },
+
     saveCurrentSong: async function() {
       const payload = this.collectEditorPayload();
+      if (!this.validateEditorPayloadForSave(payload)) return;
       const originalSlug = String(payload.originalSlug || '').trim();
       const nextSlug = String(payload.slug || '').trim();
       const existingSong = nextSlug && nextSlug !== originalSlug ? this.getSongSummaryBySlug(nextSlug) : null;
