@@ -426,23 +426,32 @@
   }
   .viewer-sidebar-restore-toggle {
     display: none;
+    position: absolute;
+    top: 50%;
+    right: calc(var(--viewer-sidebar-width) + var(--viewer-pane-resizer-size) + 24px);
+    transform: translateY(-50%);
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
     padding: 0;
     border: 0;
-    border-radius: 8px;
+    border-radius: 0;
     background: transparent;
     color: var(--accent);
     box-shadow: none;
+    z-index: 30;
   }
   .viewer-sidebar-restore-toggle:hover {
     background: rgba(var(--accent-rgb), 0.08);
+    border-radius: 999px;
+    color: var(--accent);
   }
   .viewer-sidebar-restore-toggle:focus-visible {
     outline: none;
+    border-radius: 999px;
+    background: rgba(var(--accent-rgb), 0.1);
     box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.14);
   }
   .viewer-sidebar-restore-toggle .material-symbols-outlined {
@@ -452,8 +461,11 @@
     line-height: 1;
   }
   @media (min-width: 981px) {
-    .song-header .viewer-sidebar-restore-toggle {
+    .viewer-grid .viewer-sidebar-restore-toggle {
       display: inline-flex;
+    }
+    .viewer-grid.is-sidebar-collapsed .viewer-sidebar-restore-toggle {
+      right: 4px;
     }
     .viewer-grid.is-sidebar-collapsed {
       grid-template-columns: minmax(0, 1fr) 0 0;
@@ -7600,6 +7612,7 @@ function loadCurrentSongNotes(options) {
       return [
         '<div class="shell">',
           '<div class="viewer-grid" id="viewer-grid">',
+            '<button class="viewer-sidebar-restore-toggle" type="button" data-app-action="toggle-viewer-sidebar" title="' + escapeHtml(sidebarToggleLabel) + '" aria-label="' + escapeHtml(sidebarToggleLabel) + '"><span class="material-symbols-outlined" aria-hidden="true">' + escapeHtml(sidebarToggleIcon) + '</span></button>',
             '<div class="panel viewer-body pane-scroll" id="viewer-scroll-pane">',
               '<div class="viewer-content" id="viewer-content">',
                 App.renderSetlistPlaybackBar(),
@@ -7615,7 +7628,6 @@ function loadCurrentSongNotes(options) {
                       '<button class="btn" type="button" data-app-action="sync-current-song-to-gas">Sync to GAS</button>',
                       '<button class="btn soft-accent" type="button" data-app-action="open-editor" data-song-slug="' + escapeHtml(song.slug) + '">Edit</button>',
                     ].join(''),
-                    '<button class="viewer-sidebar-restore-toggle" type="button" data-app-action="toggle-viewer-sidebar" title="' + escapeHtml(sidebarToggleLabel) + '" aria-label="' + escapeHtml(sidebarToggleLabel) + '"><span class="material-symbols-outlined" aria-hidden="true">' + escapeHtml(sidebarToggleIcon) + '</span></button>',
                   '</div>',
                 '</div>',
                 '<div class="sheet-stage" id="sheet-stage">',
