@@ -9476,28 +9476,26 @@ function renderFloatingPlayer(song) {
 
     getSlugConflictBase: function(slug) {
       const normalizedSlug = String(slug || '').trim();
-      return normalizedSlug.replace(/-\d+$/, '') || normalizedSlug;
+      return normalizedSlug;
     },
 
     getSlugConflictSuffixNumber: function(slug, baseSlug) {
       const normalizedSlug = String(slug || '').trim();
       const normalizedBase = String(baseSlug || '').trim();
       if (!normalizedSlug || !normalizedBase) return 0;
-      if (normalizedSlug === normalizedBase) return 1;
-      const suffix = normalizedSlug.slice(normalizedBase.length + 1);
-      return /^\d+$/.test(suffix) ? parseInt(suffix, 10) : 0;
+      if (normalizedSlug === normalizedBase) return 0;
+      const suffix = normalizedSlug.slice(normalizedBase.length).replace(/^-/, '');
+      return /^\d+$/.test(suffix) ? parseInt(suffix, 10) : Number.MAX_SAFE_INTEGER;
     },
 
     getSlugConflictSongs: function(slug, excludeSlug, extraSong) {
       const baseSlug = this.getSlugConflictBase(slug);
       if (!baseSlug) return [];
-      const escapedBase = baseSlug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const matcher = new RegExp('^' + escapedBase + '(?:-(\\d+))?$');
       const exclude = String(excludeSlug || '').trim();
       const bySlug = Object.create(null);
       const addSong = function(song) {
         const songSlug = String(song && song.slug || '').trim();
-        if (!songSlug || songSlug === exclude || !matcher.test(songSlug) || bySlug[songSlug]) return;
+        if (!songSlug || songSlug === exclude || songSlug.indexOf(baseSlug) !== 0 || bySlug[songSlug]) return;
         bySlug[songSlug] = song;
       };
       (this.state.songs || []).forEach(addSong);
