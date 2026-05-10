@@ -370,6 +370,7 @@
     padding-bottom: 16px;
   }
   .viewer-grid {
+    position: relative;
     --viewer-sidebar-width: 300px;
     --viewer-sidebar-min-width: 160px;
     --viewer-pane-resizer-size: 8px;
@@ -428,7 +429,7 @@
     display: none;
     position: absolute;
     top: 50%;
-    right: calc(var(--viewer-sidebar-width) + var(--viewer-pane-resizer-size) + 24px);
+    right: calc(var(--viewer-sidebar-width) + var(--viewer-pane-resizer-size) + 4px);
     transform: translateY(-50%);
     align-items: center;
     justify-content: center;
