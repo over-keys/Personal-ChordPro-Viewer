@@ -4613,6 +4613,15 @@
       .replace(/'/g, '&#39;');
   }
 
+  function getStatusMessage(value, fallback) {
+    const raw = value && typeof value.message !== 'undefined' ? value.message : value;
+    const hasFallback = typeof fallback !== 'undefined';
+    const fallbackText = hasFallback ? String(fallback || '') : 'Something went wrong.';
+    const source = raw == null || raw === '' ? fallbackText : raw;
+    const text = String(source || '').replace(/^\s*(?:error:\s*)+/i, '').trim();
+    return text || fallbackText;
+  }
+
   function encodeDataValue(value) {
     return encodeURIComponent(String(value || ''));
   }
@@ -5697,11 +5706,11 @@ function loadCurrentSongNotes(options) {
       });
       return writeSongNotesForSlug(slug, normalized, { keepEmptyNoteIds: keepEmptyNoteIds }).then(function(result) {
         if (!result.ok) {
-          setSongNoteStatus('error', String(result.error && result.error.message || result.error || 'Failed to save notes.'));
+          setSongNoteStatus('error', getStatusMessage(result && result.error, 'Failed to save notes.'));
         }
         return result;
       }).catch(function(error) {
-        setSongNoteStatus('error', String(error && error.message || error || 'Failed to save notes.'));
+        setSongNoteStatus('error', getStatusMessage(error, 'Failed to save notes.'));
         return { ok: false, error: error };
       });
     }
@@ -5734,7 +5743,7 @@ function loadCurrentSongNotes(options) {
 
     function setSongNoteStatus(type, message) {
       if (!App) return;
-      if (type === 'info' && typeof App.flashStatus === 'function') {
+      if (typeof App.flashStatus === 'function' && (type === 'info' || (typeof App.isTransientStatusMessage === 'function' && App.isTransientStatusMessage(message)))) {
         App.flashStatus(type, message);
         return;
       }
@@ -5902,7 +5911,7 @@ function loadCurrentSongNotes(options) {
       }
       const result = await writeSongNotesForSlug(song.slug, record.notes);
       if (!result.ok) {
-        setSongNoteStatus('error', String(result.error && result.error.message || result.error || 'Failed to import song notes.'));
+        setSongNoteStatus('error', getStatusMessage(result && result.error, 'Failed to import song notes.'));
         return;
       }
       refreshCurrentSongNotesAfterImport();
@@ -5968,7 +5977,7 @@ function loadCurrentSongNotes(options) {
           for (let j = 0; j < backups.length; j += 1) {
             await writeSongNotesForSlug(backups[j].slug, backups[j].notes);
           }
-          setSongNoteStatus('error', String(result.error && result.error.message || result.error || 'Failed to import all notes.'));
+          setSongNoteStatus('error', getStatusMessage(result && result.error, 'Failed to import all notes.'));
           return;
         }
       }
@@ -6020,7 +6029,7 @@ function loadCurrentSongNotes(options) {
           }
           setSongNoteStatus('error', 'Invalid note JSON file.');
         } catch (err) {
-          setSongNoteStatus('error', String(err && err.message || err || 'Failed to read note JSON file.'));
+          setSongNoteStatus('error', getStatusMessage(err, 'Failed to read note JSON file.'));
         }
       };
       reader.onerror = function() {
@@ -8725,7 +8734,7 @@ function renderFloatingPlayer(song) {
         })
         .withFailureHandler(function(err) {
           App.endBusy();
-          App.setStatus('error', String(err && err.message || err || 'Failed to load config.'));
+          App.setStatus('error', getStatusMessage(err, 'Failed to load config.'));
           App.render();
         })
         .getAppConfig();
@@ -9341,14 +9350,14 @@ function renderFloatingPlayer(song) {
             })
             .withFailureHandler(function(err) {
               App.endBusy();
-              App.setStatus('error', String(err && err.message || err || 'Failed to load setlists.'));
+              App.setStatus('error', getStatusMessage(err, 'Failed to load setlists.'));
               App.render();
             })
             .listSetlists();
         })
         .withFailureHandler(function(err) {
           App.endBusy();
-          App.setStatus('error', String(err && err.message || err || 'Failed to load songs.'));
+          App.setStatus('error', getStatusMessage(err, 'Failed to load songs.'));
           App.render();
         })
         .listSongs();
@@ -9764,7 +9773,7 @@ function renderFloatingPlayer(song) {
         })
         .withFailureHandler(function(err) {
           App.endBusy();
-          App.setStatus('error', String(err && err.message || err || 'Failed to load setlists.'));
+          App.setStatus('error', getStatusMessage(err, 'Failed to load setlists.'));
           App.render();
         })
         .listSetlists();
@@ -9860,7 +9869,7 @@ function renderFloatingPlayer(song) {
         })
         .withFailureHandler(function(err) {
           if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
-          App.setStatus('error', String(err && err.message || err || 'Failed to open setlist.'));
+          App.setStatus('error', getStatusMessage(err, 'Failed to open setlist.'));
           App.render();
         })
         .getSetlist(normalizedId);
@@ -9967,7 +9976,7 @@ function renderFloatingPlayer(song) {
         })
         .withFailureHandler(function(err) {
           if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
-          App.setStatus('error', String(err && err.message || err || 'Failed to open setlist.'));
+          App.setStatus('error', getStatusMessage(err, 'Failed to open setlist.'));
           App.render();
         })
         .getSetlist(normalizedId);
@@ -10087,7 +10096,7 @@ function renderFloatingPlayer(song) {
         })
         .withFailureHandler(function(err) {
           App.endBusy();
-          const message = String(err && err.message || err || 'Failed to save setlist.');
+          const message = getStatusMessage(err, 'Failed to save setlist.');
           if (App.isTransientStatusMessage(message)) {
             App.flashStatus('error', message);
             return;
@@ -10118,7 +10127,7 @@ function renderFloatingPlayer(song) {
         })
         .withFailureHandler(function(err) {
           App.endBusy();
-          App.setStatus('error', String(err && err.message || err || 'Failed to delete setlist.'));
+          App.setStatus('error', getStatusMessage(err, 'Failed to delete setlist.'));
           App.render();
         })
         .deleteSetlist(normalizedId);
@@ -10170,7 +10179,7 @@ function renderFloatingPlayer(song) {
         })
         .withFailureHandler(function(err) {
           if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
-          App.setStatus('error', String(err && err.message || err || 'Failed to load song.'));
+          App.setStatus('error', getStatusMessage(err, 'Failed to load song.'));
           App.render();
         })
         .getSong(slug);
@@ -10277,7 +10286,7 @@ function renderFloatingPlayer(song) {
         })
         .withFailureHandler(function(err) {
           if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
-          App.setStatus('error', String(err && err.message || err || 'Failed to load editor.'));
+          App.setStatus('error', getStatusMessage(err, 'Failed to load editor.'));
           App.render();
         })
         .getSong(slug);
@@ -10335,7 +10344,7 @@ function renderFloatingPlayer(song) {
               if (cleanupResult && cleanupResult.ok === false) cleanupWarning = 'Saved, but failed to move sticky notes.';
             }
           } catch (error) {
-            cleanupWarning = 'Saved, but failed to move sticky notes: ' + String(error && error.message || error);
+            cleanupWarning = 'Saved, but failed to move sticky notes: ' + getStatusMessage(error, '');
           }
           App.state.editorReturn = null;
           App.setBusyMessage('Refreshing list…');
@@ -10357,7 +10366,7 @@ function renderFloatingPlayer(song) {
         })
         .withFailureHandler(function(err) {
           App.endBusy();
-          const message = String(err && err.message || err || 'Failed to save.');
+          const message = getStatusMessage(err, 'Failed to save.');
           if (App.isTransientStatusMessage(message)) {
             App.flashStatus('error', message);
             return;
@@ -10393,7 +10402,7 @@ function renderFloatingPlayer(song) {
         .withSuccessHandler(async function(result) {
           if (!result || !result.ok) {
             App.endBusy();
-            App.setStatus('error', result && result.message ? result.message : 'Failed to delete.');
+            App.setStatus('error', getStatusMessage(result && result.message, 'Failed to delete.'));
             App.render();
             return;
           }
@@ -10404,7 +10413,7 @@ function renderFloatingPlayer(song) {
               if (cleanupResult && cleanupResult.ok === false) cleanupWarning = 'Deleted song, but failed to delete sticky notes.';
             }
           } catch (error) {
-            cleanupWarning = 'Deleted song, but failed to delete sticky notes: ' + String(error && error.message || error);
+            cleanupWarning = 'Deleted song, but failed to delete sticky notes: ' + getStatusMessage(error, '');
           }
           App.state.editorReturn = null;
           App.setBusyMessage('Refreshing list…');
@@ -10420,7 +10429,7 @@ function renderFloatingPlayer(song) {
         })
         .withFailureHandler(function(err) {
           App.endBusy();
-          App.setStatus('error', String(err && err.message || err || 'Failed to delete.'));
+          App.setStatus('error', getStatusMessage(err, 'Failed to delete.'));
           App.render();
         })
         .deleteSong(slug);
@@ -10448,7 +10457,7 @@ function renderFloatingPlayer(song) {
         .withSuccessHandler(async function(result) {
           if (!result || !result.ok) {
             App.endBusy();
-            App.setStatus('error', result && result.message ? result.message : 'Failed to delete.');
+            App.setStatus('error', getStatusMessage(result && result.message, 'Failed to delete.'));
             App.render();
             return;
           }
@@ -10459,7 +10468,7 @@ function renderFloatingPlayer(song) {
               if (cleanupResult && cleanupResult.ok === false) cleanupWarning = 'Deleted song, but failed to delete sticky notes.';
             }
           } catch (error) {
-            cleanupWarning = 'Deleted song, but failed to delete sticky notes: ' + String(error && error.message || error);
+            cleanupWarning = 'Deleted song, but failed to delete sticky notes: ' + getStatusMessage(error, '');
           }
           App.setBusyMessage('Refreshing list...');
           App.loadSongs(function() {
@@ -10474,7 +10483,7 @@ function renderFloatingPlayer(song) {
         })
         .withFailureHandler(function(err) {
           App.endBusy();
-          App.setStatus('error', String(err && err.message || err || 'Failed to delete.'));
+          App.setStatus('error', getStatusMessage(err, 'Failed to delete.'));
           App.render();
         })
         .deleteSong(normalizedSlug);
@@ -10551,7 +10560,7 @@ function renderFloatingPlayer(song) {
       ChordProStorage.updateSongYouTubeSelection({ slug: song.slug, youtube: value })
         .then(function(result) {
           if (result && result.ok === false) {
-            throw new Error(result.message || 'Failed to save YouTube link.');
+            throw new Error(getStatusMessage(result && result.message, 'Failed to save YouTube link.'));
           }
           const nextYouTube = Array.isArray(result && result.youtube) ? result.youtube : [];
           if (!nextYouTube.length) {
@@ -10566,7 +10575,7 @@ function renderFloatingPlayer(song) {
         })
         .catch(function(err) {
           App.endBusy();
-          App.setStatus('error', String(err && err.message || err || 'Failed to save YouTube link.'));
+          App.setStatus('error', getStatusMessage(err, 'Failed to save YouTube link.'));
           App.render();
           window.requestAnimationFrame(function() {
             App.restoreViewerYouTubeInputValue(value, true);
@@ -10671,6 +10680,7 @@ function renderFloatingPlayer(song) {
     },
 
     setStatus: function(type, message) {
+      const normalizedMessage = getStatusMessage(message, '');
       if (this._statusTimer) {
         clearTimeout(this._statusTimer);
         this._statusTimer = null;
@@ -10679,7 +10689,7 @@ function renderFloatingPlayer(song) {
         clearTimeout(this._statusHideTimer);
         this._statusHideTimer = null;
       }
-      this.status = { type: type, message: message, hiding: false };
+      this.status = { type: type, message: normalizedMessage, hiding: false };
     },
 
     clearStatus: function() {
@@ -10695,9 +10705,9 @@ function renderFloatingPlayer(song) {
     },
 
     flashStatus: function(type, message) {
-      this.setStatus(type, message);
+      const expectedMessage = getStatusMessage(message, '');
+      this.setStatus(type, expectedMessage);
       this.render();
-      var expectedMessage = message;
       this._statusTimer = window.setTimeout(function() {
         App._statusTimer = null;
         if (App.status && App.status.message === expectedMessage) {
@@ -10715,8 +10725,8 @@ function renderFloatingPlayer(song) {
     },
 
     isTransientStatusMessage: function(message) {
-      const text = String(message || '');
-      return /^(Slug is required|Slug must contain|Title is required|Artist is required|ChordPro is required|Setlist title is required|Delete is available only|This setlist has no songs|Song not found\.|Setlist not found\.)/.test(text);
+      const text = getStatusMessage(message, '');
+      return /^(slug is required|slug must contain|title is required|artist is required|chordpro is required|setlist title is required|delete is available only|this setlist has no songs|song not found\.|setlist not found\.|no current song|note import input not found\.|invalid .*json file\.)/i.test(text);
     },
 
     startSearchComposition: function() {
@@ -11263,7 +11273,7 @@ function renderFloatingPlayer(song) {
         })
         .withFailureHandler(function(err) {
           App.endBusy();
-          App.setStatus('error', String(err && err.message || err || 'Failed to save song controls.'));
+          App.setStatus('error', getStatusMessage(err, 'Failed to save song controls.'));
           App.render();
         })
         .updateSongControlSettings({
@@ -11339,7 +11349,7 @@ function renderFloatingPlayer(song) {
         })
         .catch(function(err) {
           App.endBusy();
-          App.setStatus('error', String(err && err.message || err || 'Failed to export songs.'));
+          App.setStatus('error', getStatusMessage(err, 'Failed to export songs.'));
           App.render();
         });
     },
@@ -11488,7 +11498,7 @@ function renderFloatingPlayer(song) {
         return;
       }).catch(function(err) {
         App.endBusy();
-        App.setStatus('error', String(err && err.message || err || 'Failed to prepare GAS sync.'));
+        App.setStatus('error', getStatusMessage(err, 'Failed to prepare GAS sync.'));
         App.render();
       });
       return false;
@@ -11535,7 +11545,7 @@ function renderFloatingPlayer(song) {
         })
         .catch(function(err) {
           App.endBusy();
-          App.setStatus('error', String(err && err.message || err || 'Failed to prepare GAS sync.'));
+          App.setStatus('error', getStatusMessage(err, 'Failed to prepare GAS sync.'));
           App.render();
         });
       return false;
@@ -11592,7 +11602,7 @@ function renderFloatingPlayer(song) {
         });
       }).catch(function(err) {
         App.endBusy();
-        App.setStatus('error', String(err && err.message || err || 'Failed to prepare GAS sync.'));
+        App.setStatus('error', getStatusMessage(err, 'Failed to prepare GAS sync.'));
         App.render();
       });
       return false;
@@ -11658,11 +11668,11 @@ function renderFloatingPlayer(song) {
             })
             .catch(function(err) {
               App.endBusy();
-              App.setStatus('error', String(err && err.message || err || 'Failed to import songs.'));
+              App.setStatus('error', getStatusMessage(err, 'Failed to import songs.'));
               App.render();
             });
         } catch (err) {
-          App.flashStatus('error', String(err && err.message || err || 'Failed to read song JSON file.'));
+          App.flashStatus('error', getStatusMessage(err, 'Failed to read song JSON file.'));
         }
       };
       reader.onerror = function() {
@@ -11688,7 +11698,7 @@ function renderFloatingPlayer(song) {
         })
         .catch(function(err) {
           App.endBusy();
-          App.setStatus('error', String(err && err.message || err || 'Failed to export setlists.'));
+          App.setStatus('error', getStatusMessage(err, 'Failed to export setlists.'));
           App.render();
         });
     },
@@ -11775,11 +11785,11 @@ function renderFloatingPlayer(song) {
             })
             .catch(function(err) {
               App.endBusy();
-              App.setStatus('error', String(err && err.message || err || 'Failed to import setlists.'));
+              App.setStatus('error', getStatusMessage(err, 'Failed to import setlists.'));
               App.render();
             });
         } catch (err) {
-          App.flashStatus('error', String(err && err.message || err || 'Failed to read setlist JSON file.'));
+          App.flashStatus('error', getStatusMessage(err, 'Failed to read setlist JSON file.'));
         }
       };
       reader.onerror = function() {
@@ -11944,7 +11954,7 @@ function renderFloatingPlayer(song) {
       } catch (err) {
         this._viewerRerenderInProgress = false;
         console.error('App.render failed:', err);
-        app.innerHTML = '<div class="shell"><div class="status-box error">Render failed: ' + escapeHtml(String(err && err.message || err || 'Unknown error')) + '</div></div>';
+        app.innerHTML = '<div class="shell"><div class="status-box error">Render failed: ' + escapeHtml(getStatusMessage(err, 'Unknown error')) + '</div></div>';
       }
     },
 
