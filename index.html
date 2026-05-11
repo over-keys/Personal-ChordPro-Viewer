@@ -11014,14 +11014,7 @@ function renderFloatingPlayer(song) {
     handleScrollSecondsInput: function(input) {
       if (!input) return;
       this.activatePendingObservedScrollDuration();
-      const cleaned = this.sanitizeIntegerText(input.value, false);
-      if (cleaned === '') {
-        input.value = '';
-        return;
-      }
-      const seconds = this.normalizeSecondsNumber(cleaned);
-      const normalizedSeconds = seconds === null ? 0 : seconds;
-      input.value = String(normalizedSeconds).padStart(2, '0');
+      input.value = this.sanitizeIntegerText(input.value, false);
     },
 
     closeYouTubePlayback: function() {
@@ -11238,7 +11231,6 @@ function renderFloatingPlayer(song) {
     },
 
     commitScrollSecondsInputValue: function(value) {
-      if (this.state.scroll.isObservedDurationPending) return;
       this.setScrollSecondsPart(value);
     },
 
