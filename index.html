@@ -460,6 +460,12 @@
     font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
     font-size: 20px;
     line-height: 1;
+    opacity: 0.36;
+    transition: opacity 0.14s ease;
+  }
+  .viewer-sidebar-restore-toggle:hover .material-symbols-outlined,
+  .viewer-sidebar-restore-toggle:focus-visible .material-symbols-outlined {
+    opacity: 1;
   }
   @media (min-width: 981px) {
     .viewer-grid .viewer-sidebar-restore-toggle {
@@ -11090,9 +11096,21 @@ function renderFloatingPlayer(song) {
       this.setEditorScrollDurationSec((minutes * 60) + seconds);
     },
 
+    stepScrollDurationByRoundedSeconds: function(totalSeconds, delta) {
+      const total = Math.max(1, parseInt(totalSeconds, 10) || 1);
+      const direction = parseInt(delta, 10) || 0;
+      if (direction > 0) {
+        return Math.max(1, Math.ceil((total + 1) / 10) * 10);
+      }
+      if (direction < 0) {
+        return Math.max(1, Math.floor((total - 1) / 10) * 10);
+      }
+      return total;
+    },
+
     stepEditorScrollSeconds: function(delta) {
       const total = this.getEditorScrollDurationSecFromInputs();
-      this.setEditorScrollDurationSec(Math.max(1, total + (parseInt(delta, 10) || 0)));
+      this.setEditorScrollDurationSec(this.stepScrollDurationByRoundedSeconds(total, delta));
     },
 
     commitTranspose: function(value) {
@@ -11237,8 +11255,7 @@ function renderFloatingPlayer(song) {
     stepScrollSecondsPart: function(delta) {
       this.activatePendingObservedScrollDuration();
       const currentTotal = Math.max(1, parseInt(this.state.scroll.durationSec, 10) || 240);
-      const nextTotal = Math.max(1, currentTotal + (parseInt(delta, 10) || 0));
-      this.state.scroll.durationSec = nextTotal;
+      this.state.scroll.durationSec = this.stepScrollDurationByRoundedSeconds(currentTotal, delta);
       this.closeYouTubePlayback();
       this.render();
     },
