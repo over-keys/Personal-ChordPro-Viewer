@@ -4664,7 +4664,8 @@
     }
 
     if (!options || options.symbols !== false) {
-      transposed = transposed.replace(/[\u0394\uE18A]/g, '\u25b3');
+      transposed = transposed.replace(/[\u0394\uE18A\uFF2D]/g, '\u25b3');
+      transposed = transposed.replace(/\uFF4D/g, 'm');
       transposed = transposed.replace(/maj/gi, '\u25b3');
       transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)ma(?=[0-9()/\u25b3]|$)/gi, '$1\u25b3');
       transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)\+/g, '$1aug');
