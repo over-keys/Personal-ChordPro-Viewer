@@ -2892,6 +2892,18 @@
     width: min(94vw, 680px);
     gap: 18px;
   }
+  .maintenance-menu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .maintenance-menu-header h3 {
+    margin: 0;
+  }
+  .maintenance-menu-header .btn {
+    flex: 0 0 auto;
+  }
   .maintenance-menu-sections {
     display: grid;
     gap: 18px;
@@ -9735,7 +9747,10 @@ function renderFloatingPlayer(song) {
         overlay.setAttribute('aria-labelledby', dialogId);
         overlay.innerHTML = [
           '<div class="choice-dialog panel maintenance-menu-dialog">',
-            '<h3 id="' + dialogId + '">Maintenance</h3>',
+            '<div class="maintenance-menu-header">',
+              '<h3 id="' + dialogId + '">Maintenance</h3>',
+              '<button class="btn" type="button" data-choice-value="cancel">Cancel</button>',
+            '</div>',
             '<div class="maintenance-menu-sections">',
               '<section class="maintenance-menu-section">',
                 '<h4 class="maintenance-menu-section-title">Backup</h4>',
@@ -9752,9 +9767,6 @@ function renderFloatingPlayer(song) {
                   '<button class="btn danger" type="button" data-choice-value="rebuild-slugs">Rebuild slugs from titles</button>',
                 '</div>',
               '</section>',
-            '</div>',
-            '<div class="choice-actions">',
-              '<button class="btn" type="button" data-choice-value="cancel">Cancel</button>',
             '</div>',
           '</div>'
         ].join('');
