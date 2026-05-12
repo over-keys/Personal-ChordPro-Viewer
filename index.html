@@ -11454,15 +11454,78 @@ function renderFloatingPlayer(song) {
       if (transposeDown) transposeDown.disabled = this.state.transpose <= -11;
       if (transposeUp) transposeUp.disabled = this.state.transpose >= 11;
 
+      this.refreshViewerSidebarControls();
+      if (typeof Viewer !== 'undefined' && typeof Viewer.afterRender === 'function') {
+        Viewer.afterRender({ viewerScrollTop: viewerScrollTop });
+      }
+    },
+
+
+    refreshViewerSidebarControls: function() {
+      if (this.state.page !== 'view') return;
+      const sizeText = function(value) {
+        if (typeof sizeLabel === 'function') return sizeLabel(value);
+        return String(value || '');
+      };
+      const updateStepper = function(actionName, value, min, max) {
+        const down = document.querySelector('[data-app-action="' + actionName + '"][data-app-delta="-1"]');
+        const up = document.querySelector('[data-app-action="' + actionName + '"][data-app-delta="1"]');
+        const stepper = (down && down.closest ? down.closest('.stepper') : null) || (up && up.closest ? up.closest('.stepper') : null);
+        const valueEl = stepper && stepper.querySelector ? stepper.querySelector('.stepper-value') : null;
+        if (down) down.disabled = value <= min;
+        if (up) up.disabled = value >= max;
+        if (valueEl) valueEl.textContent = sizeText(value);
+      };
+      updateStepper('change-font-size', this.state.fontSizeLevel, 1, 5);
+      updateStepper('change-chord-size', this.state.chordSizeLevel, 1, 5);
+
+      const lyricsFontSelect = document.querySelector('select[data-app-change="lyrics-font"]');
+      if (lyricsFontSelect) lyricsFontSelect.value = this.state.lyricsFont;
+      const chordFontSelect = document.querySelector('select[data-app-change="chord-font"]');
+      if (chordFontSelect) chordFontSelect.value = this.state.chordFont;
+
+      document.querySelectorAll('[data-app-change="format-option"]').forEach(function(input) {
+        const key = input.getAttribute('data-format-key') || '';
+        if (!key) return;
+        input.checked = !!App.state.formatOptions[key];
+      });
+
+      const updateChipGroup = function(actionName, currentValue) {
+        document.querySelectorAll('[data-app-action="' + actionName + '"]').forEach(function(button) {
+          const value = button.getAttribute('data-app-value') || '';
+          const active = value === currentValue;
+          button.classList.toggle('is-active', active);
+          button.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+      };
+      updateChipGroup('set-accent-color', this.state.accentColor);
+      updateChipGroup('set-note-color', this.state.noteColor);
+      updateChipGroup('set-bpm-blink-color', normalizeBpmBlinkColor(this.state.formatOptions && this.state.formatOptions.bpmBlinkColor));
+
+      const transposeInput = document.getElementById('transpose-input');
+      if (transposeInput) transposeInput.value = String(this.state.transpose);
+      const transposeDown = document.querySelector('[data-app-action="change-transpose"][data-app-delta="-1"]');
+      const transposeUp = document.querySelector('[data-app-action="change-transpose"][data-app-delta="1"]');
+      if (transposeDown) transposeDown.disabled = this.state.transpose <= -11;
+      if (transposeUp) transposeUp.disabled = this.state.transpose >= 11;
+
       document.querySelectorAll('[data-app-action="set-notation"]').forEach(function(button) {
         const value = button.getAttribute('data-app-value') || 'default';
         button.classList.toggle('is-active', value === App.state.notation);
       });
 
-      this.syncViewerSongControlsSaveButtons();
-      if (typeof Viewer !== 'undefined' && typeof Viewer.afterRender === 'function') {
-        Viewer.afterRender({ viewerScrollTop: viewerScrollTop });
+      const minutesInput = document.getElementById('scroll-minutes-input');
+      const secondsInput = document.getElementById('scroll-seconds-input');
+      const observedPendingClass = this.state.scroll.isObservedDurationPending ? 'is-pending-observed' : '';
+      if (minutesInput) {
+        minutesInput.value = String(this.getScrollMinutesValue());
+        minutesInput.classList.toggle('is-pending-observed', !!observedPendingClass);
       }
+      if (secondsInput) {
+        secondsInput.value = String(this.getScrollSecondsValue()).padStart(2, '0');
+        secondsInput.classList.toggle('is-pending-observed', !!observedPendingClass);
+      }
+      this.syncViewerSongControlsSaveButtons();
     },
 
     changeTranspose: function(delta) {
@@ -11578,7 +11641,10 @@ function renderFloatingPlayer(song) {
       if (isNaN(next)) next = 3;
       this.state.fontSizeLevel = Math.max(1, Math.min(5, next));
       if (!saveStoredString(STORAGE_KEYS.fontSizeLevel, String(this.state.fontSizeLevel))) this.notifyStorageUnavailable();
-      this.closeYouTubePlayback();
+      if (this.state.page === 'view' && this.state.currentSong) {
+        this.refreshViewerSheetDisplay();
+        return;
+      }
       this.render();
     },
 
@@ -11591,7 +11657,10 @@ function renderFloatingPlayer(song) {
       if (isNaN(next)) next = 3;
       this.state.chordSizeLevel = Math.max(1, Math.min(5, next));
       if (!saveStoredString(STORAGE_KEYS.chordSizeLevel, String(this.state.chordSizeLevel))) this.notifyStorageUnavailable();
-      this.closeYouTubePlayback();
+      if (this.state.page === 'view' && this.state.currentSong) {
+        this.refreshViewerSheetDisplay();
+        return;
+      }
       this.render();
     },
 
@@ -11602,14 +11671,20 @@ function renderFloatingPlayer(song) {
     setLyricsFont: function(value) {
       this.state.lyricsFont = value;
       if (!saveStoredString(STORAGE_KEYS.lyricsFont, value)) this.notifyStorageUnavailable();
-      this.closeYouTubePlayback();
+      if (this.state.page === 'view' && this.state.currentSong) {
+        this.refreshViewerSheetDisplay();
+        return;
+      }
       this.render();
     },
 
     setChordFont: function(value) {
       this.state.chordFont = value;
       if (!saveStoredString(STORAGE_KEYS.chordFont, value)) this.notifyStorageUnavailable();
-      this.closeYouTubePlayback();
+      if (this.state.page === 'view' && this.state.currentSong) {
+        this.refreshViewerSheetDisplay();
+        return;
+      }
       this.render();
     },
 
@@ -11625,7 +11700,10 @@ function renderFloatingPlayer(song) {
       this.state.formatOptions[key] = !!checked;
       this.state.formatOptions = normalizeFormatOptions(this.state.formatOptions);
       if (!saveStoredJson(STORAGE_KEYS.formatOptions, this.state.formatOptions)) this.notifyStorageUnavailable();
-      this.closeYouTubePlayback();
+      if (this.state.page === 'view' && this.state.currentSong) {
+        this.refreshViewerSheetDisplay();
+        return;
+      }
       this.render();
     },
 
@@ -11633,7 +11711,10 @@ function renderFloatingPlayer(song) {
       this.state.accentColor = normalizeAccentColor(value);
       applyAccentColor(this.state.accentColor);
       if (!saveStoredString(STORAGE_KEYS.accentColor, this.state.accentColor)) this.notifyStorageUnavailable();
-      this.closeYouTubePlayback();
+      if (this.state.page === 'view') {
+        this.refreshViewerSidebarControls();
+        return;
+      }
       this.render();
     },
 
@@ -11641,7 +11722,10 @@ function renderFloatingPlayer(song) {
       this.state.noteColor = normalizeNoteColor(value);
       applyNoteColor(this.state.noteColor);
       if (!saveStoredString(STORAGE_KEYS.noteColor, this.state.noteColor)) this.notifyStorageUnavailable();
-      this.closeYouTubePlayback();
+      if (this.state.page === 'view') {
+        this.refreshViewerSidebarControls();
+        return;
+      }
       this.render();
     },
 
@@ -11649,7 +11733,10 @@ function renderFloatingPlayer(song) {
       this.state.formatOptions.bpmBlinkColor = normalizeBpmBlinkColor(value);
       this.state.formatOptions = normalizeFormatOptions(this.state.formatOptions);
       if (!saveStoredJson(STORAGE_KEYS.formatOptions, this.state.formatOptions)) this.notifyStorageUnavailable();
-      this.closeYouTubePlayback();
+      if (this.state.page === 'view' && this.state.currentSong) {
+        this.refreshViewerSheetDisplay();
+        return;
+      }
       this.render();
     },
 
@@ -11666,7 +11753,10 @@ function renderFloatingPlayer(song) {
       const minutes = normalized === null ? 0 : normalized;
       const currentSeconds = Math.max(0, Math.min(59, this.getScrollSecondsValue()));
       this.state.scroll.durationSec = Math.max(1, (minutes * 60) + currentSeconds);
-      this.closeYouTubePlayback();
+      if (this.state.page === 'view') {
+        this.refreshViewerSidebarControls();
+        return;
+      }
       this.render();
     },
 
@@ -11686,7 +11776,10 @@ function renderFloatingPlayer(song) {
       const seconds = normalized === null ? 0 : normalized;
       const currentMinutes = Math.max(0, this.getScrollMinutesValue());
       this.state.scroll.durationSec = Math.max(1, (currentMinutes * 60) + seconds);
-      this.closeYouTubePlayback();
+      if (this.state.page === 'view') {
+        this.refreshViewerSidebarControls();
+        return;
+      }
       this.render();
     },
 
@@ -11694,7 +11787,10 @@ function renderFloatingPlayer(song) {
       this.activatePendingObservedScrollDuration();
       const currentTotal = Math.max(1, parseInt(this.state.scroll.durationSec, 10) || 240);
       this.state.scroll.durationSec = this.stepScrollDurationByRoundedSeconds(currentTotal, delta);
-      this.closeYouTubePlayback();
+      if (this.state.page === 'view') {
+        this.refreshViewerSidebarControls();
+        return;
+      }
       this.render();
     },
 
