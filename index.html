@@ -103,6 +103,46 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  .title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+  .title-row h1 {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+  .maintenance-menu-button {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    box-shadow: none;
+    cursor: pointer;
+  }
+  .maintenance-menu-button:hover:not(:disabled),
+  .maintenance-menu-button:focus-visible {
+    background: rgba(var(--accent-rgb), 0.09);
+    color: var(--accent);
+    box-shadow: none;
+  }
+  .maintenance-menu-button .material-symbols-outlined {
+    font-family: "Material Symbols Outlined";
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+    font-size: 20px;
+    line-height: 1;
+  }
   .title-block p {
     margin: 4px 0 0;
     color: var(--muted);
@@ -2848,6 +2888,49 @@
     font-size: 0.9rem;
     white-space: nowrap;
   }
+  .maintenance-menu-dialog {
+    width: min(94vw, 680px);
+    gap: 18px;
+  }
+  .maintenance-menu-sections {
+    display: grid;
+    gap: 18px;
+  }
+  .maintenance-menu-section {
+    display: grid;
+    gap: 10px;
+  }
+  .maintenance-menu-section-title {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+  }
+  .maintenance-menu-grid {
+    display: grid;
+    gap: 10px;
+  }
+  .maintenance-menu-grid.export-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .maintenance-menu-grid.maintenance-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .maintenance-menu-grid .btn {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+  .maintenance-menu-dialog .choice-actions {
+    justify-content: flex-end;
+  }
+  @media (max-width: 640px) {
+    .maintenance-menu-grid.export-grid,
+    .maintenance-menu-grid.maintenance-grid {
+      grid-template-columns: 1fr;
+    }
+  }
   @media (max-width: 380px) {
     .choice-dialog.choice-dialog-wide-actions {
       padding: 16px;
@@ -2937,7 +3020,7 @@
     position: fixed;
     top: calc(env(safe-area-inset-top, 0px) + 180px);
     left: 50%;
-    z-index: 9500;
+    z-index: 10050;
     width: fit-content;
     max-width: min(520px, calc(100vw - 28px));
     margin: 0;
@@ -3715,7 +3798,37 @@
       return asciiSlug || 'jp-' + hashStringToBase36(baseSource || source).slice(0, 8);
     }
 
+    function buildUniqueSlugPlanForSongs(songs) {
+      const records = Array.isArray(songs) ? songs : [];
+      const used = Object.create(null);
+      const slugMap = [];
+      const slugMapByOldSlug = Object.create(null);
+      const rebuiltSongs = records.map(function(song, index) {
+        const record = cloneValue(song || {});
+        const oldSlug = String(record.slug || '').trim();
+        const title = String(record.title || '').trim();
+        if (!title) throw new Error('Title is empty at song ' + (index + 1) + '.');
+        let baseSlug = buildSlug(title);
+        if (!baseSlug) baseSlug = oldSlug || ('song-' + (index + 1));
+        let nextSlug = baseSlug;
+        let suffix = 2;
+        while (used[nextSlug]) {
+          nextSlug = baseSlug + '-' + suffix;
+          suffix += 1;
+        }
+        used[nextSlug] = true;
+        record.slug = nextSlug;
+        if (oldSlug && oldSlug !== nextSlug) {
+          slugMap.push({ oldSlug: oldSlug, newSlug: nextSlug });
+          slugMapByOldSlug[oldSlug] = nextSlug;
+        }
+        return record;
+      });
+      return { songs: rebuiltSongs, slugMap: slugMap, slugMapByOldSlug: slugMapByOldSlug };
+    }
+
     window.__PCV_SHARED_NORMALIZERS__.buildSlug = buildSlug;
+    window.__PCV_SHARED_NORMALIZERS__.buildUniqueSlugPlanForSongs = buildUniqueSlugPlanForSongs;
 
     function parseTags(value) {
       if (Array.isArray(value)) {
@@ -4123,6 +4236,91 @@
         return { ok: true, count: normalizedRecords.length };
       },
 
+
+      rebuildSlugsFromTitles: async function() {
+        await this.ready();
+        const tx = this._db.transaction([SONGS_STORE, SETLISTS_STORE, NOTES_STORE], 'readwrite');
+        const songStore = tx.objectStore(SONGS_STORE);
+        const setlistStore = tx.objectStore(SETLISTS_STORE);
+        const notesStore = tx.objectStore(NOTES_STORE);
+        const songs = await this._requestToPromise(songStore.getAll());
+        const plan = buildUniqueSlugPlanForSongs(Array.isArray(songs) ? songs : []);
+        const slugMap = Array.isArray(plan.slugMap) ? plan.slugMap : [];
+        const slugMapByOldSlug = plan.slugMapByOldSlug || Object.create(null);
+        if (!slugMap.length) {
+          return {
+            ok: true,
+            count: Array.isArray(songs) ? songs.length : 0,
+            changedCount: 0,
+            setlistRefsUpdated: 0,
+            notesUpdated: 0,
+            slugMap: [],
+            notesMigratedInStorage: true
+          };
+        }
+
+        songStore.clear();
+        (Array.isArray(plan.songs) ? plan.songs : []).forEach(function(record) {
+          songStore.put(record);
+        });
+
+        const now = new Date().toISOString();
+        const setlists = await this._requestToPromise(setlistStore.getAll());
+        let setlistRefsUpdated = 0;
+        (Array.isArray(setlists) ? setlists : []).forEach(function(setlist) {
+          const items = normalizeSetlistItems(setlist && setlist.items);
+          let changed = false;
+          const nextItems = items.map(function(item) {
+            const nextSlug = slugMapByOldSlug[item.slug];
+            if (!nextSlug) return item;
+            changed = true;
+            setlistRefsUpdated += 1;
+            return Object.assign({}, item, { slug: nextSlug });
+          });
+          if (changed) {
+            setlistStore.put(Object.assign({}, setlist, { items: nextItems, updatedAt: now }));
+          }
+        });
+
+        const noteEntries = await this._requestToPromise(notesStore.getAll());
+        const nextNotesBySlug = Object.create(null);
+        let notesUpdated = 0;
+        (Array.isArray(noteEntries) ? noteEntries : []).forEach(function(entry) {
+          const oldSlug = String(entry && entry.slug || '').trim();
+          if (!oldSlug) return;
+          const newSlug = slugMapByOldSlug[oldSlug] || oldSlug;
+          if (newSlug !== oldSlug) notesUpdated += 1;
+          nextNotesBySlug[newSlug] = mergeNoteLists(nextNotesBySlug[newSlug] || [], notesFromEntry(entry));
+        });
+        notesStore.clear();
+        Object.keys(nextNotesBySlug).forEach(function(slug) {
+          const notes = nextNotesBySlug[slug] || [];
+          if (notes.length) notesStore.put({ slug: slug, notes: cloneValue(notes) });
+        });
+
+        await new Promise(function(resolve, reject) {
+          tx.oncomplete = function() { resolve(); };
+          tx.onerror = function() { reject(tx.error || new Error('Failed to rebuild slugs.')); };
+          tx.onabort = function() { reject(tx.error || new Error('Failed to rebuild slugs.')); };
+        });
+
+        this._noteCache = Object.create(null);
+        Object.keys(nextNotesBySlug).forEach((slug) => {
+          const notes = nextNotesBySlug[slug] || [];
+          if (notes.length) this._noteCache[slug] = cloneValue(notes);
+        });
+
+        return {
+          ok: true,
+          count: (Array.isArray(plan.songs) ? plan.songs.length : 0),
+          changedCount: slugMap.length,
+          setlistRefsUpdated: setlistRefsUpdated,
+          notesUpdated: notesUpdated,
+          slugMap: cloneValue(slugMap),
+          notesMigratedInStorage: true
+        };
+      },
+
       saveSong: async function(payload) {
         await this.ready();
         const song = normalizeSongPayload(payload);
@@ -4521,6 +4719,51 @@
         }
       },
 
+
+      rebuildNoteSlugsFromMapSync: async function(slugMap) {
+        const map = Object.create(null);
+        (Array.isArray(slugMap) ? slugMap : []).forEach(function(item) {
+          const oldSlug = String(item && item.oldSlug || '').trim();
+          const newSlug = String(item && item.newSlug || '').trim();
+          if (oldSlug && newSlug && oldSlug !== newSlug) map[oldSlug] = newSlug;
+        });
+        if (!Object.keys(map).length) return { ok: true, updated: 0 };
+        try {
+          await this.ready();
+          const tx = this._db.transaction(NOTES_STORE, 'readwrite');
+          const store = tx.objectStore(NOTES_STORE);
+          const entries = await this._requestToPromise(store.getAll());
+          const nextNotesBySlug = Object.create(null);
+          let updated = 0;
+          (Array.isArray(entries) ? entries : []).forEach(function(entry) {
+            const oldSlug = String(entry && entry.slug || '').trim();
+            if (!oldSlug) return;
+            const newSlug = map[oldSlug] || oldSlug;
+            if (newSlug !== oldSlug) updated += 1;
+            nextNotesBySlug[newSlug] = mergeNoteLists(nextNotesBySlug[newSlug] || [], notesFromEntry(entry));
+          });
+          store.clear();
+          Object.keys(nextNotesBySlug).forEach(function(slug) {
+            const notes = nextNotesBySlug[slug] || [];
+            if (notes.length) store.put({ slug: slug, notes: cloneValue(notes) });
+          });
+          await new Promise(function(resolve, reject) {
+            tx.oncomplete = function() { resolve(); };
+            tx.onerror = function() { reject(tx.error || new Error('Failed to rebuild note slugs.')); };
+            tx.onabort = function() { reject(tx.error || new Error('Failed to rebuild note slugs.')); };
+          });
+          this._noteCache = Object.create(null);
+          Object.keys(nextNotesBySlug).forEach((slug) => {
+            const notes = nextNotesBySlug[slug] || [];
+            if (notes.length) this._noteCache[slug] = cloneValue(notes);
+          });
+          return { ok: true, updated: updated };
+        } catch (error) {
+          console.error('Failed to rebuild note slugs:', error);
+          return { ok: false, error: error };
+        }
+      },
+
       getAllNoteEntriesSync: function() {
         return Object.keys(this._noteCache)
           .map((slug) => ({ slug: slug, notes: Array.isArray(this._noteCache[slug]) ? cloneValue(this._noteCache[slug]) : [] }))
@@ -4551,6 +4794,7 @@
       attach('getSong', ChordProStorage.getSong);
       attach('getAllSongsFull', ChordProStorage.getAllSongsFull);
       attach('importSongs', ChordProStorage.importSongs);
+      attach('rebuildSlugsFromTitles', ChordProStorage.rebuildSlugsFromTitles);
       attach('saveSong', ChordProStorage.saveSong);
       attach('deleteSong', ChordProStorage.deleteSong);
       attach('updateSongControlSettings', ChordProStorage.updateSongControlSettings);
@@ -8925,6 +9169,7 @@ function renderFloatingPlayer(song) {
           case 'delete-current-song': App.deleteCurrentSong(); break;
           case 'save-current-song': App.saveCurrentSong(); break;
           case 'export-all-songs': App.exportAllSongs(); break;
+          case 'show-maintenance-menu': App.showMaintenanceMenu(); break;
           case 'toggle-dedupe': App.toggleDedupeMode(); break;
           case 'delete-song-from-list': App.deleteSongFromList(actionEl.getAttribute('data-song-slug') || ''); break;
           case 'sync-library-to-gas': App.syncLibraryToGas({ forceUrlPrompt: !!event.shiftKey }); break;
@@ -9471,6 +9716,145 @@ function renderFloatingPlayer(song) {
     toggleDedupeMode: function() {
       this.state.dedupeMode = !this.state.dedupeMode;
       this.filterSongs(true);
+    },
+
+    showDuplicateTitlesFromMaintenance: function() {
+      this.state.dedupeMode = true;
+      this.state.page = 'list';
+      this.filterSongs(false);
+      this.showList({ keepStatus: true });
+    },
+
+    showMaintenanceMenuDialog: function() {
+      return new Promise(function(resolve) {
+        const dialogId = 'maintenance-menu-dialog-title';
+        const overlay = document.createElement('div');
+        overlay.className = 'choice-overlay';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-labelledby', dialogId);
+        overlay.innerHTML = [
+          '<div class="choice-dialog panel maintenance-menu-dialog">',
+            '<h3 id="' + dialogId + '">Maintenance</h3>',
+            '<div class="maintenance-menu-sections">',
+              '<section class="maintenance-menu-section">',
+                '<h4 class="maintenance-menu-section-title">Backup</h4>',
+                '<div class="maintenance-menu-grid export-grid">',
+                  '<button class="btn" type="button" data-choice-value="export-songs">Export all songs</button>',
+                  '<button class="btn" type="button" data-choice-value="export-notes">Export all notes</button>',
+                  '<button class="btn" type="button" data-choice-value="export-setlists">Export all setlists</button>',
+                '</div>',
+              '</section>',
+              '<section class="maintenance-menu-section">',
+                '<h4 class="maintenance-menu-section-title">Maintenance</h4>',
+                '<div class="maintenance-menu-grid maintenance-grid">',
+                  '<button class="btn" type="button" data-choice-value="dedupe">Find duplicate titles</button>',
+                  '<button class="btn danger" type="button" data-choice-value="rebuild-slugs">Rebuild slugs from titles</button>',
+                '</div>',
+              '</section>',
+            '</div>',
+            '<div class="choice-actions">',
+              '<button class="btn" type="button" data-choice-value="cancel">Cancel</button>',
+            '</div>',
+          '</div>'
+        ].join('');
+
+        let done = false;
+        const close = function(choice) {
+          if (done) return;
+          done = true;
+          document.removeEventListener('keydown', onKeyDown, true);
+          overlay.remove();
+          resolve(choice);
+        };
+        const onKeyDown = function(event) {
+          if (event.key === 'Escape') close('cancel');
+        };
+        overlay.addEventListener('click', function(event) {
+          const button = event.target && event.target.closest ? event.target.closest('[data-choice-value]') : null;
+          if (!button) return;
+          event.preventDefault();
+          const choice = button.getAttribute('data-choice-value') || 'cancel';
+          if (choice === 'export-songs') {
+            App.exportAllSongs();
+            return;
+          }
+          if (choice === 'export-notes') {
+            if (typeof Viewer !== 'undefined' && Viewer.exportAllSongNotes) Viewer.exportAllSongNotes();
+            return;
+          }
+          if (choice === 'export-setlists') {
+            App.exportAllSetlists();
+            return;
+          }
+          close(choice);
+        });
+        document.addEventListener('keydown', onKeyDown, true);
+        document.body.appendChild(overlay);
+        window.requestAnimationFrame(function() {
+          const initialButton = overlay.querySelector('[data-choice-value="cancel"]') || overlay.querySelector('[data-choice-value]');
+          if (initialButton && typeof initialButton.focus === 'function') initialButton.focus();
+        });
+      });
+    },
+
+    showMaintenanceMenu: async function() {
+      const choice = await this.showMaintenanceMenuDialog();
+      if (choice === 'export-songs') {
+        this.exportAllSongs();
+        return;
+      }
+      if (choice === 'export-notes') {
+        if (typeof Viewer !== 'undefined' && Viewer.exportAllSongNotes) Viewer.exportAllSongNotes();
+        return;
+      }
+      if (choice === 'export-setlists') {
+        this.exportAllSetlists();
+        return;
+      }
+      if (choice === 'dedupe') {
+        this.showDuplicateTitlesFromMaintenance();
+        return;
+      }
+      if (choice === 'rebuild-slugs') {
+        this.rebuildSlugsFromTitles();
+      }
+    },
+
+    rebuildSlugsFromTitles: async function() {
+      const confirmed = await this.confirmAction({
+        title: 'Rebuild slugs from titles?',
+        message: 'All song slugs will be regenerated using the current rules. Setlists and notes will be updated to follow the new slugs.\n\nPlease export songs, notes, and setlists first if needed.',
+        confirmText: 'Rebuild',
+        confirmClassName: 'btn danger'
+      });
+      if (!confirmed) return;
+      this.beginBusy('Rebuilding slugs…');
+      try {
+        const result = await ChordProStorage.rebuildSlugsFromTitles();
+        if (result && result.slugMap && !result.notesMigratedInStorage && window.ChordProStorage && ChordProStorage.rebuildNoteSlugsFromMapSync) {
+          const noteResult = await ChordProStorage.rebuildNoteSlugsFromMapSync(result.slugMap);
+          if (noteResult && noteResult.ok === false) {
+            throw noteResult.error || new Error('Slugs were rebuilt, but notes could not be updated.');
+          }
+        }
+        this.state.currentSong = null;
+        this.state.editorSong = null;
+        this.state.editorReturn = null;
+        this.state.currentSetlist = null;
+        this.state.missingSetlistSong = null;
+        this.state.setlistEditor = null;
+        this.state.setlistEditMode = false;
+        this.state.dedupeMode = false;
+        this.flashStatus('info', 'Slugs rebuilt: ' + ((result && result.changedCount) || 0) + ' song(s) updated.');
+        this.loadSongs(function() {
+          App.showList({ endBusyOnDone: true, keepStatus: true });
+        }, { skipBusy: true });
+      } catch (err) {
+        this.endBusy();
+        this.setStatus('error', getStatusMessage(err, 'Failed to rebuild slugs.'));
+        this.render();
+      }
     },
 
     getDuplicateTitleSongsForPayload: function(payload, extraSong) {
@@ -12248,7 +12632,6 @@ function renderFloatingPlayer(song) {
         ? '<button class="btn" data-app-action="toggle-dedupe">Cancel</button>'
         : [
             '<button class="btn primary setlists-entry-btn" data-app-action="show-setlists">Setlists</button>',
-            '<button class="btn danger" data-app-action="toggle-dedupe">De-dupe</button>',
             '<button class="btn" data-app-action="sync-library-to-gas">Sync to GAS</button>',
             '<button class="btn" data-app-action="export-all-songs">Export all</button>',
             '<button class="btn" data-app-action="import-all-songs">Import</button>',
@@ -12259,7 +12642,10 @@ function renderFloatingPlayer(song) {
         '<div class="shell">',
           '<div class="topbar">',
             '<div class="title-block">',
-              '<h1>Personal ChordPro Viewer</h1>',
+              '<div class="title-row">',
+                '<h1>Personal ChordPro Viewer</h1>',
+                '<button class="maintenance-menu-button" type="button" data-app-action="show-maintenance-menu" title="Maintenance" aria-label="Maintenance"><span class="material-symbols-outlined" aria-hidden="true">settings</span></button>',
+              '</div>',
             '</div>',
             '<div class="actions list-topbar-actions">',
               actionButtons,
