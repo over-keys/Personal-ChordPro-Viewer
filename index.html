@@ -11419,12 +11419,60 @@ function renderFloatingPlayer(song) {
       this._forceYoutubeRefresh = false;
     },
 
+
+    refreshViewerSheetDisplay: function() {
+      if (this.state.page !== 'view' || !this.state.currentSong) {
+        this.render();
+        return;
+      }
+      const sheet = document.querySelector('#sheet-stage .cw-sheet');
+      const stage = document.getElementById('sheet-stage');
+      if (!sheet || !stage) {
+        this.render();
+        return;
+      }
+      const viewerScrollTop = typeof Viewer !== 'undefined' && typeof Viewer.getRenderScrollTop === 'function'
+        ? Viewer.getRenderScrollTop()
+        : 0;
+      sheet.innerHTML = renderChordPro(this.state.currentSong.chordPro, {
+        transpose: this.state.transpose,
+        notation: this.state.notation,
+        fontSizeLevel: this.state.fontSizeLevel,
+        chordSizeLevel: this.state.chordSizeLevel,
+        formatOptions: this.state.formatOptions,
+        lyricsFont: this.getLyricsFontStack(),
+        chordFont: this.getChordFontStack()
+      });
+      if (typeof applyPersonalChordProViewerTypography === 'function') {
+        applyPersonalChordProViewerTypography(sheet);
+      }
+
+      const transposeInput = document.getElementById('transpose-input');
+      if (transposeInput) transposeInput.value = String(this.state.transpose);
+      const transposeDown = document.querySelector('[data-app-action="change-transpose"][data-app-delta="-1"]');
+      const transposeUp = document.querySelector('[data-app-action="change-transpose"][data-app-delta="1"]');
+      if (transposeDown) transposeDown.disabled = this.state.transpose <= -11;
+      if (transposeUp) transposeUp.disabled = this.state.transpose >= 11;
+
+      document.querySelectorAll('[data-app-action="set-notation"]').forEach(function(button) {
+        const value = button.getAttribute('data-app-value') || 'default';
+        button.classList.toggle('is-active', value === App.state.notation);
+      });
+
+      this.syncViewerSongControlsSaveButtons();
+      if (typeof Viewer !== 'undefined' && typeof Viewer.afterRender === 'function') {
+        Viewer.afterRender({ viewerScrollTop: viewerScrollTop });
+      }
+    },
+
     changeTranspose: function(delta) {
       const next = Math.max(-11, Math.min(11, this.state.transpose + delta));
       this.state.transpose = next;
       this.state.transposeStr = String(next);
       if (this.state.page === 'view' && this.state.currentSong && this.state.currentSong.slug) {
         this.updateCurrentViewUrl();
+        this.refreshViewerSheetDisplay();
+        return;
       }
       this.render();
     },
@@ -11509,6 +11557,8 @@ function renderFloatingPlayer(song) {
       this.state.transposeStr = String(num);
       if (this.state.page === 'view' && this.state.currentSong && this.state.currentSong.slug) {
         this.updateCurrentViewUrl();
+        this.refreshViewerSheetDisplay();
+        return;
       }
       this.render();
     },
@@ -11517,6 +11567,8 @@ function renderFloatingPlayer(song) {
       this.state.notation = normalizeStoredNotation(value, 'default');
       if (this.state.page === 'view' && this.state.currentSong && this.state.currentSong.slug) {
         this.updateCurrentViewUrl();
+        this.refreshViewerSheetDisplay();
+        return;
       }
       this.render();
     },
