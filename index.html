@@ -5872,6 +5872,11 @@
       return Math.max(0, Math.min(1, base));
     }
 
+    function normalizeNotePixel(value) {
+      const numeric = Number(value);
+      return Number.isFinite(numeric) ? Math.max(0, Math.round(numeric)) : null;
+    }
+
     function clampNoteDimension(value, min, max, fallback) {
       const numeric = Number(value);
       const base = Number.isFinite(numeric) ? numeric : fallback;
@@ -5887,7 +5892,7 @@
     function normalizeSongNote(note) {
       if (!note || typeof note !== 'object') return null;
       const id = String(note.id || '').trim() || ('note-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8));
-      return {
+      const normalized = {
         id: id,
         xPercent: clampNotePercent(note.xPercent, 0.5),
         yPercent: clampNotePercent(note.yPercent, 0.5),
@@ -5897,6 +5902,9 @@
         fontSizeLevel: clampSongNoteFontSizeLevel(note.fontSizeLevel),
         isExpanded: !!note.isExpanded
       };
+      const xPx = normalizeNotePixel(note.xPx);
+      if (xPx !== null) normalized.xPx = xPx;
+      return normalized;
     }
 
     function clampSongNoteFontSizeLevel(value) {
@@ -6345,11 +6353,47 @@ function loadCurrentSongNotes(options) {
       const rect = stage.getBoundingClientRect();
       const metrics = getSheetStageMetrics(stage);
       const rawX = (source.clientX || 0) - rect.left;
-      const rawY = (source.clientY || 0) - rect.top;
       return {
+        xPx: Math.max(0, Math.round(rawX)),
         xPercent: clampNotePercent(rawX / Math.max(metrics.width, 1), 0.5),
-        yPercent: clampNotePercent(rawY / Math.max(metrics.height, 1), 0.5)
+        yPercent: getSongNoteYPercentFromClientY(source.clientY || 0, stage)
       };
+    }
+
+    function getSongNoteLineContext(stage) {
+      const metrics = getSheetStageMetrics(stage);
+      const els = cacheElements();
+      const scrollTarget = getScrollTarget(els);
+      const scrollTop = getScrollTop(scrollTarget);
+      const viewportTop = getViewportTop(scrollTarget);
+      const stageRect = stage && stage.getBoundingClientRect ? stage.getBoundingClientRect() : { top: 0 };
+      const stageTop = scrollTop + stageRect.top - viewportTop;
+      const lineMetrics = getAutoscrollLineMetrics(els, scrollTarget, stageTop, metrics.height);
+      return {
+        metrics: metrics,
+        stageTop: stageTop,
+        lineMetrics: lineMetrics
+      };
+    }
+
+    function getSongNoteYPercentFromStageTopPx(topPx, stage) {
+      const context = getSongNoteLineContext(stage);
+      const fallback = Number(topPx) / Math.max(context.metrics.height, 1);
+      const y = context.stageTop + (Number.isFinite(Number(topPx)) ? Number(topPx) : 0);
+      return clampNotePercent(getAutoscrollPercentForY(y, context.lineMetrics, context.stageTop, context.metrics.height), fallback);
+    }
+
+    function getSongNoteYPercentFromClientY(clientY, stage) {
+      const rect = stage.getBoundingClientRect();
+      return getSongNoteYPercentFromStageTopPx((Number(clientY) || 0) - rect.top, stage);
+    }
+
+    function getSongNoteTopPx(note, stage, metrics) {
+      const context = getSongNoteLineContext(stage);
+      return Math.round(
+        getYForAutoscrollPercent(clampNotePercent(note && note.yPercent, 0.5), context.lineMetrics, context.stageTop, context.metrics.height)
+        - context.stageTop
+      );
     }
 
     function getSongNoteClampBounds(note, stage, options) {
@@ -6357,8 +6401,8 @@ function loadCurrentSongNotes(options) {
       const keepDotInside = !!(options && options.keepDotInside);
       if (!keepDotInside) {
         return {
-          minX: 0,
-          maxX: 1,
+          minXPx: 0,
+          maxXPx: metrics.width,
           minY: 0,
           maxY: 1,
           width: metrics.width,
@@ -6370,8 +6414,8 @@ function loadCurrentSongNotes(options) {
       const maxXPx = Math.max(minXPx, metrics.width - NOTE_DOT_SIZE_PX - NOTE_DOT_EDGE_MARGIN_PX);
       const maxYPx = Math.max(minYPx, metrics.height - NOTE_DOT_SIZE_PX - NOTE_DOT_EDGE_MARGIN_PX);
       return {
-        minX: minXPx / Math.max(metrics.width, 1),
-        maxX: maxXPx / Math.max(metrics.width, 1),
+        minXPx: minXPx,
+        maxXPx: maxXPx,
         minY: minYPx / Math.max(metrics.height, 1),
         maxY: maxYPx / Math.max(metrics.height, 1),
         width: metrics.width,
@@ -6379,22 +6423,31 @@ function loadCurrentSongNotes(options) {
       };
     }
 
-    function clampSongNotePosition(note, stage, xPercent, yPercent, options) {
+    function getSongNoteLeftPx(note, metrics) {
+      const storedPx = note && note.xPx !== undefined && note.xPx !== null && note.xPx !== ''
+        ? Number(note.xPx)
+        : NaN;
+      if (Number.isFinite(storedPx)) return Math.round(storedPx);
+      return Math.round(clampNotePercent(note && note.xPercent, 0.5) * Math.max(metrics && metrics.width || 1, 1));
+    }
+
+    function clampSongNotePosition(note, stage, xPx, yPercent, options) {
       const bounds = getSongNoteClampBounds(note, stage, options);
+      const nextXPx = Number.isFinite(Number(xPx)) ? Math.round(Number(xPx)) : getSongNoteLeftPx(note, bounds);
       return {
-        xPercent: Math.max(bounds.minX, Math.min(bounds.maxX, Number.isFinite(xPercent) ? xPercent : note.xPercent)),
+        xPx: Math.max(bounds.minXPx, Math.min(bounds.maxXPx, nextXPx)),
         yPercent: Math.max(bounds.minY, Math.min(bounds.maxY, Number.isFinite(yPercent) ? yPercent : note.yPercent))
       };
     }
 
     function getSongNotePixelPosition(note, stage, options) {
       const metrics = getSheetStageMetrics(stage);
-      const position = clampSongNotePosition(note, stage, note.xPercent, note.yPercent, options);
+      const position = clampSongNotePosition(note, stage, getSongNoteLeftPx(note, metrics), note.yPercent, options);
       return {
         metrics: metrics,
         position: position,
-        leftPx: Math.round(position.xPercent * metrics.width),
-        topPx: Math.round(position.yPercent * metrics.height)
+        leftPx: Math.round(position.xPx),
+        topPx: getSongNoteTopPx(position, stage, metrics)
       };
     }
 
@@ -6559,8 +6612,8 @@ function loadCurrentSongNotes(options) {
         kind: dragTarget.dataset.noteDrag || '',
         startClientX: pointer.clientX,
         startClientY: pointer.clientY,
-        originLeftPx: note.xPercent * metrics.width,
-        originTopPx: note.yPercent * metrics.height,
+        originLeftPx: getSongNoteLeftPx(note, metrics),
+        originTopPx: getSongNoteTopPx(note, stage, metrics),
         moved: false
       };
       dragTarget.classList.add('is-dragging');
@@ -6586,7 +6639,6 @@ function loadCurrentSongNotes(options) {
       }
       const pointer = event && event.touches ? event.touches[0] : event;
       if (!pointer || typeof pointer.clientX !== 'number' || typeof pointer.clientY !== 'number') return false;
-      const metrics = getSheetStageMetrics(activeNoteDrag.stage);
       const deltaX = pointer.clientX - activeNoteDrag.startClientX;
       const deltaY = pointer.clientY - activeNoteDrag.startClientY;
       if (!activeNoteDrag.moved && Math.hypot(deltaX, deltaY) < NOTE_DRAG_START_THRESHOLD_PX) {
@@ -6596,11 +6648,12 @@ function loadCurrentSongNotes(options) {
       const nextPosition = clampSongNotePosition(
         note,
         activeNoteDrag.stage,
-        (activeNoteDrag.originLeftPx + deltaX) / Math.max(metrics.width, 1),
-        (activeNoteDrag.originTopPx + deltaY) / Math.max(metrics.height, 1),
+        activeNoteDrag.originLeftPx + deltaX,
+        getSongNoteYPercentFromStageTopPx(activeNoteDrag.originTopPx + deltaY, activeNoteDrag.stage),
         { keepDotInside: true }
       );
-      note.xPercent = nextPosition.xPercent;
+      note.xPx = nextPosition.xPx;
+      note.xPercent = clampNotePercent(nextPosition.xPx / Math.max(getSheetStageMetrics(activeNoteDrag.stage).width, 1), note.xPercent);
       note.yPercent = nextPosition.yPercent;
       setSongNoteElementPosition(activeNoteDrag.moveElement || activeNoteDrag.element, note, activeNoteDrag.stage);
       if (event.cancelable) event.preventDefault();
@@ -6639,6 +6692,7 @@ function loadCurrentSongNotes(options) {
     function createSongNote(position) {
       const note = normalizeSongNote({
         id: 'note-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+        xPx: position && position.xPx,
         xPercent: position && position.xPercent,
         yPercent: position && position.yPercent,
         text: '',
