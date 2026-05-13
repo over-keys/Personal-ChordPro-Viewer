@@ -5415,6 +5415,7 @@
     let noteCreateMode = false;
     let activeNoteDrag = null;
     let activeNoteResize = null;
+    let noteDragAutoScrollRafId = 0;
     let noteToggleSuppress = null;
     let suppressSheetAutoScrollToggleUntil = 0;
     let observedScrollSessionStartAt = 0;
@@ -6467,6 +6468,7 @@ function loadCurrentSongNotes(options) {
     function clearActiveNoteDrag(options) {
       options = options || {};
       if (!activeNoteDrag) return null;
+      stopSongNoteDragAutoScroll();
       const state = activeNoteDrag;
       activeNoteDrag = null;
       if (!options.keepPointerCapture && state.element && typeof state.element.releasePointerCapture === 'function') {
@@ -6478,6 +6480,11 @@ function loadCurrentSongNotes(options) {
         state.element.classList.remove('is-dragging');
       }
       return state;
+    }
+
+    function stopSongNoteDragAutoScroll() {
+      if (noteDragAutoScrollRafId) cancelAnimationFrame(noteDragAutoScrollRafId);
+      noteDragAutoScrollRafId = 0;
     }
 
     function clearActiveNoteResize(options) {
@@ -6603,6 +6610,9 @@ function loadCurrentSongNotes(options) {
       if (!pointer || typeof pointer.clientX !== 'number' || typeof pointer.clientY !== 'number') return false;
       clearActiveNoteInteraction({ keepPointerCapture: true });
       const moveElement = dragTarget.closest('.viewer-note-card, .viewer-note-popover, .viewer-note-dot') || dragTarget;
+      const stageRect = stage.getBoundingClientRect();
+      const noteLeftPx = getSongNoteLeftPx(note, metrics);
+      const noteTopPx = getSongNoteTopPx(note, stage, metrics);
       activeNoteDrag = {
         noteId: noteId,
         pointerId: typeof event.pointerId === 'number' ? event.pointerId : null,
@@ -6612,8 +6622,10 @@ function loadCurrentSongNotes(options) {
         kind: dragTarget.dataset.noteDrag || '',
         startClientX: pointer.clientX,
         startClientY: pointer.clientY,
-        originLeftPx: getSongNoteLeftPx(note, metrics),
-        originTopPx: getSongNoteTopPx(note, stage, metrics),
+        lastClientX: pointer.clientX,
+        lastClientY: pointer.clientY,
+        pointerOffsetXPx: pointer.clientX - stageRect.left - noteLeftPx,
+        pointerOffsetYPx: pointer.clientY - stageRect.top - noteTopPx,
         moved: false
       };
       dragTarget.classList.add('is-dragging');
@@ -6624,6 +6636,40 @@ function loadCurrentSongNotes(options) {
       }
       if (event.cancelable) event.preventDefault();
       if (event.stopPropagation) event.stopPropagation();
+      startSongNoteDragAutoScroll();
+      return true;
+    }
+
+    function updateActiveSongNoteDragFromClient(clientX, clientY) {
+      if (!activeNoteDrag) return false;
+      const note = findSongNoteById(activeNoteDrag.noteId);
+      if (!note || !activeNoteDrag.stage) {
+        clearActiveNoteDrag();
+        return false;
+      }
+      if (typeof clientX !== 'number' || typeof clientY !== 'number') return false;
+      activeNoteDrag.lastClientX = clientX;
+      activeNoteDrag.lastClientY = clientY;
+      const deltaX = clientX - activeNoteDrag.startClientX;
+      const deltaY = clientY - activeNoteDrag.startClientY;
+      if (!activeNoteDrag.moved && Math.hypot(deltaX, deltaY) < NOTE_DRAG_START_THRESHOLD_PX) {
+        return true;
+      }
+      activeNoteDrag.moved = true;
+      const stageRect = activeNoteDrag.stage.getBoundingClientRect();
+      const nextLeftPx = clientX - stageRect.left - activeNoteDrag.pointerOffsetXPx;
+      const nextTopPx = clientY - stageRect.top - activeNoteDrag.pointerOffsetYPx;
+      const nextPosition = clampSongNotePosition(
+        note,
+        activeNoteDrag.stage,
+        nextLeftPx,
+        getSongNoteYPercentFromStageTopPx(nextTopPx, activeNoteDrag.stage),
+        { keepDotInside: true }
+      );
+      note.xPx = nextPosition.xPx;
+      note.xPercent = clampNotePercent(nextPosition.xPx / Math.max(getSheetStageMetrics(activeNoteDrag.stage).width, 1), note.xPercent);
+      note.yPercent = nextPosition.yPercent;
+      setSongNoteElementPosition(activeNoteDrag.moveElement || activeNoteDrag.element, note, activeNoteDrag.stage);
       return true;
     }
 
@@ -6632,33 +6678,50 @@ function loadCurrentSongNotes(options) {
       if (typeof activeNoteDrag.pointerId === 'number' && typeof event.pointerId === 'number' && activeNoteDrag.pointerId !== event.pointerId) {
         return false;
       }
-      const note = findSongNoteById(activeNoteDrag.noteId);
-      if (!note || !activeNoteDrag.stage) {
-        clearActiveNoteDrag();
-        return false;
-      }
       const pointer = event && event.touches ? event.touches[0] : event;
       if (!pointer || typeof pointer.clientX !== 'number' || typeof pointer.clientY !== 'number') return false;
-      const deltaX = pointer.clientX - activeNoteDrag.startClientX;
-      const deltaY = pointer.clientY - activeNoteDrag.startClientY;
-      if (!activeNoteDrag.moved && Math.hypot(deltaX, deltaY) < NOTE_DRAG_START_THRESHOLD_PX) {
-        return true;
-      }
-      activeNoteDrag.moved = true;
-      const nextPosition = clampSongNotePosition(
-        note,
-        activeNoteDrag.stage,
-        activeNoteDrag.originLeftPx + deltaX,
-        getSongNoteYPercentFromStageTopPx(activeNoteDrag.originTopPx + deltaY, activeNoteDrag.stage),
-        { keepDotInside: true }
-      );
-      note.xPx = nextPosition.xPx;
-      note.xPercent = clampNotePercent(nextPosition.xPx / Math.max(getSheetStageMetrics(activeNoteDrag.stage).width, 1), note.xPercent);
-      note.yPercent = nextPosition.yPercent;
-      setSongNoteElementPosition(activeNoteDrag.moveElement || activeNoteDrag.element, note, activeNoteDrag.stage);
+      updateActiveSongNoteDragFromClient(pointer.clientX, pointer.clientY);
       if (event.cancelable) event.preventDefault();
       if (event.stopPropagation) event.stopPropagation();
       return true;
+    }
+
+    function refreshActiveSongNoteDragPosition() {
+      if (!activeNoteDrag || !activeNoteDrag.moved) return false;
+      return updateActiveSongNoteDragFromClient(activeNoteDrag.lastClientX, activeNoteDrag.lastClientY);
+    }
+
+    function startSongNoteDragAutoScroll() {
+      stopSongNoteDragAutoScroll();
+      const autoScrollStep = function() {
+        if (!activeNoteDrag) {
+          noteDragAutoScrollRafId = 0;
+          return;
+        }
+        if (activeNoteDrag.moved) {
+          const scrollTarget = getScrollTarget(cacheElements());
+          const paneRect = scrollTarget === document.body || scrollTarget === document.documentElement || scrollTarget === document.scrollingElement
+            ? { top: 0, bottom: window.innerHeight || document.documentElement.clientHeight || 0 }
+            : scrollTarget.getBoundingClientRect();
+          const edgeThreshold = 60;
+          const scrollStep = 14;
+          const currentTop = getScrollTop(scrollTarget);
+          let nextTop = currentTop;
+          if (activeNoteDrag.lastClientY < paneRect.top + edgeThreshold) {
+            nextTop = Math.max(0, currentTop - scrollStep);
+          } else if (activeNoteDrag.lastClientY > paneRect.bottom - edgeThreshold) {
+            const viewportHeight = getViewportHeight(scrollTarget);
+            const maxTop = Math.max(0, scrollTarget.scrollHeight - viewportHeight);
+            nextTop = Math.min(maxTop, currentTop + scrollStep);
+          }
+          if (nextTop !== currentTop) {
+            setProgrammaticScrollTop(scrollTarget, nextTop);
+            refreshActiveSongNoteDragPosition();
+          }
+        }
+        noteDragAutoScrollRafId = requestAnimationFrame(autoScrollStep);
+      };
+      noteDragAutoScrollRafId = requestAnimationFrame(autoScrollStep);
     }
 
     function finishActiveSongNoteDrag(event) {
@@ -7402,6 +7465,7 @@ function loadCurrentSongNotes(options) {
         els.scrollPane.dataset.viewerBound = '1';
         els.scrollPane.addEventListener('scroll', function() {
           handleScrollPositionChange(els);
+          refreshActiveSongNoteDragPosition();
         }, { passive: true });
         els.scrollPane.addEventListener('wheel', function(event) {
           markManualScrollIntent(event);
@@ -7420,6 +7484,7 @@ function loadCurrentSongNotes(options) {
         windowScrollBound = true;
         window.addEventListener('scroll', function() {
           handleScrollPositionChange();
+          refreshActiveSongNoteDragPosition();
         }, { passive: true });
         window.addEventListener('wheel', function(event) {
           markManualScrollIntent(event);
