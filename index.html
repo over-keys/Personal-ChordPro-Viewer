@@ -4925,7 +4925,7 @@
       transposed = transposed.replace(/maj/gi, '\u25b3');
       transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)ma(?=[0-9()/\u25b3]|$)/gi, '$1\u25b3');
       transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)\+/g, '$1aug');
-      transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)-/g, '$1m');
+      transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)-(?!-)/g, '$1m');
       transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)min(?=[0-9()/\u25b3]|$)/gi, '$1m');
       transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)mi(?=[0-9()/\u25b3]|$)/gi, '$1m');
       transposed = transposed.replace(/mM(?=[0-9()/\u25b3]|$)/g, 'm\u25b3');
