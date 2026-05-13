@@ -6326,7 +6326,7 @@ function loadCurrentSongNotes(options) {
       return importSongNotes();
     }
 
-        function getSongNoteIndex(noteId) {
+    function getSongNoteIndex(noteId) {
       return currentSongNotes.findIndex(function(note) {
         return note.id === noteId;
       });
@@ -6571,7 +6571,6 @@ function loadCurrentSongNotes(options) {
         activeNoteResize.resizeElement.style.width = nextWidth + 'px';
         activeNoteResize.resizeElement.style.height = nextHeight + 'px';
       }
-      saveCurrentSongNotes({ preserveNoteId: editingNoteId || note.id });
       if (event.cancelable) event.preventDefault();
       if (event.stopPropagation) event.stopPropagation();
       return true;
@@ -6801,7 +6800,7 @@ function loadCurrentSongNotes(options) {
       if (note.widthPx === nextWidth && note.heightPx === nextHeight) return;
       note.widthPx = nextWidth;
       note.heightPx = nextHeight;
-      saveCurrentSongNotes();
+      if (!options.skipSave) saveCurrentSongNotes();
       if (!options.skipRender) renderSingleSongNote(noteId);
     }
 
@@ -6838,7 +6837,7 @@ function loadCurrentSongNotes(options) {
       if (!editingNoteId) return;
       const popover = document.getElementById('viewer-note-popover');
       if (!popover) return;
-      updateSongNoteSize(editingNoteId, popover.offsetWidth, popover.offsetHeight, { skipRender: true });
+      updateSongNoteSize(editingNoteId, popover.offsetWidth, popover.offsetHeight, { skipRender: true, skipSave: true });
     }
 
     function bindActiveSongNoteResizeObserver() {
@@ -6849,7 +6848,7 @@ function loadCurrentSongNotes(options) {
       noteResizeObserver = new ResizeObserver(function(entries) {
         const entry = entries && entries[0];
         if (!entry || !editingNoteId) return;
-        updateSongNoteSize(editingNoteId, popover.offsetWidth, popover.offsetHeight, { skipRender: true });
+        updateSongNoteSize(editingNoteId, popover.offsetWidth, popover.offsetHeight, { skipRender: true, skipSave: true });
       });
       noteResizeObserver.observe(popover);
     }
