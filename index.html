@@ -6004,17 +6004,7 @@ function loadCurrentSongNotes(options) {
     }
 
     function downloadSongNoteJson(filename, payload) {
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
-      const objectUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = objectUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.setTimeout(function() {
-        URL.revokeObjectURL(objectUrl);
-      }, 1000);
+      downloadJsonFile(filename, payload);
     }
 
     function setSongNoteStatus(type, message) {
@@ -6113,7 +6103,7 @@ function loadCurrentSongNotes(options) {
       return false;
     }
 
-        function extractSongNoteImportRecord(payload) {
+    function extractSongNoteImportRecord(payload) {
       if (payload && payload.type === 'personal-chordpro-viewer-notes' && payload.scope === 'song' && payload.song && typeof payload.song === 'object') {
         return {
           slug: String(payload.song.slug || '').trim(),
@@ -9761,7 +9751,7 @@ function renderFloatingPlayer(song) {
                 '</div>',
               '</section>',
               '<section class="maintenance-menu-section">',
-                '<h4 class="maintenance-menu-section-title">Maintenance</h4>',
+                '<h4 class="maintenance-menu-section-title">Tools</h4>',
                 '<div class="maintenance-menu-grid maintenance-grid">',
                   '<button class="btn" type="button" data-choice-value="dedupe">Find duplicate titles</button>',
                   '<button class="btn danger" type="button" data-choice-value="rebuild-slugs">Rebuild slugs from titles</button>',
