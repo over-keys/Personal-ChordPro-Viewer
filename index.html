@@ -10398,8 +10398,10 @@ function renderFloatingPlayer(song) {
           const setlist = normalizeSetlistForApp(record);
           if (!setlist || !setlist.id) {
             if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
-            App.setStatus('error', 'Setlist not found.');
-            App.showSetlists({ keepStatus: true });
+            App.showSetlists({
+              keepStatus: true,
+              onDone: function() { App.flashStatus('error', 'Setlist not found.'); }
+            });
             return;
           }
           if (!setlist.items.length) {
@@ -10516,8 +10518,10 @@ function renderFloatingPlayer(song) {
           const setlist = normalizeSetlistForApp(record);
           if (!setlist.id) {
             if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
-            App.setStatus('error', 'Setlist not found.');
-            App.showSetlists({ keepStatus: true });
+            App.showSetlists({
+              keepStatus: true,
+              onDone: function() { App.flashStatus('error', 'Setlist not found.'); }
+            });
             return;
           }
           App.state.setlistEditor = setlist;
@@ -10703,8 +10707,8 @@ function renderFloatingPlayer(song) {
               return;
             }
             if (!options.skipBusy || options.endBusyOnDone) App.endBusy();
-            App.setStatus('error', 'Song not found.');
             App.showList();
+            App.flashStatus('error', 'Song not found.');
             return;
           }
           var hasUrlTranspose = String(options.urlTranspose || '').trim() !== '';
