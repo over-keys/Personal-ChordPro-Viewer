@@ -9879,8 +9879,7 @@ function renderFloatingPlayer(song) {
         this.showList({ keepStatus: true });
       } catch (err) {
         this.endBusy();
-        this.setStatus('error', getStatusMessage(err, 'Failed to find duplicate titles.'));
-        this.render();
+        this.flashStatus('error', getStatusMessage(err, 'Failed to find duplicate titles.'));
       }
     },
 
@@ -11037,8 +11036,7 @@ function renderFloatingPlayer(song) {
     deleteSongFromList: async function(slug) {
       const normalizedSlug = String(slug || '').trim();
       if (!normalizedSlug) {
-        this.setStatus('error', 'Song not found.');
-        this.render();
+        this.flashStatus('error', 'Song not found.');
         return;
       }
       const song = this.getSongSummaryBySlug(normalizedSlug) || { slug: normalizedSlug, title: '' };
