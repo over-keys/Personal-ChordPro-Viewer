@@ -4171,6 +4171,25 @@
           });
       },
 
+      listSongTitleSlugs: async function() {
+        await this.ready();
+        const store = this._txStore(SONGS_STORE, 'readonly');
+        const rows = await this._requestToPromise(store.getAll());
+        return (Array.isArray(rows) ? rows : [])
+          .filter(function(song) { return !!(song && song.slug); })
+          .map(function(song) {
+            return {
+              slug: song.slug,
+              title: song.title
+            };
+          })
+          .sort(function(a, b) {
+            const titleCompare = String(a.title || '').localeCompare(String(b.title || ''));
+            if (titleCompare) return titleCompare;
+            return String(a.slug || '').localeCompare(String(b.slug || ''));
+          });
+      },
+
       getSong: async function(slug) {
         await this.ready();
         const normalizedSlug = String(slug || '').trim();
@@ -4803,6 +4822,7 @@
       }
       attach('getAppConfig', ChordProStorage.getAppConfig);
       attach('listSongs', ChordProStorage.listSongs);
+      attach('listSongTitleSlugs', ChordProStorage.listSongTitleSlugs);
       attach('getSong', ChordProStorage.getSong);
       attach('getAllSongsFull', ChordProStorage.getAllSongsFull);
       attach('importSongs', ChordProStorage.importSongs);
@@ -8779,6 +8799,7 @@ function renderFloatingPlayer(song) {
       searchText: '',
       searchDraft: '',
       dedupeMode: false,
+      dedupeSongs: null,
       setlistSongSearchText: '',
       setlistSongSearchDraft: '',
       transpose: 0,
@@ -9788,7 +9809,8 @@ function renderFloatingPlayer(song) {
       if (typeof shouldRender === 'undefined') shouldRender = true;
       options = options || {};
       const search = String(this.state.searchText || '').trim().toLowerCase();
-      const baseSongs = this.state.dedupeMode ? this.getDuplicateTitleSongs(this.state.songs) : this.state.songs;
+      const dedupeSource = Array.isArray(this.state.dedupeSongs) ? this.state.dedupeSongs : this.state.songs;
+      const baseSongs = this.state.dedupeMode ? this.getDuplicateTitleSongs(dedupeSource) : this.state.songs;
       if (!search) {
         this.state.filteredSongs = baseSongs.slice();
       } else {
@@ -9834,15 +9856,32 @@ function renderFloatingPlayer(song) {
     },
 
     toggleDedupeMode: function() {
-      this.state.dedupeMode = !this.state.dedupeMode;
+      if (!this.state.dedupeMode) {
+        this.showDuplicateTitlesFromMaintenance();
+        return;
+      }
+      this.state.dedupeMode = false;
+      this.state.dedupeSongs = null;
       this.filterSongs(true);
     },
 
-    showDuplicateTitlesFromMaintenance: function() {
-      this.state.dedupeMode = true;
-      this.state.page = 'list';
-      this.filterSongs(false);
-      this.showList({ keepStatus: true });
+    showDuplicateTitlesFromMaintenance: async function() {
+      this.beginBusy('Finding duplicate titles...');
+      try {
+        const songs = ChordProStorage && typeof ChordProStorage.listSongTitleSlugs === 'function'
+          ? await ChordProStorage.listSongTitleSlugs()
+          : await ChordProStorage.listSongs();
+        this.state.dedupeSongs = Array.isArray(songs) ? songs : [];
+        this.state.dedupeMode = true;
+        this.state.page = 'list';
+        this.filterSongs(false);
+        this.endBusy();
+        this.showList({ keepStatus: true });
+      } catch (err) {
+        this.endBusy();
+        this.setStatus('error', getStatusMessage(err, 'Failed to find duplicate titles.'));
+        this.render();
+      }
     },
 
     showMaintenanceMenuDialog: function() {
@@ -10321,7 +10360,11 @@ function renderFloatingPlayer(song) {
 
     getSongSummaryBySlug: function(slug) {
       const normalizedSlug = String(slug || '').trim();
-      return (this.state.songs || []).filter(function(song) {
+      const songFromLibrary = (this.state.songs || []).filter(function(song) {
+        return String(song && song.slug || '') === normalizedSlug;
+      })[0] || null;
+      if (songFromLibrary) return songFromLibrary;
+      return (this.state.dedupeSongs || []).filter(function(song) {
         return String(song && song.slug || '') === normalizedSlug;
       })[0] || null;
     },
@@ -11023,6 +11066,7 @@ function renderFloatingPlayer(song) {
             cleanupWarning = 'Deleted song, but failed to delete sticky notes: ' + getStatusMessage(error, '');
           }
           App.setBusyMessage('Refreshing list...');
+          App.state.dedupeSongs = null;
           App.loadSongs(function() {
             App.showList({ endBusyOnDone: true });
             if (cleanupWarning) {
@@ -12686,13 +12730,15 @@ function renderFloatingPlayer(song) {
       songs = Array.isArray(songs) ? songs : [];
       if (!songs.length) return '<div class="empty-state panel">No duplicate titles found.</div>';
       return songs.map(function(song) {
+        const hasDetail = !!(String(song && song.artist || '').trim() || (Array.isArray(song && song.tags) && song.tags.length));
+        const detailHtml = hasDetail ? App.renderSongDetailHtml(song) : '';
         return [
           '<div class="song-item song-item-clickable" role="button" tabindex="0" data-song-slug="' + escapeHtml(song.slug) + '">',
             '<div class="song-meta">',
               '<div class="song-title-row">',
                 '<h3>' + escapeHtml(song.title) + '</h3>',
               '</div>',
-              App.renderSongDetailHtml(song),
+              detailHtml,
               '<p>' + escapeHtml(song.slug || '') + '</p>',
             '</div>',
             '<div class="actions">',
