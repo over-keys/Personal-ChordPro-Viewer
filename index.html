@@ -10004,9 +10004,10 @@ function renderFloatingPlayer(song) {
         this.state.setlistEditor = null;
         this.state.setlistEditMode = false;
         this.state.dedupeMode = false;
-        this.flashStatus('info', 'Slugs rebuilt: ' + ((result && result.changedCount) || 0) + ' song(s) updated.');
+        const changedCount = (result && result.changedCount) || 0;
         this.loadSongs(function() {
           App.showList({ endBusyOnDone: true, keepStatus: true });
+          App.flashStatus('info', 'Slugs rebuilt: ' + changedCount + ' song(s) updated.');
         }, { skipBusy: true });
       } catch (err) {
         this.endBusy();
