@@ -372,18 +372,6 @@
     min-width: 0;
     flex: 0 1 auto;
   }
-  .tag-row-inline-actions {
-    margin-left: 0;
-    margin-right: 2px;
-    display: flex;
-    justify-content: flex-end;
-    gap: 5px;
-    flex-wrap: nowrap;
-    min-width: 0;
-    max-width: 100%;
-    overflow: hidden;
-    flex: 1 1 auto;
-  }
   .tag {
     display: inline-flex;
     align-items: center;
@@ -402,12 +390,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     flex: 0 1 auto;
-  }
-  .viewer-shell {
-    min-height: 100vh;
-    height: auto;
-    padding-top: 16px;
-    padding-bottom: 16px;
   }
   .viewer-grid {
     position: relative;
@@ -455,15 +437,6 @@
   .viewer-grid.is-pane-resize-disabled .viewer-pane-resizer::before {
     background: rgba(148, 163, 184, 0.32);
     box-shadow: none;
-  }
-  .viewer-sidebar-title {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-  }
-  .viewer-sidebar-title .section-title-row {
-    flex: 1 1 auto;
   }
   .viewer-sidebar-restore-toggle {
     display: none;
@@ -754,21 +727,16 @@
   .viewer-grid .btn-save-autoscroll,
   .viewer-grid .btn-chip,
   .viewer-grid .viewer-note-toolbar-btn,
-  .viewer-grid .youtube-save-btn,
-  .viewer-grid .youtube-next-btn {
+  .viewer-grid .youtube-save-btn {
     min-height: calc(30px * var(--viewer-sidebar-scale, 1));
     padding: calc(5px * var(--viewer-sidebar-scale, 1)) calc(7px * var(--viewer-sidebar-scale, 1));
     font-size: calc(0.78rem * var(--viewer-sidebar-scale, 1));
     line-height: 1.12;
   }
-  .viewer-grid .youtube-save-btn,
-  .viewer-grid .youtube-next-btn {
+  .viewer-grid .youtube-save-btn {
     min-height: calc(24px * var(--viewer-sidebar-scale, 1));
     padding: calc(3px * var(--viewer-sidebar-scale, 1)) calc(8px * var(--viewer-sidebar-scale, 1));
     font-size: calc(0.72rem * var(--viewer-sidebar-scale, 1));
-  }
-  .viewer-grid .youtube-auto-page-label {
-    font-size: calc(0.76rem * var(--viewer-sidebar-scale, 1));
   }
   .viewer-grid .field-compact {
     padding-top: calc(8px * var(--viewer-sidebar-scale, 1));
@@ -823,15 +791,13 @@
     font-size: 0.64rem;
     line-height: 1.16;
   }
-  .viewer-grid.is-sidebar-compact .youtube-save-btn,
-  .viewer-grid.is-sidebar-compact .youtube-next-btn {
+  .viewer-grid.is-sidebar-compact .youtube-save-btn {
     min-height: 20px;
     padding: 2px 6px;
     font-size: 0.64rem;
     line-height: 1;
   }
-  .viewer-grid.is-sidebar-tight .youtube-save-btn,
-  .viewer-grid.is-sidebar-tight .youtube-next-btn {
+  .viewer-grid.is-sidebar-tight .youtube-save-btn {
     min-height: 18px;
     padding: 2px 5px;
     font-size: 0.58rem;
@@ -923,7 +889,6 @@
   }
   .viewer-grid.is-sidebar-ultra .viewer-note-toolbar-btn,
   .viewer-grid.is-sidebar-ultra .youtube-save-btn,
-  .viewer-grid.is-sidebar-ultra .youtube-next-btn,
   .viewer-grid.is-sidebar-ultra .btn-save-autoscroll,
   .viewer-grid.is-sidebar-ultra .btn-chip {
     width: 100%;
@@ -1035,7 +1000,6 @@
   }
   .viewer-grid.is-sidebar-micro .viewer-note-toolbar-btn,
   .viewer-grid.is-sidebar-micro .youtube-save-btn,
-  .viewer-grid.is-sidebar-micro .youtube-next-btn,
   .viewer-grid.is-sidebar-micro .btn-save-autoscroll,
   .viewer-grid.is-sidebar-micro .btn-chip {
     min-height: 18px;
@@ -1107,16 +1071,6 @@
 
   .sidebar-panel-fonts .compact-select {
     font-size: 0.92rem;
-  }
-  .two-col {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-  .three-col {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
   }
   .viewer-body {
     min-height: 0;
@@ -1273,9 +1227,6 @@
     flex: 1 1 auto;
     min-width: 2px;
   }
-  .viewer-note-drag-handle {
-    display: none;
-  }
   .viewer-note-card-body {
     position: relative;
     z-index: 1;
@@ -1406,22 +1357,6 @@
   .sheet-stage.is-note-placing {
     cursor: crosshair;
     background: var(--viewer-note-place-bg);
-  }
-  .btn-note-add.is-active {
-    background: var(--viewer-note-dot-hover-bg);
-    border-color: var(--viewer-note-place-border);
-  }
-  .btn-block {
-    width: 100%;
-    justify-content: center;
-  }
-  .viewer-note-tool-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-  }
-  .viewer-note-tool-grid .btn {
-    width: 100%;
   }
   .viewer-note-controls-compact {
     gap: 0;
@@ -1712,9 +1647,6 @@
     color: #fff;
     pointer-events: none;
   }
-  .autoscroll-hint {
-    line-height: 1.45;
-  }
   .pane-scroll {
     overscroll-behavior: contain;
     scrollbar-width: none;
@@ -1817,12 +1749,6 @@
     width: auto;
     max-width: none;
     margin-left: auto;
-    overflow: hidden;
-  }
-  .list-mode-body .song-item .actions .tag-row-inline-actions {
-    flex: 1 1 1px;
-    min-width: 0;
-    max-width: none;
     overflow: hidden;
   }
   .list-mode-body .song-item .actions .tag {
@@ -1930,6 +1856,9 @@
   .view-mode-body .sheet-stage .cw-sheet * {
     pointer-events: none;
   }
+  .view-mode-body .sheet-stage .cw-sheet .cw-tempo-sound-btn {
+    pointer-events: auto;
+  }
   .view-mode-body .viewer-note-ui,
   .view-mode-body .viewer-note-ui *,
   .view-mode-body .viewer-note-action-btn,
@@ -1992,26 +1921,11 @@
     display: grid;
     gap: 8px;
   }
-  .control-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
   .muted {
     color: var(--muted);
   }
   .small {
     font-size: 0.85rem;
-  }
-  .checkbox-list {
-    display: grid;
-    gap: 8px;
-  }
-  .checkbox-item {
-    display: flex;
-    gap: 8px;
-    align-items: center;
   }
   .compact-controls {
     display: grid;
@@ -2150,13 +2064,6 @@
   .compact-select {
     padding-top: 8px;
     padding-bottom: 8px;
-  }
-  .checkbox-list-compact {
-    grid-template-columns: 1fr 1fr;
-    gap: 10px 12px;
-  }
-  .checkbox-list-compact .checkbox-item {
-    font-size: 0.86rem;
   }
   .setting-row-autoscroll {
     align-items: stretch;
@@ -2439,14 +2346,6 @@
     gap: 10px;
     width: 100%;
   }
-  .youtube-auto-item {
-    display: grid;
-    gap: 6px;
-  }
-  .youtube-auto-actions {
-    display: flex;
-    justify-content: flex-end;
-  }
   .youtube-empty-row {
     display: flex;
     align-items: center;
@@ -2475,27 +2374,6 @@
   .youtube-empty-row .btn-save-youtube {
     align-self: center;
   }
-  .youtube-auto-pager {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    margin-top: 0;
-  }
-  .youtube-auto-page-label {
-    font-size: 0.76rem;
-    color: var(--muted);
-    line-height: 1;
-  }
-  .youtube-next-btn {
-    width: auto;
-    min-width: 64px;
-    min-height: 24px;
-    padding: 3px 10px;
-    font-size: 0.72rem;
-    line-height: 1;
-  }
   .youtube-thumb {
     width: 100%;
     display: block;
@@ -2517,13 +2395,6 @@
   }
   .youtube-thumb.is-active {
     border-color: rgba(var(--accent-rgb), 0.42);
-    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.12);
-  }
-  .youtube-embed-card {
-    border: 1px solid rgba(var(--accent-rgb), 0.42);
-    border-radius: 14px;
-    overflow: hidden;
-    background: #111827;
     box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.12);
   }
   .youtube-thumb-media {
@@ -3151,17 +3022,62 @@
   .cw-tempo-marker {
     display: inline;
   }
+  .cw-tempo-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32em;
+    margin-left: 0.36em;
+    vertical-align: baseline;
+  }
   .cw-tempo-blink {
     display: inline-block;
-    margin-left: 0.32em;
     color: var(--cw-tempo-on-color, #dc2626);
     font-size: 0.92em;
     line-height: 1;
     vertical-align: baseline;
     animation-name: cw-tempo-blink;
     animation-duration: var(--cw-tempo-period, 1s);
+    animation-delay: var(--cw-tempo-delay, 0s);
     animation-timing-function: steps(1, end);
     animation-iteration-count: infinite;
+  }
+  .cw-tempo-sound-icon {
+    font-size: 0.9em;
+    line-height: 1;
+  }
+  .cw-tempo-sound-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.22em 0.48em;
+    border: 1px solid rgba(107, 114, 128, 0.42);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.68);
+    color: inherit;
+    font: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: 1.3;
+    cursor: pointer;
+    vertical-align: middle;
+    transition: background 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .cw-tempo-sound-btn:hover {
+    border-color: rgba(var(--accent-rgb), 0.58);
+    background: rgba(var(--accent-rgb), 0.08);
+    color: var(--accent);
+  }
+  .cw-tempo-sound-btn:focus-visible {
+    outline: 2px solid rgba(var(--accent-rgb), 0.54);
+    outline-offset: 2px;
+  }
+  .cw-tempo-sound-btn.is-playing {
+    border-color: rgba(var(--accent-rgb), 0.72);
+    background: rgba(var(--accent-rgb), 0.16);
+    color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.12);
   }
   @keyframes cw-tempo-blink {
     0%, 24% { opacity: 1; }
@@ -3300,11 +3216,6 @@
   }
 
   @media (max-width: 980px) {
-    .viewer-shell {
-      height: auto;
-      padding-top: 14px;
-      padding-bottom: 14px;
-    }
     .viewer-grid,
     .editor-grid {
       grid-template-columns: 1fr;
@@ -3346,9 +3257,6 @@
       align-items: center;
       min-width: 0;
     }
-    .two-col,
-    .three-col,
-    .checkbox-list-compact,
     .preset-chip-row {
       grid-template-columns: 1fr;
     }
@@ -3592,9 +3500,6 @@
     .list-mode-body .song-item .btn {
       padding-inline: 8px;
       font-size: 0.82rem;
-    }
-    .tag-row-inline-actions {
-      gap: 4px;
     }
   }
 
@@ -4129,6 +4034,14 @@
         });
       },
 
+      _transactionToPromise: function(tx, message) {
+        return new Promise(function(resolve, reject) {
+          tx.oncomplete = function() { resolve(); };
+          tx.onerror = function() { reject(tx.error || new Error(message)); };
+          tx.onabort = function() { reject(tx.error || new Error(message)); };
+        });
+      },
+
       _loadAllNotesIntoCache: async function() {
         this._noteCache = Object.create(null);
         const store = this._txStore(NOTES_STORE, 'readonly');
@@ -4259,11 +4172,7 @@
         normalizedRecords.forEach(function(record) {
           store.put(record);
         });
-        await new Promise(function(resolve, reject) {
-          tx.oncomplete = function() { resolve(); };
-          tx.onerror = function() { reject(tx.error || new Error('Failed to import songs.')); };
-          tx.onabort = function() { reject(tx.error || new Error('Failed to import songs.')); };
-        });
+        await this._transactionToPromise(tx, 'Failed to import songs.');
         return { ok: true, count: normalizedRecords.length };
       },
 
@@ -4329,11 +4238,7 @@
           if (notes.length) notesStore.put({ slug: slug, notes: cloneValue(notes) });
         });
 
-        await new Promise(function(resolve, reject) {
-          tx.oncomplete = function() { resolve(); };
-          tx.onerror = function() { reject(tx.error || new Error('Failed to rebuild slugs.')); };
-          tx.onabort = function() { reject(tx.error || new Error('Failed to rebuild slugs.')); };
-        });
+        await this._transactionToPromise(tx, 'Failed to rebuild slugs.');
 
         this._noteCache = Object.create(null);
         Object.keys(nextNotesBySlug).forEach((slug) => {
@@ -4441,11 +4346,7 @@
           notesStore.delete(song.slug);
         }
         songStore.put(record);
-        await new Promise(function(resolve, reject) {
-          tx.oncomplete = function() { resolve(); };
-          tx.onerror = function() { reject(tx.error || new Error('Failed to save song.')); };
-          tx.onabort = function() { reject(tx.error || new Error('Failed to save song.')); };
-        });
+        await this._transactionToPromise(tx, 'Failed to save song.');
         if (slugChanged && migratedNotes) {
           if (migratedNotes.length) this._noteCache[song.slug] = cloneValue(migratedNotes);
           else delete this._noteCache[song.slug];
@@ -4480,11 +4381,7 @@
         }
         notesStore.delete(normalizedSlug);
         songStore.delete(normalizedSlug);
-        await new Promise(function(resolve, reject) {
-          tx.oncomplete = function() { resolve(); };
-          tx.onerror = function() { reject(tx.error || new Error('Failed to delete song.')); };
-          tx.onabort = function() { reject(tx.error || new Error('Failed to delete song.')); };
-        });
+        await this._transactionToPromise(tx, 'Failed to delete song.');
         delete this._noteCache[normalizedSlug];
         return { ok: true, notesDeleted: true };
       },
@@ -4508,11 +4405,7 @@
         song.notation = normalizeStoredNotation(source.notation, song.notation);
         song.updatedAt = new Date().toISOString();
         store.put(song);
-        await new Promise(function(resolve, reject) {
-          tx.oncomplete = function() { resolve(); };
-          tx.onerror = function() { reject(tx.error || new Error('Failed to save song controls.')); };
-          tx.onabort = function() { reject(tx.error || new Error('Failed to save song controls.')); };
-        });
+        await this._transactionToPromise(tx, 'Failed to save song controls.');
         return { ok: true, slug: song.slug };
       },
 
@@ -4537,11 +4430,7 @@
         song.youtube = cloneValue(youtube);
         song.updatedAt = new Date().toISOString();
         store.put(song);
-        await new Promise(function(resolve, reject) {
-          tx.oncomplete = function() { resolve(); };
-          tx.onerror = function() { reject(tx.error || new Error('Failed to save YouTube link.')); };
-          tx.onabort = function() { reject(tx.error || new Error('Failed to save YouTube link.')); };
-        });
+        await this._transactionToPromise(tx, 'Failed to save YouTube link.');
         return { ok: true, slug: song.slug, youtube: cloneValue(song.youtube) };
       },
 
@@ -4591,11 +4480,7 @@
           updatedAt: now
         };
         store.put(record);
-        await new Promise(function(resolve, reject) {
-          tx.oncomplete = function() { resolve(); };
-          tx.onerror = function() { reject(tx.error || new Error('Failed to save setlist.')); };
-          tx.onabort = function() { reject(tx.error || new Error('Failed to save setlist.')); };
-        });
+        await this._transactionToPromise(tx, 'Failed to save setlist.');
         return { ok: true, id: id };
       },
 
@@ -4631,11 +4516,7 @@
         normalizedRecords.forEach(function(record) {
           store.put(record);
         });
-        await new Promise(function(resolve, reject) {
-          tx.oncomplete = function() { resolve(); };
-          tx.onerror = function() { reject(tx.error || new Error('Failed to import setlists.')); };
-          tx.onabort = function() { reject(tx.error || new Error('Failed to import setlists.')); };
-        });
+        await this._transactionToPromise(tx, 'Failed to import setlists.');
         return { ok: true, count: normalizedRecords.length };
       },
 
@@ -4651,11 +4532,7 @@
           return { ok: false, message: 'Setlist not found.' };
         }
         store.delete(normalizedId);
-        await new Promise(function(resolve, reject) {
-          tx.oncomplete = function() { resolve(); };
-          tx.onerror = function() { reject(tx.error || new Error('Failed to delete setlist.')); };
-          tx.onabort = function() { reject(tx.error || new Error('Failed to delete setlist.')); };
-        });
+        await this._transactionToPromise(tx, 'Failed to delete setlist.');
         return { ok: true };
       },
 
@@ -4685,11 +4562,7 @@
           const store = tx.objectStore(NOTES_STORE);
           if (!normalized.length) store.delete(normalizedSlug);
           else store.put({ slug: normalizedSlug, notes: cloneValue(normalized) });
-          await new Promise(function(resolve, reject) {
-            tx.oncomplete = function() { resolve(); };
-            tx.onerror = function() { reject(tx.error || new Error('Failed to persist notes.')); };
-            tx.onabort = function() { reject(tx.error || new Error('Failed to persist notes.')); };
-          });
+          await this._transactionToPromise(tx, 'Failed to persist notes.');
           if (!normalized.length) delete this._noteCache[normalizedSlug];
           else this._noteCache[normalizedSlug] = normalized;
           return { ok: true, count: normalized.length };
@@ -4714,11 +4587,7 @@
           if (merged.length) store.put({ slug: toSlug, notes: cloneValue(merged) });
           else store.delete(toSlug);
           store.delete(fromSlug);
-          await new Promise(function(resolve, reject) {
-            tx.oncomplete = function() { resolve(); };
-            tx.onerror = function() { reject(tx.error || new Error('Failed to move notes.')); };
-            tx.onabort = function() { reject(tx.error || new Error('Failed to move notes.')); };
-          });
+          await this._transactionToPromise(tx, 'Failed to move notes.');
           if (merged.length) this._noteCache[toSlug] = cloneValue(merged);
           else delete this._noteCache[toSlug];
           delete this._noteCache[fromSlug];
@@ -4737,11 +4606,7 @@
           const tx = this._db.transaction(NOTES_STORE, 'readwrite');
           const store = tx.objectStore(NOTES_STORE);
           store.delete(normalizedSlug);
-          await new Promise(function(resolve, reject) {
-            tx.oncomplete = function() { resolve(); };
-            tx.onerror = function() { reject(tx.error || new Error('Failed to delete notes.')); };
-            tx.onabort = function() { reject(tx.error || new Error('Failed to delete notes.')); };
-          });
+          await this._transactionToPromise(tx, 'Failed to delete notes.');
           delete this._noteCache[normalizedSlug];
           return { ok: true, deleted: true };
         } catch (error) {
@@ -4778,11 +4643,7 @@
             const notes = nextNotesBySlug[slug] || [];
             if (notes.length) store.put({ slug: slug, notes: cloneValue(notes) });
           });
-          await new Promise(function(resolve, reject) {
-            tx.oncomplete = function() { resolve(); };
-            tx.onerror = function() { reject(tx.error || new Error('Failed to rebuild note slugs.')); };
-            tx.onabort = function() { reject(tx.error || new Error('Failed to rebuild note slugs.')); };
-          });
+          await this._transactionToPromise(tx, 'Failed to rebuild note slugs.');
           this._noteCache = Object.create(null);
           Object.keys(nextNotesBySlug).forEach((slug) => {
             const notes = nextNotesBySlug[slug] || [];
@@ -5205,10 +5066,16 @@
     const tempoDotHtml = bpmBlinkColor === 'off'
       ? ''
       : '<span class="cw-tempo-blink" aria-hidden="true" style="--cw-tempo-period:' + String(periodSec) + 's;--cw-tempo-on-color:' + escapeHtml(getBpmBlinkColorValue(bpmBlinkColor)) + ';">●</span>';
+    const bpmText = String(bpm);
+    const tempoButtonHtml = [
+      '<button class="cw-tempo-sound-btn" type="button" data-app-action="toggle-tempo-sound" data-tempo-bpm="', escapeHtml(bpmText), '" aria-pressed="false" aria-label="Play tempo at ', escapeHtml(bpmText), ' BPM" title="Play tempo">',
+      '<span class="cw-tempo-marker">', escapeHtml(match[1]), '</span>',
+      '<span class="cw-tempo-controls">', tempoDotHtml, '<span class="cw-tempo-sound-icon" aria-hidden="true">♩</span></span>',
+      '</button>'
+    ].join('');
     return [
       escapeHtml(source.slice(0, start)),
-      '<span class="cw-tempo-marker">', escapeHtml(match[1]), '</span>',
-      tempoDotHtml,
+      tempoButtonHtml,
       escapeHtml(source.slice(end))
     ].join('');
   }
@@ -5404,6 +5271,207 @@
 </script>
 
     <script>
+  const TempoSound = (function() {
+    let audioContext = null;
+    let schedulerTimer = 0;
+    let activeBpm = 0;
+    let nextClickTime = 0;
+    let beatAnchorTime = 0;
+    let operationToken = 0;
+    const scheduledOscillators = new Set();
+
+    const CLICK_DURATION_SEC = 0.04;
+    const CLICK_ATTACK_SEC = 0.002;
+    const CLICK_FREQUENCY_HZ = 1000;
+    const CLICK_GAIN = 0.52;
+    const SCHEDULER_INTERVAL_MS = 25;
+    const SCHEDULE_AHEAD_SEC = 0.1;
+    const BPM_MATCH_TOLERANCE = 0.0001;
+
+    function getAudioContext() {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return null;
+      if (!audioContext || audioContext.state === 'closed') {
+        audioContext = new AudioContextClass();
+      }
+      return audioContext;
+    }
+
+    function clearScheduledClicks() {
+      scheduledOscillators.forEach(function(oscillator) {
+        try { oscillator.stop(); } catch (err) {}
+      });
+      scheduledOscillators.clear();
+    }
+
+    function createClick(time) {
+      const context = audioContext;
+      if (!context || !activeBpm) return;
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(CLICK_FREQUENCY_HZ, time);
+      gain.gain.setValueAtTime(0.0001, time);
+      gain.gain.exponentialRampToValueAtTime(CLICK_GAIN, time + CLICK_ATTACK_SEC);
+      gain.gain.exponentialRampToValueAtTime(0.0001, time + CLICK_DURATION_SEC);
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      scheduledOscillators.add(oscillator);
+      oscillator.onended = function() {
+        scheduledOscillators.delete(oscillator);
+        try { oscillator.disconnect(); } catch (err) {}
+        try { gain.disconnect(); } catch (err) {}
+      };
+      oscillator.start(time);
+      oscillator.stop(time + CLICK_DURATION_SEC);
+    }
+
+    function scheduleClicks() {
+      const context = audioContext;
+      if (!context || !activeBpm) return;
+      const scheduleUntil = context.currentTime + SCHEDULE_AHEAD_SEC;
+      const periodSec = 60 / activeBpm;
+      while (nextClickTime < scheduleUntil) {
+        createClick(nextClickTime);
+        nextClickTime += periodSec;
+      }
+    }
+
+    function getButtonBpm(button) {
+      const bpm = parseFloat(button && button.getAttribute ? button.getAttribute('data-tempo-bpm') : '');
+      return isFinite(bpm) && bpm > 0 ? bpm : 0;
+    }
+
+    function isActiveBpm(bpm) {
+      return !!activeBpm && Math.abs(bpm - activeBpm) < BPM_MATCH_TOLERANCE;
+    }
+
+    function syncBlink(button, isActive) {
+      const blink = button && button.querySelector ? button.querySelector('.cw-tempo-blink') : null;
+      if (!blink) return;
+      const context = audioContext;
+      if (!isActive || !context) {
+        blink.style.removeProperty('--cw-tempo-delay');
+        blink.style.animationName = '';
+        return;
+      }
+      const periodSec = 60 / activeBpm;
+      const elapsedSec = Math.max(0, context.currentTime - beatAnchorTime);
+      blink.style.setProperty('--cw-tempo-delay', String(-(elapsedSec % periodSec)) + 's');
+      blink.style.animationName = 'none';
+      void blink.offsetWidth;
+      blink.style.animationName = '';
+    }
+
+    function syncUi() {
+      document.querySelectorAll('.cw-tempo-sound-btn').forEach(function(button) {
+        const bpm = getButtonBpm(button);
+        const isActive = isActiveBpm(bpm);
+        button.classList.toggle('is-playing', isActive);
+        button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        button.setAttribute('title', isActive ? 'Stop tempo' : 'Play tempo');
+        button.setAttribute('aria-label', (isActive ? 'Stop tempo at ' : 'Play tempo at ') + String(bpm) + ' BPM');
+        syncBlink(button, isActive);
+      });
+    }
+
+    function stop(options) {
+      options = options || {};
+      operationToken += 1;
+      if (schedulerTimer) {
+        window.clearInterval(schedulerTimer);
+        schedulerTimer = 0;
+      }
+      activeBpm = 0;
+      nextClickTime = 0;
+      beatAnchorTime = 0;
+      clearScheduledClicks();
+      if (!options.skipUiSync) syncUi();
+    }
+
+    function flashTempoError(message) {
+      if (typeof App !== 'undefined' && typeof App.flashStatus === 'function') {
+        App.flashStatus('error', message);
+      }
+    }
+
+    function handleStartFailure(error, token) {
+      console.error('Failed to start tempo sound:', error);
+      if (token !== operationToken) return;
+      stop();
+      flashTempoError('Tempo sound could not be started.');
+    }
+
+    function start(bpm) {
+      const normalizedBpm = parseFloat(bpm);
+      if (!isFinite(normalizedBpm) || normalizedBpm <= 0) return;
+      let context;
+      try {
+        context = getAudioContext();
+      } catch (err) {
+        handleStartFailure(err, operationToken);
+        return;
+      }
+      if (!context) {
+        flashTempoError('Tempo sound is not supported in this browser.');
+        return;
+      }
+      stop({ skipUiSync: true });
+      const token = operationToken;
+      const begin = function() {
+        if (token !== operationToken) return;
+        activeBpm = normalizedBpm;
+        beatAnchorTime = context.currentTime;
+        nextClickTime = beatAnchorTime;
+        scheduleClicks();
+        schedulerTimer = window.setInterval(scheduleClicks, SCHEDULER_INTERVAL_MS);
+        syncUi();
+      };
+      if (context.state === 'suspended' && typeof context.resume === 'function') {
+        let resumeResult;
+        try {
+          resumeResult = context.resume();
+        } catch (err) {
+          handleStartFailure(err, token);
+          return;
+        }
+        if (resumeResult && typeof resumeResult.then === 'function') {
+          resumeResult.then(begin).catch(function(err) {
+            handleStartFailure(err, token);
+          });
+          return;
+        }
+      }
+      begin();
+    }
+
+    function toggle(button) {
+      const bpm = getButtonBpm(button);
+      if (!bpm) return;
+      if (isActiveBpm(bpm)) {
+        stop();
+        return;
+      }
+      start(bpm);
+    }
+
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden) stop();
+    });
+    window.addEventListener('blur', function() {
+      stop();
+    });
+    window.addEventListener('pagehide', function() {
+      stop();
+    });
+
+    return {
+      toggle: toggle,
+      stop: stop,
+      syncUi: syncUi
+    };
+  })();
+
   const Viewer = (function() {
     let rafId = null;
     let lastTime = 0;
@@ -5415,6 +5483,7 @@
     let autoDragRafId = null;
     let resetScrollRafId = null;
     let lastDragClientY = 0;
+    let markerDragSessionId = 0;
     let programmaticScrollTop = 0;
     let programmaticScrollUntil = 0;
     let keyboardScrollRafId = 0;
@@ -6373,16 +6442,17 @@ function loadCurrentSongNotes(options) {
       const source = event && event.touches ? event.touches[0] : event;
       const rect = stage.getBoundingClientRect();
       const metrics = getSheetStageMetrics(stage);
+      const context = getSongNoteLineContext(stage, metrics);
       const rawX = (source.clientX || 0) - rect.left;
       return {
         xPx: Math.max(0, Math.round(rawX)),
         xPercent: clampNotePercent(rawX / Math.max(metrics.width, 1), 0.5),
-        yPercent: getSongNoteYPercentFromClientY(source.clientY || 0, stage)
+        yPercent: getSongNoteYPercentFromClientY(source.clientY || 0, stage, context)
       };
     }
 
-    function getSongNoteLineContext(stage) {
-      const metrics = getSheetStageMetrics(stage);
+    function getSongNoteLineContext(stage, metrics) {
+      metrics = metrics || getSheetStageMetrics(stage);
       const els = cacheElements();
       const scrollTarget = getScrollTarget(els);
       const scrollTop = getScrollTop(scrollTarget);
@@ -6397,28 +6467,28 @@ function loadCurrentSongNotes(options) {
       };
     }
 
-    function getSongNoteYPercentFromStageTopPx(topPx, stage) {
-      const context = getSongNoteLineContext(stage);
+    function getSongNoteYPercentFromStageTopPx(topPx, stage, context) {
+      context = context || getSongNoteLineContext(stage);
       const fallback = Number(topPx) / Math.max(context.metrics.height, 1);
       const y = context.stageTop + (Number.isFinite(Number(topPx)) ? Number(topPx) : 0);
       return clampNotePercent(getAutoscrollPercentForY(y, context.lineMetrics, context.stageTop, context.metrics.height), fallback);
     }
 
-    function getSongNoteYPercentFromClientY(clientY, stage) {
+    function getSongNoteYPercentFromClientY(clientY, stage, context) {
       const rect = stage.getBoundingClientRect();
-      return getSongNoteYPercentFromStageTopPx((Number(clientY) || 0) - rect.top, stage);
+      return getSongNoteYPercentFromStageTopPx((Number(clientY) || 0) - rect.top, stage, context);
     }
 
-    function getSongNoteTopPx(note, stage, metrics) {
-      const context = getSongNoteLineContext(stage);
+    function getSongNoteTopPx(note, stage, context) {
+      context = context || getSongNoteLineContext(stage);
       return Math.round(
         getYForAutoscrollPercent(clampNotePercent(note && note.yPercent, 0.5), context.lineMetrics, context.stageTop, context.metrics.height)
         - context.stageTop
       );
     }
 
-    function getSongNoteClampBounds(note, stage, options) {
-      const metrics = getSheetStageMetrics(stage);
+    function getSongNoteClampBounds(stage, options, metrics) {
+      metrics = metrics || getSheetStageMetrics(stage);
       const keepDotInside = !!(options && options.keepDotInside);
       if (!keepDotInside) {
         return {
@@ -6452,8 +6522,8 @@ function loadCurrentSongNotes(options) {
       return Math.round(clampNotePercent(note && note.xPercent, 0.5) * Math.max(metrics && metrics.width || 1, 1));
     }
 
-    function clampSongNotePosition(note, stage, xPx, yPercent, options) {
-      const bounds = getSongNoteClampBounds(note, stage, options);
+    function clampSongNotePosition(note, stage, xPx, yPercent, options, metrics) {
+      const bounds = getSongNoteClampBounds(stage, options, metrics);
       const nextXPx = Number.isFinite(Number(xPx)) ? Math.round(Number(xPx)) : getSongNoteLeftPx(note, bounds);
       return {
         xPx: Math.max(bounds.minXPx, Math.min(bounds.maxXPx, nextXPx)),
@@ -6461,26 +6531,28 @@ function loadCurrentSongNotes(options) {
       };
     }
 
-    function getSongNotePixelPosition(note, stage, options) {
-      const metrics = getSheetStageMetrics(stage);
-      const position = clampSongNotePosition(note, stage, getSongNoteLeftPx(note, metrics), note.yPercent, options);
+    function getSongNotePixelPosition(note, stage, options, context) {
+      context = context || getSongNoteLineContext(stage);
+      const metrics = context.metrics;
+      const position = clampSongNotePosition(note, stage, getSongNoteLeftPx(note, metrics), note.yPercent, options, metrics);
       return {
         metrics: metrics,
         position: position,
         leftPx: Math.round(position.xPx),
-        topPx: getSongNoteTopPx(position, stage, metrics)
+        topPx: getSongNoteTopPx(position, stage, context)
       };
     }
 
-    function setSongNoteElementPosition(element, note, stage) {
+    function setSongNoteElementPosition(element, note, stage, context) {
       if (!element || !note || !stage) return;
+      context = context || getSongNoteLineContext(stage);
       if (element.classList.contains('viewer-note-dot')) {
-        const pixelPosition = getSongNotePixelPosition(note, stage);
+        const pixelPosition = getSongNotePixelPosition(note, stage, null, context);
         element.style.left = pixelPosition.leftPx + 'px';
         element.style.top = pixelPosition.topPx + 'px';
         return;
       }
-      element.style.cssText = getSongNoteInlineStyle(note, stage);
+      element.style.cssText = getSongNoteInlineStyle(note, stage, context);
       element.classList.remove('is-left');
       element.classList.remove('is-up');
     }
@@ -6630,8 +6702,9 @@ function loadCurrentSongNotes(options) {
       clearActiveNoteInteraction({ keepPointerCapture: true });
       const moveElement = dragTarget.closest('.viewer-note-card, .viewer-note-popover, .viewer-note-dot') || dragTarget;
       const stageRect = stage.getBoundingClientRect();
+      const context = getSongNoteLineContext(stage, metrics);
       const noteLeftPx = getSongNoteLeftPx(note, metrics);
-      const noteTopPx = getSongNoteTopPx(note, stage, metrics);
+      const noteTopPx = getSongNoteTopPx(note, stage, context);
       activeNoteDrag = {
         noteId: noteId,
         pointerId: typeof event.pointerId === 'number' ? event.pointerId : null,
@@ -6675,20 +6748,23 @@ function loadCurrentSongNotes(options) {
         return true;
       }
       activeNoteDrag.moved = true;
-      const stageRect = activeNoteDrag.stage.getBoundingClientRect();
+      const stage = activeNoteDrag.stage;
+      const stageRect = stage.getBoundingClientRect();
+      const context = getSongNoteLineContext(stage);
       const nextLeftPx = clientX - stageRect.left - activeNoteDrag.pointerOffsetXPx;
       const nextTopPx = clientY - stageRect.top - activeNoteDrag.pointerOffsetYPx;
       const nextPosition = clampSongNotePosition(
         note,
-        activeNoteDrag.stage,
+        stage,
         nextLeftPx,
-        getSongNoteYPercentFromStageTopPx(nextTopPx, activeNoteDrag.stage),
-        { keepDotInside: true }
+        getSongNoteYPercentFromStageTopPx(nextTopPx, stage, context),
+        { keepDotInside: true },
+        context.metrics
       );
       note.xPx = nextPosition.xPx;
-      note.xPercent = clampNotePercent(nextPosition.xPx / Math.max(getSheetStageMetrics(activeNoteDrag.stage).width, 1), note.xPercent);
+      note.xPercent = clampNotePercent(nextPosition.xPx / Math.max(context.metrics.width, 1), note.xPercent);
       note.yPercent = nextPosition.yPercent;
-      setSongNoteElementPosition(activeNoteDrag.moveElement || activeNoteDrag.element, note, activeNoteDrag.stage);
+      setSongNoteElementPosition(activeNoteDrag.moveElement || activeNoteDrag.element, note, stage, context);
       return true;
     }
 
@@ -6760,6 +6836,11 @@ function loadCurrentSongNotes(options) {
         if (event && event.stopPropagation) event.stopPropagation();
       }
       return true;
+    }
+
+    function finishActiveNoteInteraction(event) {
+      if (finishActiveSongNoteResize(event)) return true;
+      return finishActiveSongNoteDrag(event);
     }
 
     function shouldSuppressNoteToggle(noteId) {
@@ -6930,20 +7011,16 @@ function loadCurrentSongNotes(options) {
       textarea.setSelectionRange(textarea.value.length, textarea.value.length);
     }
 
-    function getSongNoteAnchorClass(note) {
-      return '';
-    }
-
-    function getSongNoteInlineStyle(note, stage) {
-      const pixelPosition = getSongNotePixelPosition(note, stage);
+    function getSongNoteInlineStyle(note, stage, context) {
+      const pixelPosition = getSongNotePixelPosition(note, stage, null, context);
       return 'left:' + pixelPosition.leftPx + 'px;top:' + pixelPosition.topPx + 'px;width:' + note.widthPx + 'px;height:' + note.heightPx + 'px;--viewer-note-font-size:calc(var(--viewer-note-base-size, 1.16rem) * ' + getSongNoteFontSizeFactor(note).toFixed(2) + ');';
     }
 
-    function renderSongNoteDisplayCard(note, stage) {
+    function renderSongNoteDisplayCard(note, stage, context) {
       if (!note || !stage || editingNoteId === note.id || !note.isExpanded) return '';
       const safeText = escapeHtml(note.text || '');
       return [
-        '<div class="viewer-note-card viewer-note-ui' + getSongNoteAnchorClass(note) + '" data-note-id="' + escapeHtml(note.id) + '" style="' + getSongNoteInlineStyle(note, stage) + '">',
+        '<div class="viewer-note-card viewer-note-ui" data-note-id="' + escapeHtml(note.id) + '" style="' + getSongNoteInlineStyle(note, stage, context) + '">',
           '<div class="viewer-note-card-actions" data-note-drag="card" data-note-id="' + escapeHtml(note.id) + '" title="Drag note">',
             '<button type="button" class="viewer-note-action-btn viewer-note-action-edit" data-note-action="edit" data-note-id="' + escapeHtml(note.id) + '" title="Edit note" aria-label="Edit note">✎</button>',
             '<button type="button" class="viewer-note-action-btn viewer-note-action-font" data-note-action="font-down" data-note-id="' + escapeHtml(note.id) + '" title="Smaller note text" aria-label="Smaller note text">A−</button>',
@@ -6958,12 +7035,12 @@ function loadCurrentSongNotes(options) {
       ].join('');
     }
 
-    function renderSongNotePopover(stage) {
+    function renderSongNotePopover(stage, context) {
       if (!editingNoteId) return '';
       const note = findSongNoteById(editingNoteId);
       if (!note || !stage) return '';
       return [
-        '<div class="viewer-note-popover viewer-note-ui' + getSongNoteAnchorClass(note) + '" id="viewer-note-popover" data-note-id="' + escapeHtml(note.id) + '" style="' + getSongNoteInlineStyle(note, stage) + '">',
+        '<div class="viewer-note-popover viewer-note-ui" id="viewer-note-popover" data-note-id="' + escapeHtml(note.id) + '" style="' + getSongNoteInlineStyle(note, stage, context) + '">',
           '<div class="viewer-note-popover-actions" data-note-drag="popover" data-note-id="' + escapeHtml(note.id) + '" title="Drag note">',
             '<button type="button" class="viewer-note-action-btn" data-note-action="close" data-note-id="' + escapeHtml(note.id) + '" title="Close note" aria-label="Close note">✓</button>',
             '<button type="button" class="viewer-note-action-btn viewer-note-action-font" data-note-action="font-down" data-note-id="' + escapeHtml(note.id) + '" title="Smaller note text" aria-label="Smaller note text">A−</button>',
@@ -6978,15 +7055,15 @@ function loadCurrentSongNotes(options) {
       ].join('');
     }
 
-    function renderSongNoteItem(note, stage) {
+    function renderSongNoteItem(note, stage, context) {
       if (!note || !stage) return '';
       if (note.isExpanded && editingNoteId !== note.id) {
-        return renderSongNoteDisplayCard(note, stage);
+        return renderSongNoteDisplayCard(note, stage, context);
       }
       if (editingNoteId === note.id) {
-        return renderSongNotePopover(stage);
+        return renderSongNotePopover(stage, context);
       }
-      const dotPosition = getSongNotePixelPosition(note, stage);
+      const dotPosition = getSongNotePixelPosition(note, stage, null, context);
       return '<button type="button" class="viewer-note-dot viewer-note-ui" data-note-action="toggle" data-note-drag="dot" data-note-id="' + escapeHtml(note.id) + '" style="left:' + dotPosition.leftPx + 'px;top:' + dotPosition.topPx + 'px;" title="' + escapeHtml(getNotePreviewText(note.text)) + '" aria-label="Open note"></button>';
     }
 
@@ -7000,7 +7077,8 @@ function loadCurrentSongNotes(options) {
         if (child && child.dataset && child.dataset.noteId === noteId) child.remove();
       });
       const note = findSongNoteById(noteId);
-      const html = renderSongNoteItem(note, els.sheetStage);
+      const context = getSongNoteLineContext(els.sheetStage);
+      const html = renderSongNoteItem(note, els.sheetStage, context);
       if (html) els.noteLayer.insertAdjacentHTML('beforeend', html);
       if (editingNoteId === noteId) {
         bindActiveSongNoteResizeObserver();
@@ -7017,11 +7095,12 @@ function loadCurrentSongNotes(options) {
       const captureHtml = noteCreateMode
         ? '<button type="button" class="viewer-note-capture" id="viewer-note-capture" aria-label="Place note" title="Click to place a note"></button>'
         : '';
+      const context = els.sheetStage ? getSongNoteLineContext(els.sheetStage) : null;
       const notesHtml = currentSongNotes.map(function(note) {
         if (editingNoteId === note.id) return '';
-        return renderSongNoteItem(note, els.sheetStage);
+        return renderSongNoteItem(note, els.sheetStage, context);
       }).join('');
-      els.noteLayer.innerHTML = captureHtml + notesHtml + renderSongNotePopover(els.sheetStage);
+      els.noteLayer.innerHTML = captureHtml + notesHtml + renderSongNotePopover(els.sheetStage, context);
       syncNoteCreateModeUi(els);
       if (editingNoteId) {
         bindActiveSongNoteResizeObserver();
@@ -7257,19 +7336,24 @@ function loadCurrentSongNotes(options) {
           commitActiveSongNote();
         }, true);
         window.addEventListener('pointermove', function(event) {
+          if ((activeNoteDrag || activeNoteResize) && event.pointerType === 'mouse' && event.buttons === 0) {
+            finishActiveNoteInteraction(event);
+            return;
+          }
           if (handleActiveSongNoteResizeMove(event)) return;
           handleActiveSongNoteDragMove(event);
         }, { passive: false });
-        window.addEventListener('pointerup', function(event) {
-          if (finishActiveSongNoteResize(event)) return;
-          finishActiveSongNoteDrag(event);
+        window.addEventListener('pointerup', finishActiveNoteInteraction, true);
+        window.addEventListener('pointercancel', finishActiveNoteInteraction, true);
+        window.addEventListener('pointerout', function(event) {
+          if (!event.relatedTarget) finishActiveNoteInteraction(event);
         }, true);
-        window.addEventListener('pointercancel', function(event) {
-          if (finishActiveSongNoteResize(event)) return;
-          finishActiveSongNoteDrag(event);
-        }, true);
+        document.addEventListener('lostpointercapture', finishActiveNoteInteraction, true);
+        document.addEventListener('visibilitychange', function() {
+          if (document.hidden) finishActiveNoteInteraction();
+        });
         window.addEventListener('blur', function() {
-          clearActiveNoteInteraction();
+          finishActiveNoteInteraction();
         });
         document.addEventListener('keydown', function(event) {
           if (event.key !== 'Escape' || !editingNoteId) return;
@@ -7303,11 +7387,14 @@ function loadCurrentSongNotes(options) {
 
     function getAutoscrollLineMetrics(els, scrollTarget, stageTop, stageHeight) {
       const stageBottom = stageTop + Math.max(stageHeight || 1, 1);
+      const scrollTop = getScrollTop(scrollTarget);
+      const viewportTop = getViewportTop(scrollTarget);
       const lineBoxes = getAutoscrollLineNodes(els).map(function(node) {
         const rect = node.getBoundingClientRect();
-        const top = getScrollTop(scrollTarget) + rect.top - getViewportTop(scrollTarget);
-        const bottom = getScrollTop(scrollTarget) + rect.bottom - getViewportTop(scrollTarget);
-        return { top: top, bottom: bottom };
+        return {
+          top: scrollTop + rect.top - viewportTop,
+          bottom: scrollTop + rect.bottom - viewportTop
+        };
       }).filter(function(box) {
         return Number.isFinite(box.top) && Number.isFinite(box.bottom) && box.bottom >= box.top;
       }).sort(function(a, b) {
@@ -7632,6 +7719,7 @@ function loadCurrentSongNotes(options) {
       syncAutoscrollUi();
       syncPendingObservedDurationInputs();
       renderSongNotes();
+      TempoSound.syncUi();
       window.requestAnimationFrame(function() {
         if (els.sidebarScrollPane && typeof options.sidebarScrollTop === 'number') {
           els.sidebarScrollPane.scrollTop = Math.max(0, options.sidebarScrollTop);
@@ -7827,6 +7915,8 @@ function loadCurrentSongNotes(options) {
       const isRightButton = !!(event && (event.button === 2 || event.which === 3));
       const isMarker = !!(target && target.closest && target.closest('.autoscroll-marker'));
       const isNoteUi = !!(target && target.closest && target.closest('.viewer-note-ui'));
+      const isTempoSoundButton = !!(target && target.closest && target.closest('.cw-tempo-sound-btn'));
+      if (isTempoSoundButton) return true;
       if (isRightButton) {
         const stage = resolveSongNoteStageFromEvent(event) || els.sheetStage;
         if (!stage) return false;
@@ -7880,6 +7970,7 @@ function loadCurrentSongNotes(options) {
       if (shouldSuppressSheetAutoScrollToggle()) return;
       if (event && event.target && event.target.closest && event.target.closest('.autoscroll-marker')) return;
       if (event && event.target && event.target.closest && event.target.closest('.viewer-note-ui')) return;
+      if (event && event.target && event.target.closest && event.target.closest('.cw-tempo-sound-btn')) return;
       blurActiveControlFromSheet(event);
       toggleAutoScroll();
     }
@@ -7907,18 +7998,55 @@ function loadCurrentSongNotes(options) {
 
       isDraggingMarker = true;
       lastDragClientY = event && event.touches ? event.touches[0].clientY : event.clientY;
+      const dragSessionId = ++markerDragSessionId;
 
       const updateFromClientY = function(clientY) {
         lastDragClientY = clientY;
         setMarkerPercent(which, getAutoscrollPercentForClientY(clientY));
       };
 
+      let ended = false;
+
+      const handleEnd = function() {
+        if (ended) return;
+        ended = true;
+        if (autoDragRafId) cancelAnimationFrame(autoDragRafId);
+        autoDragRafId = null;
+        document.removeEventListener('mousemove', handleMove);
+        document.removeEventListener('mouseup', handleEnd);
+        document.removeEventListener('touchmove', handleMove);
+        document.removeEventListener('touchend', handleEnd);
+        document.removeEventListener('touchcancel', handleEnd);
+        window.removeEventListener('mouseup', handleEnd);
+        window.removeEventListener('mouseout', handleWindowMouseOut, true);
+        window.removeEventListener('blur', handleEnd);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        window.setTimeout(function() {
+          if (dragSessionId === markerDragSessionId) isDraggingMarker = false;
+        }, 80);
+      };
+
+      const handleWindowMouseOut = function(outEvent) {
+        if (!outEvent.relatedTarget) handleEnd();
+      };
+
+      const handleVisibilityChange = function() {
+        if (document.hidden) handleEnd();
+      };
+
       const handleMove = function(moveEvent) {
+        if (moveEvent.type === 'mousemove' && moveEvent.buttons === 0) {
+          handleEnd();
+          return;
+        }
+        const pointer = moveEvent.touches ? moveEvent.touches[0] : moveEvent;
+        if (!pointer || typeof pointer.clientY !== 'number') return;
         if (moveEvent.cancelable) moveEvent.preventDefault();
-        updateFromClientY(moveEvent.touches ? moveEvent.touches[0].clientY : moveEvent.clientY);
+        updateFromClientY(pointer.clientY);
       };
 
       const autoScrollPane = function() {
+        if (ended) return;
         const scrollTarget = geometry.scrollTarget;
         if (!scrollTarget) return;
         const paneRect = scrollTarget === document.body || scrollTarget === document.documentElement || scrollTarget === document.scrollingElement
@@ -7952,22 +8080,15 @@ function loadCurrentSongNotes(options) {
         autoDragRafId = requestAnimationFrame(autoScrollPane);
       };
 
-      const handleEnd = function() {
-        if (autoDragRafId) cancelAnimationFrame(autoDragRafId);
-        autoDragRafId = null;
-        document.removeEventListener('mousemove', handleMove);
-        document.removeEventListener('mouseup', handleEnd);
-        document.removeEventListener('touchmove', handleMove);
-        document.removeEventListener('touchend', handleEnd);
-        window.setTimeout(function() {
-          isDraggingMarker = false;
-        }, 80);
-      };
-
       document.addEventListener('mousemove', handleMove);
       document.addEventListener('mouseup', handleEnd);
       document.addEventListener('touchmove', handleMove, { passive: false });
       document.addEventListener('touchend', handleEnd);
+      document.addEventListener('touchcancel', handleEnd);
+      window.addEventListener('mouseup', handleEnd);
+      window.addEventListener('mouseout', handleWindowMouseOut, true);
+      window.addEventListener('blur', handleEnd);
+      document.addEventListener('visibilitychange', handleVisibilityChange);
       updateFromClientY(lastDragClientY);
       autoDragRafId = requestAnimationFrame(autoScrollPane);
     }
@@ -8105,7 +8226,8 @@ function loadCurrentSongNotes(options) {
                     '</div>',
                   '</div>',
                 '</div>',
-              '</div>',              '<div class="panel pad sidebar-panel sidebar-panel-youtube" id="viewer-youtube-panel">',
+              '</div>',
+              '<div class="panel pad sidebar-panel sidebar-panel-youtube" id="viewer-youtube-panel">',
                 sectionTitleHtml('smart_display', 'YouTube'),
                 renderYouTubePanel(song, state),
               '</div>',
@@ -9351,6 +9473,7 @@ function renderFloatingPlayer(song) {
           case 'set-accent-color': App.setAccentColor(value); break;
           case 'set-note-color': App.setNoteColor(value); break;
           case 'set-bpm-blink-color': App.setBpmBlinkColor(value); break;
+          case 'toggle-tempo-sound': TempoSound.toggle(actionEl); break;
           case 'clear-search': App.clearSearch(); break;
           case 'play-youtube': if (!isNaN(index)) App.playYouTube(index); break;
           case 'stop-youtube': App.stopYouTubePlayback(); break;
@@ -10300,6 +10423,7 @@ function renderFloatingPlayer(song) {
 
     showList: function(options) {
       options = options || {};
+      TempoSound.stop();
       Viewer.stopAutoScroll({ skipRender: true, resetProgress: true });
       this.state.page = 'list';
       this.state.currentSong = null;
@@ -10334,6 +10458,7 @@ function renderFloatingPlayer(song) {
 
     showSetlists: function(options) {
       options = options || {};
+      TempoSound.stop();
       Viewer.stopAutoScroll({ skipRender: true, resetProgress: true });
       const shouldEndBusy = !options.skipBusy || options.endBusyOnDone;
       if (!options.skipBusy) this.beginBusy(options.busyMessage || 'Opening setlists…');
@@ -10480,6 +10605,7 @@ function renderFloatingPlayer(song) {
 
     handleSetlistBack: function() {
       const context = this.state.currentSetlist || {};
+      TempoSound.stop();
       Viewer.stopAutoScroll({ skipRender: true, resetProgress: true });
       if ((context.returnPage === 'songs' || context.returnPage === 'edit') && context.id) {
         this.openSetlistEditor(context.id || '', { editMode: false });
@@ -10490,6 +10616,7 @@ function renderFloatingPlayer(song) {
 
     openSetlistEditor: function(id, options) {
       options = options || {};
+      TempoSound.stop();
       Viewer.stopAutoScroll({ skipRender: true, resetProgress: true });
       if (!options.keepStatus) this.clearStatus();
       const normalizedId = String(id || '').trim();
@@ -10696,6 +10823,7 @@ function renderFloatingPlayer(song) {
 
     openSong: function(slug, options) {
       options = options || {};
+      TempoSound.stop();
       Viewer.stopAutoScroll({ skipRender: true, resetProgress: true });
       if (!options.keepStatus) this.clearStatus();
       if (!options.skipBusy) this.beginBusy(options.busyMessage || 'Opening song…');
@@ -10799,6 +10927,7 @@ function renderFloatingPlayer(song) {
 
     openEditor: function(slug, options) {
       options = options || {};
+      TempoSound.stop();
       Viewer.stopAutoScroll({ skipRender: true, resetProgress: true });
       this.clearStatus();
       const editorReturn = options.returnTo === 'view' && String(options.returnSlug || slug || '').trim()
@@ -11574,6 +11703,18 @@ function renderFloatingPlayer(song) {
       this._forceYoutubeRefresh = false;
     },
 
+    refreshViewerSheetOrRender: function(options) {
+      options = options || {};
+      const currentSong = this.state.currentSong;
+      const canRefreshViewer = this.state.page === 'view' && currentSong && (!options.requireSlug || currentSong.slug);
+      if (!canRefreshViewer) {
+        this.render();
+        return false;
+      }
+      if (options.updateUrl) this.updateCurrentViewUrl();
+      this.refreshViewerSheetDisplay();
+      return true;
+    },
 
     refreshViewerSheetDisplay: function() {
       if (this.state.page !== 'view' || !this.state.currentSong) {
@@ -11601,13 +11742,6 @@ function renderFloatingPlayer(song) {
       if (typeof applyPersonalChordProViewerTypography === 'function') {
         applyPersonalChordProViewerTypography(sheet);
       }
-
-      const transposeInput = document.getElementById('transpose-input');
-      if (transposeInput) transposeInput.value = String(this.state.transpose);
-      const transposeDown = document.querySelector('[data-app-action="change-transpose"][data-app-delta="-1"]');
-      const transposeUp = document.querySelector('[data-app-action="change-transpose"][data-app-delta="1"]');
-      if (transposeDown) transposeDown.disabled = this.state.transpose <= -11;
-      if (transposeUp) transposeUp.disabled = this.state.transpose >= 11;
 
       this.refreshViewerSidebarControls();
       if (typeof Viewer !== 'undefined' && typeof Viewer.afterRender === 'function') {
@@ -11671,14 +11805,14 @@ function renderFloatingPlayer(song) {
 
       const minutesInput = document.getElementById('scroll-minutes-input');
       const secondsInput = document.getElementById('scroll-seconds-input');
-      const observedPendingClass = this.state.scroll.isObservedDurationPending ? 'is-pending-observed' : '';
+      const isObservedDurationPending = !!this.state.scroll.isObservedDurationPending;
       if (minutesInput) {
         minutesInput.value = String(this.getScrollMinutesValue());
-        minutesInput.classList.toggle('is-pending-observed', !!observedPendingClass);
+        minutesInput.classList.toggle('is-pending-observed', isObservedDurationPending);
       }
       if (secondsInput) {
         secondsInput.value = String(this.getScrollSecondsValue()).padStart(2, '0');
-        secondsInput.classList.toggle('is-pending-observed', !!observedPendingClass);
+        secondsInput.classList.toggle('is-pending-observed', isObservedDurationPending);
       }
       this.syncViewerSongControlsSaveButtons();
     },
@@ -11687,12 +11821,7 @@ function renderFloatingPlayer(song) {
       const next = Math.max(-11, Math.min(11, this.state.transpose + delta));
       this.state.transpose = next;
       this.state.transposeStr = String(next);
-      if (this.state.page === 'view' && this.state.currentSong && this.state.currentSong.slug) {
-        this.updateCurrentViewUrl();
-        this.refreshViewerSheetDisplay();
-        return;
-      }
-      this.render();
+      this.refreshViewerSheetOrRender({ updateUrl: true, requireSlug: true });
     },
 
     changeEditorTranspose: function(delta) {
@@ -11773,22 +11902,12 @@ function renderFloatingPlayer(song) {
       const num = normalized === null ? 0 : normalized;
       this.state.transpose = num;
       this.state.transposeStr = String(num);
-      if (this.state.page === 'view' && this.state.currentSong && this.state.currentSong.slug) {
-        this.updateCurrentViewUrl();
-        this.refreshViewerSheetDisplay();
-        return;
-      }
-      this.render();
+      this.refreshViewerSheetOrRender({ updateUrl: true, requireSlug: true });
     },
 
     setNotation: function(value) {
       this.state.notation = normalizeStoredNotation(value, 'default');
-      if (this.state.page === 'view' && this.state.currentSong && this.state.currentSong.slug) {
-        this.updateCurrentViewUrl();
-        this.refreshViewerSheetDisplay();
-        return;
-      }
-      this.render();
+      this.refreshViewerSheetOrRender({ updateUrl: true, requireSlug: true });
     },
 
     setFontSizeLevel: function(value) {
@@ -11796,11 +11915,7 @@ function renderFloatingPlayer(song) {
       if (isNaN(next)) next = 3;
       this.state.fontSizeLevel = Math.max(1, Math.min(5, next));
       if (!saveStoredString(STORAGE_KEYS.fontSizeLevel, String(this.state.fontSizeLevel))) this.notifyStorageUnavailable();
-      if (this.state.page === 'view' && this.state.currentSong) {
-        this.refreshViewerSheetDisplay();
-        return;
-      }
-      this.render();
+      this.refreshViewerSheetOrRender();
     },
 
     changeFontSizeLevel: function(delta) {
@@ -11812,11 +11927,7 @@ function renderFloatingPlayer(song) {
       if (isNaN(next)) next = 3;
       this.state.chordSizeLevel = Math.max(1, Math.min(5, next));
       if (!saveStoredString(STORAGE_KEYS.chordSizeLevel, String(this.state.chordSizeLevel))) this.notifyStorageUnavailable();
-      if (this.state.page === 'view' && this.state.currentSong) {
-        this.refreshViewerSheetDisplay();
-        return;
-      }
-      this.render();
+      this.refreshViewerSheetOrRender();
     },
 
     changeChordSizeLevel: function(delta) {
@@ -11826,21 +11937,13 @@ function renderFloatingPlayer(song) {
     setLyricsFont: function(value) {
       this.state.lyricsFont = value;
       if (!saveStoredString(STORAGE_KEYS.lyricsFont, value)) this.notifyStorageUnavailable();
-      if (this.state.page === 'view' && this.state.currentSong) {
-        this.refreshViewerSheetDisplay();
-        return;
-      }
-      this.render();
+      this.refreshViewerSheetOrRender();
     },
 
     setChordFont: function(value) {
       this.state.chordFont = value;
       if (!saveStoredString(STORAGE_KEYS.chordFont, value)) this.notifyStorageUnavailable();
-      if (this.state.page === 'view' && this.state.currentSong) {
-        this.refreshViewerSheetDisplay();
-        return;
-      }
-      this.render();
+      this.refreshViewerSheetOrRender();
     },
 
     getLyricsFontStack: function() {
@@ -11855,11 +11958,7 @@ function renderFloatingPlayer(song) {
       this.state.formatOptions[key] = !!checked;
       this.state.formatOptions = normalizeFormatOptions(this.state.formatOptions);
       if (!saveStoredJson(STORAGE_KEYS.formatOptions, this.state.formatOptions)) this.notifyStorageUnavailable();
-      if (this.state.page === 'view' && this.state.currentSong) {
-        this.refreshViewerSheetDisplay();
-        return;
-      }
-      this.render();
+      this.refreshViewerSheetOrRender();
     },
 
     setAccentColor: function(value) {
@@ -11888,13 +11987,8 @@ function renderFloatingPlayer(song) {
       this.state.formatOptions.bpmBlinkColor = normalizeBpmBlinkColor(value);
       this.state.formatOptions = normalizeFormatOptions(this.state.formatOptions);
       if (!saveStoredJson(STORAGE_KEYS.formatOptions, this.state.formatOptions)) this.notifyStorageUnavailable();
-      if (this.state.page === 'view' && this.state.currentSong) {
-        this.refreshViewerSheetDisplay();
-        return;
-      }
-      this.render();
+      this.refreshViewerSheetOrRender();
     },
-
 
 
     commitScrollMinutesInputValue: function(value) {
@@ -11969,7 +12063,6 @@ function renderFloatingPlayer(song) {
     getScrollSecondsValue: function() {
       return Math.max(1, parseInt(this.state.scroll.durationSec, 10) || 240) % 60;
     },
-
 
 
     playYouTube: function(index) {
@@ -12575,6 +12668,7 @@ function renderFloatingPlayer(song) {
     render: function() {
       const app = document.getElementById('app');
       if (!app) return;
+      if (this.state.page !== 'view' || !this.state.currentSong) TempoSound.stop();
 
       const shouldResetViewerScroll = !!this._resetViewerScrollOnNextRender;
       const prevViewerScrollTop = this.state.page === 'view' && !shouldResetViewerScroll
