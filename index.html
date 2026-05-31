@@ -26,11 +26,10 @@
     --viewer-note-place-bg: rgba(254, 249, 195, 0.22);
     --danger: #dc2626;
     --btn-bg: #f8fafc;
-    --btn-bg-hover: #ffffff;
     --btn-bg-active: #eef3f9;
     --btn-line: #d4dbe7;
-    --btn-line-hover: #bcc7d9;
     --btn-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+    --btn-hover-ring: 0 0 0 3px rgba(var(--accent-rgb), 0.14);
     --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
     --radius: 16px;
   }
@@ -131,11 +130,16 @@
     box-shadow: none;
     cursor: pointer;
   }
-  .maintenance-menu-button:hover:not(:disabled),
   .maintenance-menu-button:focus-visible {
-    background: rgba(var(--accent-rgb), 0.09);
+    outline: none;
     color: var(--accent);
-    box-shadow: none;
+    box-shadow: var(--btn-hover-ring);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .maintenance-menu-button:hover:not(:disabled) {
+      color: var(--accent);
+      box-shadow: var(--btn-hover-ring);
+    }
   }
   .maintenance-menu-button .material-symbols-outlined {
     font-family: "Material Symbols Outlined";
@@ -187,10 +191,10 @@
     box-shadow: var(--btn-shadow);
     transition: background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease, box-shadow 0.14s ease, transform 0.14s ease;
   }
-  .btn:hover:not(:disabled) {
-    background: var(--btn-bg-hover);
-    border-color: var(--btn-line-hover);
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+  @media (hover: hover) and (pointer: fine) {
+    .btn:hover:not(:disabled) {
+      box-shadow: var(--btn-hover-ring);
+    }
   }
   .btn:active:not(:disabled) {
     background: var(--btn-bg-active);
@@ -208,10 +212,10 @@
     font-weight: 400;
     box-shadow: 0 3px 8px rgba(var(--accent-rgb), 0.1);
   }
-  .btn.primary:hover:not(:disabled) {
-    background: var(--accent);
-    border-color: var(--accent);
-    box-shadow: 0 4px 10px rgba(var(--accent-rgb), 0.13);
+  @media (hover: hover) and (pointer: fine) {
+    .btn.primary:hover:not(:disabled) {
+      box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.16);
+    }
   }
   .btn.primary:active:not(:disabled) {
     background: var(--accent);
@@ -224,10 +228,10 @@
     background: #fff1f2;
     font-weight: 400;
   }
-  .btn.danger:hover:not(:disabled) {
-    background: #ffe4e6;
-    border-color: #f3b7bf;
-    box-shadow: 0 4px 14px rgba(185, 28, 28, 0.08);
+  @media (hover: hover) and (pointer: fine) {
+    .btn.danger:hover:not(:disabled) {
+      box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+    }
   }
   .btn.danger:active:not(:disabled) {
     background: #fecdd3;
@@ -239,10 +243,10 @@
     border-color: rgba(var(--accent-rgb), 0.28);
     background: rgba(var(--accent-rgb), 0.08);
   }
-  .btn.soft-accent:hover:not(:disabled),
-  .btn.soft-accent:focus-visible {
-    background: rgba(var(--accent-rgb), 0.13);
-    border-color: rgba(var(--accent-rgb), 0.36);
+  @media (hover: hover) and (pointer: fine) {
+    .btn.soft-accent:hover:not(:disabled) {
+      box-shadow: var(--btn-hover-ring);
+    }
   }
   .panel {
     background: var(--panel);
@@ -457,16 +461,17 @@
     box-shadow: none;
     z-index: 30;
   }
-  .viewer-sidebar-restore-toggle:hover {
-    background: rgba(var(--accent-rgb), 0.08);
-    border-radius: 999px;
-    color: var(--accent);
+  @media (hover: hover) and (pointer: fine) {
+    .viewer-sidebar-restore-toggle:hover {
+      border-radius: 999px;
+      color: var(--accent);
+      box-shadow: var(--btn-hover-ring);
+    }
   }
   .viewer-sidebar-restore-toggle:focus-visible {
     outline: none;
     border-radius: 999px;
-    background: rgba(var(--accent-rgb), 0.1);
-    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.14);
+    box-shadow: var(--btn-hover-ring);
   }
   .viewer-sidebar-restore-toggle .material-symbols-outlined {
     font-family: "Material Symbols Outlined";
@@ -476,7 +481,11 @@
     opacity: 0.36;
     transition: opacity 0.14s ease;
   }
-  .viewer-sidebar-restore-toggle:hover .material-symbols-outlined,
+  @media (hover: hover) and (pointer: fine) {
+    .viewer-sidebar-restore-toggle:hover .material-symbols-outlined {
+      opacity: 1;
+    }
+  }
   .viewer-sidebar-restore-toggle:focus-visible .material-symbols-outlined {
     opacity: 1;
   }
@@ -1528,11 +1537,12 @@
     box-shadow: none;
     transition: background-color 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease, transform 0.14s ease;
   }
-  .color-chip:hover {
-    border-color: var(--btn-line-hover);
-    background: var(--btn-bg-hover);
+  @media (hover: hover) and (pointer: fine) {
+    .color-chip:hover:not(:disabled) {
+      box-shadow: var(--btn-hover-ring);
+    }
   }
-  .color-chip:focus-visible {
+  .color-chip:focus-visible:not(:disabled) {
     outline: none;
     border-color: rgba(var(--accent-rgb), 0.52);
     box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.14);
@@ -2045,12 +2055,6 @@
     color: var(--accent);
     box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0.28);
   }
-  .btn-segment.is-active:hover:not(:disabled),
-  .btn-segment.is-active:focus-visible {
-    background: rgba(var(--accent-rgb), 0.13);
-    background: color-mix(in srgb, var(--accent) 13%, #fff);
-    color: var(--accent);
-  }
   .segmented-control-sign .btn-segment {
     line-height: 1;
   }
@@ -2160,13 +2164,6 @@
     border-color: var(--accent);
     color: #fff;
   }
-  .btn-toggle.is-active:hover:not(:disabled),
-  .btn-toggle.is-active:focus-visible {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-    box-shadow: 0 10px 22px rgba(var(--accent-rgb), 0.22);
-  }
   .btn-toggle.is-active:active:not(:disabled) {
     background: var(--accent);
     border-color: var(--accent);
@@ -2204,23 +2201,15 @@
     color: rgba(var(--accent-rgb), 0.62);
     box-shadow: none;
   }
-  .btn-save-autoscroll:hover:not(:disabled),
-  .btn-save-autoscroll:focus-visible,
-  .btn-save-youtube:hover:not(:disabled),
-  .btn-save-youtube:focus-visible {
-    background: rgba(var(--accent-rgb), 0.055);
-    border-color: rgba(var(--accent-rgb), 0.2);
-    color: rgba(var(--accent-rgb), 0.72);
-    box-shadow: none;
-  }
-  .btn-save-autoscroll.is-dirty:hover:not(:disabled),
   .btn-save-autoscroll.is-dirty:focus-visible,
-  .btn-save-youtube.is-dirty:hover:not(:disabled),
-  .btn-save-youtube.is-dirty:focus-visible {
-    background: rgba(var(--accent-rgb), 0.13);
-    border-color: rgba(var(--accent-rgb), 0.36);
-    color: var(--accent);
-    box-shadow: none;
+  .btn-save-youtube:focus-visible {
+    box-shadow: var(--btn-hover-ring);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .btn-save-autoscroll.is-dirty:hover:not(:disabled),
+    .btn-save-youtube:hover:not(:disabled) {
+      box-shadow: var(--btn-hover-ring);
+    }
   }
   .btn-save-autoscroll:active:not(:disabled),
   .btn-save-youtube:active:not(:disabled) {
@@ -2340,6 +2329,11 @@
     padding: 8px 10px;
     font-size: 0.84rem;
     font-weight: 500;
+  }
+  .btn-chip:active:not(:disabled) {
+    background: var(--btn-bg-active);
+    border-color: var(--btn-line);
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
   }
   .youtube-list {
     display: grid;
@@ -3064,14 +3058,14 @@
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
   }
-  .cw-tempo-sound-btn:hover {
-    border-color: rgba(var(--accent-rgb), 0.58);
-    background: rgba(var(--accent-rgb), 0.08);
-    color: var(--accent);
+  @media (hover: hover) and (pointer: fine) {
+    .cw-tempo-sound-btn:hover {
+      box-shadow: var(--btn-hover-ring);
+    }
   }
   .cw-tempo-sound-btn:focus-visible {
-    outline: 2px solid rgba(var(--accent-rgb), 0.54);
-    outline-offset: 2px;
+    outline: none;
+    box-shadow: var(--btn-hover-ring);
   }
   .cw-tempo-sound-btn.is-playing {
     border-color: rgba(var(--accent-rgb), 0.72);
