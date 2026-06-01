@@ -2991,7 +2991,7 @@
     max-width: 100%;
     margin: 0 0 12px;
     padding: 2px 8px;
-    border-radius: 999px;
+    border-radius: 4px;
     background: #f3f4f6;
     font-family: var(--cw-lyrics-font);
     font-size: calc(var(--cw-lyrics-size) * 0.78);
@@ -3013,18 +3013,9 @@
     color: var(--muted);
     font-weight: 700;
   }
-  .cw-tempo-marker {
-    display: inline;
-  }
-  .cw-tempo-controls {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.32em;
-    margin-left: 0.36em;
-    vertical-align: baseline;
-  }
   .cw-tempo-blink {
     display: inline-block;
+    margin-left: 0.36em;
     color: var(--cw-tempo-on-color, #dc2626);
     font-size: 0.92em;
     line-height: 1;
@@ -3034,10 +3025,6 @@
     animation-delay: var(--cw-tempo-delay, 0s);
     animation-timing-function: steps(1, end);
     animation-iteration-count: infinite;
-  }
-  .cw-tempo-sound-icon {
-    font-size: 0.9em;
-    line-height: 1;
   }
   .cw-tempo-sound-btn {
     display: inline-flex;
@@ -5063,8 +5050,8 @@
     const bpmText = String(bpm);
     const tempoButtonHtml = [
       '<button class="cw-tempo-sound-btn" type="button" data-app-action="toggle-tempo-sound" data-tempo-bpm="', escapeHtml(bpmText), '" aria-pressed="false" aria-label="Play tempo at ', escapeHtml(bpmText), ' BPM" title="Play tempo">',
-      '<span class="cw-tempo-marker">', escapeHtml(match[1]), '</span>',
-      '<span class="cw-tempo-controls">', tempoDotHtml, '<span class="cw-tempo-sound-icon" aria-hidden="true">♩</span></span>',
+      escapeHtml(match[1]),
+      tempoDotHtml,
       '</button>'
     ].join('');
     return [
@@ -8130,11 +8117,13 @@ function loadCurrentSongNotes(options) {
                     '<div class="song-detail-row song-header-detail-row"><p>' + escapeHtml(song.artist) + '</p>' + (tags ? '<div class="tag-row tag-row-inline">' + tags + '</div>' : '') + '</div>',
                   '</div>',
                   '<div class="inline-actions song-header-actions">',
-                    state.currentSetlist ? '' : [
-                      '<button class="btn" type="button" data-app-action="show-list">← Back</button>',
-                      '<button class="btn" type="button" data-app-action="sync-current-song-to-gas">Sync to GAS</button>',
-                      '<button class="btn soft-accent" type="button" data-app-action="open-editor" data-song-slug="' + escapeHtml(song.slug) + '">Edit</button>',
-                    ].join(''),
+                    state.currentSetlist
+                      ? '<button class="btn soft-accent" type="button" data-app-action="open-editor" data-song-slug="' + escapeHtml(song.slug) + '">Edit</button>'
+                      : [
+                          '<button class="btn" type="button" data-app-action="show-list">← Back</button>',
+                          '<button class="btn" type="button" data-app-action="sync-current-song-to-gas">Sync to GAS</button>',
+                          '<button class="btn soft-accent" type="button" data-app-action="open-editor" data-song-slug="' + escapeHtml(song.slug) + '">Edit</button>',
+                        ].join(''),
                   '</div>',
                 '</div>',
                 '<div class="sheet-stage" id="sheet-stage">',
@@ -9441,7 +9430,8 @@ function renderFloatingPlayer(song) {
                   returnTo: 'view',
                   returnSlug: editSlug,
                   returnTranspose: App.state.transpose,
-                  returnNotation: App.state.notation
+                  returnNotation: App.state.notation,
+                  returnSetlistContext: App.state.currentSetlist
                 }
               : {};
             App.openEditor(editSlug, returnOptions);
@@ -10536,6 +10526,7 @@ function renderFloatingPlayer(song) {
             endBusyOnDone: !options.skipBusy || options.endBusyOnDone,
             urlTranspose: options.urlTranspose,
             urlNotation: options.urlNotation,
+            onDone: options.onDone,
             setlistContext: {
               id: setlist.id,
               title: setlist.title,
@@ -10595,6 +10586,7 @@ function renderFloatingPlayer(song) {
       this.updateCurrentViewUrl();
       this.render();
       if (!options.skipBusy || options.endBusyOnDone) this.endBusy();
+      if (typeof options.onDone === 'function') options.onDone();
     },
 
     handleSetlistBack: function() {
@@ -10906,16 +10898,34 @@ function renderFloatingPlayer(song) {
       this.animateViewerScrollTo(window, 0, 140);
     },
 
+    returnFromEditorToView: function(editorReturn, options) {
+      options = options || {};
+      if (!editorReturn || editorReturn.returnTo !== 'view') return false;
+      const openOptions = {
+        skipBusy: !!options.skipBusy,
+        endBusyOnDone: !!options.endBusyOnDone,
+        onDone: options.onDone
+      };
+      if (options.restoreViewerControls) {
+        openOptions.urlTranspose = editorReturn.transpose;
+        openOptions.urlNotation = editorReturn.notation;
+      }
+      const setlistContext = this.normalizeSetlistPlaybackContext(editorReturn.setlistContext);
+      if (setlistContext && setlistContext.id) {
+        openOptions.returnPage = setlistContext.returnPage;
+        this.openSetlistSong(setlistContext.id, setlistContext.index, openOptions);
+        return true;
+      }
+      const slug = String(options.slug || editorReturn.slug || '').trim();
+      if (!slug) return false;
+      this.openSong(slug, openOptions);
+      return true;
+    },
+
     cancelEditor: function() {
       const editorReturn = this.state.editorReturn || null;
       this.state.editorReturn = null;
-      if (editorReturn && editorReturn.returnTo === 'view' && editorReturn.slug) {
-        this.openSong(editorReturn.slug, {
-          urlTranspose: editorReturn.transpose,
-          urlNotation: editorReturn.notation
-        });
-        return;
-      }
+      if (this.returnFromEditorToView(editorReturn, { restoreViewerControls: true })) return;
       this.showList();
     },
 
@@ -10929,7 +10939,8 @@ function renderFloatingPlayer(song) {
             returnTo: 'view',
             slug: String(options.returnSlug || slug || '').trim(),
             transpose: typeof options.returnTranspose === 'undefined' ? '' : options.returnTranspose,
-            notation: options.returnNotation || ''
+            notation: options.returnNotation || '',
+            setlistContext: this.normalizeSetlistPlaybackContext(options.returnSetlistContext)
           }
         : null;
       if (!slug) {
@@ -11068,21 +11079,29 @@ function renderFloatingPlayer(song) {
           } catch (error) {
             cleanupWarning = 'Saved, but failed to move sticky notes: ' + getStatusMessage(error, '');
           }
+          const editorReturn = App.state.editorReturn || null;
           App.state.editorReturn = null;
           App.setBusyMessage('Refreshing list…');
           App.loadSongs(function() {
+            const showSavedStatus = function() {
+              if (cleanupWarning) {
+                App.setStatus('error', cleanupWarning);
+                App.render();
+              } else {
+                App.flashStatus('info', 'Saved.');
+              }
+            };
             App.setBusyMessage('Opening song…');
+            if (App.returnFromEditorToView(editorReturn, {
+              slug: result.slug,
+              skipBusy: true,
+              endBusyOnDone: true,
+              onDone: showSavedStatus
+            })) return;
             App.openSong(result.slug, {
               skipBusy: true,
               endBusyOnDone: true,
-              onDone: function() {
-                if (cleanupWarning) {
-                  App.setStatus('error', cleanupWarning);
-                  App.render();
-                } else {
-                  App.flashStatus('info', 'Saved.');
-                }
-              }
+              onDone: showSavedStatus
             });
           }, { skipBusy: true });
         })
