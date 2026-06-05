@@ -29,7 +29,8 @@
     --btn-bg-active: #eef3f9;
     --btn-line: #d4dbe7;
     --btn-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
-    --btn-hover-ring: 0 0 0 3px rgba(var(--accent-rgb), 0.14);
+    --btn-hover-ring: 0 0 0 2px rgba(var(--accent-rgb), 0.10);
+    --btn-focus-ring: 0 0 0 3px rgba(var(--accent-rgb), 0.14);
     --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
     --radius: 16px;
   }
@@ -133,7 +134,7 @@
   .maintenance-menu-button:focus-visible {
     outline: none;
     color: var(--accent);
-    box-shadow: var(--btn-hover-ring);
+    box-shadow: var(--btn-focus-ring);
   }
   @media (hover: hover) and (pointer: fine) {
     .maintenance-menu-button:hover:not(:disabled) {
@@ -203,7 +204,7 @@
   .btn:focus-visible {
     outline: none;
     border-color: rgba(var(--accent-rgb), 0.52);
-    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.14);
+    box-shadow: var(--btn-focus-ring);
   }
   .btn.primary {
     background: var(--accent);
@@ -230,7 +231,7 @@
   }
   @media (hover: hover) and (pointer: fine) {
     .btn.danger:hover:not(:disabled) {
-      box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+      box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.10);
     }
   }
   .btn.danger:active:not(:disabled) {
@@ -279,6 +280,18 @@
     border-radius: 12px;
     padding: 10px 12px;
     background: #fff;
+    transition: border-color 0.14s ease, box-shadow 0.14s ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .select:hover {
+      border-color: rgba(var(--accent-rgb), 0.28);
+      box-shadow: var(--btn-hover-ring);
+    }
+  }
+  .select:focus-visible {
+    outline: none;
+    border-color: rgba(var(--accent-rgb), 0.52);
+    box-shadow: var(--btn-focus-ring);
   }
   .textarea {
     min-height: 180px;
@@ -471,7 +484,7 @@
   .viewer-sidebar-restore-toggle:focus-visible {
     outline: none;
     border-radius: 999px;
-    box-shadow: var(--btn-hover-ring);
+    box-shadow: var(--btn-focus-ring);
   }
   .viewer-sidebar-restore-toggle .material-symbols-outlined {
     font-family: "Material Symbols Outlined";
@@ -1545,7 +1558,7 @@
   .color-chip:focus-visible:not(:disabled) {
     outline: none;
     border-color: rgba(var(--accent-rgb), 0.52);
-    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.14);
+    box-shadow: var(--btn-focus-ring);
   }
   .color-chip.is-active {
     border-color: rgba(var(--accent-rgb), 0.42);
@@ -1681,7 +1694,6 @@
   .list-mode-body .actions,
   .list-mode-body .tag,
   .list-mode-body .tag-row,
-  .list-mode-body .status-box,
   .list-mode-body .empty-state,
   .list-mode-body h1,
   .list-mode-body h2,
@@ -1716,7 +1728,7 @@
   .list-mode-body .topbar > .actions {
     flex: 0 0 auto;
     flex-wrap: nowrap;
-    overflow: hidden;
+    overflow: visible;
   }
   .list-mode-body .topbar > .actions.setlist-page-actions {
     flex: 1 1 auto;
@@ -2055,6 +2067,14 @@
     color: var(--accent);
     box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0.28);
   }
+  @media (hover: hover) and (pointer: fine) {
+    .btn-segment:hover:not(:disabled) {
+      box-shadow: inset 0 0 0 2px rgba(var(--accent-rgb), 0.14);
+    }
+  }
+  .btn-segment:focus-visible {
+    box-shadow: inset 0 0 0 2px rgba(var(--accent-rgb), 0.18);
+  }
   .segmented-control-sign .btn-segment {
     line-height: 1;
   }
@@ -2203,7 +2223,7 @@
   }
   .btn-save-autoscroll.is-dirty:focus-visible,
   .btn-save-youtube:focus-visible {
-    box-shadow: var(--btn-hover-ring);
+    box-shadow: var(--btn-focus-ring);
   }
   @media (hover: hover) and (pointer: fine) {
     .btn-save-autoscroll.is-dirty:hover:not(:disabled),
@@ -2304,6 +2324,16 @@
     line-height: 1;
     display: grid;
     place-items: center;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .btn-stepper-mini:hover:not(:disabled) {
+      background: var(--btn-bg-active);
+      border-color: rgba(var(--accent-rgb), 0.28);
+      box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0.18);
+    }
+  }
+  .btn-stepper-mini:focus-visible {
+    box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0.24);
   }
   .autoscroll-time-sep {
     align-self: center;
@@ -2651,18 +2681,25 @@
     position: fixed;
     inset: 0;
     z-index: 9999;
-    display: grid;
-    place-items: center;
-    background: rgba(245, 247, 251, 0.72);
-    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+    background: transparent;
   }
   .busy-dialog {
     min-width: 220px;
     max-width: min(92vw, 360px);
     padding: 18px 20px;
+    border-radius: 12px;
+    border: 2px solid rgba(var(--accent-rgb), 0.24);
+    background: #fff;
+    color: var(--accent);
     display: grid;
     justify-items: center;
+    justify-content: center;
     gap: 12px;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
   }
   .busy-message {
     text-align: center;
@@ -2671,6 +2708,7 @@
     color: var(--text);
   }
   .busy-spinner {
+    flex: 0 0 auto;
     width: 28px;
     height: 28px;
     border-radius: 999px;
@@ -2880,33 +2918,51 @@
   .status-box {
     margin: 0 0 14px;
     padding: 10px 12px;
+    border: 1px solid var(--line);
     border-radius: 12px;
-    background: var(--accent-soft);
+    background: #fff;
     color: var(--accent);
   }
   .status-box.error {
-    background: #fef2f2;
+    background: #fff;
     color: #b91c1c;
   }
   .status-box.warning {
-    background: #fffbeb;
+    background: #fff;
     color: #92400e;
   }
   .shell > .status-box,
   .viewer-content > .status-box.viewer-status {
     position: fixed;
-    top: calc(env(safe-area-inset-top, 0px) + 180px);
+    top: 50%;
     left: 50%;
     z-index: 10050;
-    width: fit-content;
-    max-width: min(520px, calc(100vw - 28px));
+    min-width: 220px;
+    max-width: min(92vw, 360px);
     margin: 0;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.10);
+    border: 2px solid rgba(var(--accent-rgb), 0.24);
+    display: grid;
+    justify-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
     pointer-events: none;
-    padding-left: 18px;
-    padding-right: 18px;
-    transform: translateX(-50%);
+    padding: 18px 20px;
+    transform: translate(-50%, -50%);
     animation: status-toast-in 240ms cubic-bezier(0.2, 0.85, 0.25, 1.15);
+  }
+  .status-icon {
+    flex: 0 0 auto;
+    width: 28px;
+    font-size: 28px;
+    line-height: 1;
+  }
+  .status-message {
+    min-width: 0;
+    text-align: center;
+    overflow-wrap: anywhere;
+    font-weight: 600;
+    color: var(--text);
   }
   .shell > .status-box.is-hiding,
   .viewer-content > .status-box.viewer-status.is-hiding {
@@ -2915,25 +2971,25 @@
   @keyframes status-toast-in {
     from {
       opacity: 0;
-      transform: translate(-50%, -12px) scale(0.96);
+      transform: translate(-50%, calc(-50% - 12px)) scale(0.96);
     }
     70% {
       opacity: 1;
-      transform: translate(-50%, 1px) scale(1.01);
+      transform: translate(-50%, calc(-50% + 1px)) scale(1.01);
     }
     to {
       opacity: 1;
-      transform: translate(-50%, 0) scale(1);
+      transform: translate(-50%, -50%) scale(1);
     }
   }
   @keyframes status-toast-out {
     from {
       opacity: 1;
-      transform: translate(-50%, 0) scale(1);
+      transform: translate(-50%, -50%) scale(1);
     }
     to {
       opacity: 0;
-      transform: translate(-50%, -8px) scale(0.98);
+      transform: translate(-50%, calc(-50% - 8px)) scale(0.98);
     }
   }
   .empty-state {
@@ -3052,7 +3108,7 @@
   }
   .cw-tempo-sound-btn:focus-visible {
     outline: none;
-    box-shadow: var(--btn-hover-ring);
+    box-shadow: var(--btn-focus-ring);
   }
   .cw-tempo-sound-btn.is-playing {
     border-color: rgba(var(--accent-rgb), 0.72);
@@ -5264,7 +5320,7 @@
     const CLICK_DURATION_SEC = 0.04;
     const CLICK_ATTACK_SEC = 0.002;
     const CLICK_FREQUENCY_HZ = 1000;
-    const CLICK_GAIN = 0.52;
+    const CLICK_GAIN = 0.8;
     const SCHEDULER_INTERVAL_MS = 25;
     const SCHEDULE_AHEAD_SEC = 0.1;
     const BPM_MATCH_TOLERANCE = 0.0001;
@@ -8110,7 +8166,7 @@ function loadCurrentSongNotes(options) {
             '<div class="panel viewer-body pane-scroll" id="viewer-scroll-pane">',
               '<div class="viewer-content" id="viewer-content">',
                 App.renderSetlistPlaybackBar(),
-                App.status.message ? '<div class="status-box viewer-status' + (App.status.type === 'error' ? ' error' : (App.status.type === 'warning' ? ' warning' : '')) + (App.status.hiding ? ' is-hiding' : '') + '">' + escapeHtml(App.status.message) + '</div>' : '',
+                App.renderStatusHtml('viewer-status'),
                 '<div class="song-header">',
                   '<div class="song-header-main">',
                     '<h2>' + escapeHtml(song.title) + '</h2>',
@@ -8526,7 +8582,7 @@ function renderFloatingPlayer(song) {
               '<button class="btn soft-accent" type="button" data-app-action="save-current-song">Save</button>',
             '</div>',
           '</div>',
-          App.status.message ? '<div class="status-box' + (App.status.type === 'error' ? ' error' : (App.status.type === 'warning' ? ' warning' : '')) + (App.status.hiding ? ' is-hiding' : '') + '">' + escapeHtml(App.status.message) + '</div>' : '',
+          App.renderStatusHtml(),
           '<div class="editor-grid">',
             '<div class="panel pad">',
               '<div class="form-stack">',
@@ -11420,6 +11476,30 @@ function renderFloatingPlayer(song) {
       return window.__PCV_SHARED_NORMALIZERS__.buildSlug(value);
     },
 
+    getStatusIconName: function(type, message) {
+      const text = String(message || '').toLowerCase();
+      if (type === 'error') return 'error';
+      if (type === 'warning') return 'warning';
+      if (text.indexOf('deleted') !== -1) return 'delete';
+      if (text.indexOf('imported') !== -1) return 'file_upload';
+      if (text.indexOf('exported') !== -1) return 'file_download';
+      if (text.indexOf('copied') !== -1 || text.indexOf('ready to copy') !== -1) return 'content_copy';
+      if (text.indexOf('locked') !== -1) return text.indexOf('unlocked') !== -1 ? 'lock_open' : 'lock';
+      if (text.indexOf('loaded into the editor') !== -1) return 'edit';
+      if (text.indexOf('rebuilt') !== -1) return 'sync';
+      return 'check_circle';
+    },
+
+    renderStatusHtml: function(extraClass) {
+      const status = this.status || {};
+      if (!status.message) return '';
+      const typeClass = status.type === 'error' ? ' error' : (status.type === 'warning' ? ' warning' : '');
+      const hidingClass = status.hiding ? ' is-hiding' : '';
+      const extra = extraClass ? ' ' + escapeHtml(extraClass) : '';
+      const icon = this.getStatusIconName(status.type, status.message);
+      return '<div class="status-box' + extra + typeClass + hidingClass + '" role="status" aria-live="polite"><span class="status-icon material-symbols-outlined" aria-hidden="true">' + escapeHtml(icon) + '</span><span class="status-message">' + escapeHtml(status.message) + '</span></div>';
+    },
+
     setStatus: function(type, message) {
       const normalizedMessage = getStatusMessage(message, '');
       if (this._statusTimer) {
@@ -12892,7 +12972,7 @@ function renderFloatingPlayer(song) {
               '<button class="btn primary" data-app-action="new-setlist">Add Setlist</button>',
             '</div>',
           '</div>',
-          this.status.message ? '<div class="status-box' + (this.status.type === 'error' ? ' error' : (this.status.type === 'warning' ? ' warning' : '')) + (this.status.hiding ? ' is-hiding' : '') + '">' + escapeHtml(this.status.message) + '</div>' : '',
+          this.renderStatusHtml(),
           '<div class="panel pad">',
             '<div class="song-list">' + this.renderSetlistListHtml(this.state.setlists) + '</div>',
             '<input id="setlist-import-input" type="file" accept="application/json,.json" data-app-change="setlist-import" hidden>',
@@ -12978,7 +13058,7 @@ function renderFloatingPlayer(song) {
                 : '<span class="setlist-page-action-group"><button class="btn" data-app-action="show-setlists">← Back</button><button class="btn" data-app-action="sync-current-setlist-to-gas"' + (setlist.id ? '' : ' disabled') + '>Sync to GAS</button></span><span class="setlist-page-action-group"><button class="btn" data-app-action="export-current-setlist">Export</button><button class="btn danger" data-app-action="delete-setlist" data-setlist-id="' + escapeHtml(setlist.id) + '"' + (setlist.id ? '' : ' disabled') + '>Delete</button><button class="btn soft-accent" data-app-action="enter-setlist-edit">Edit</button></span>',
             '</div>',
           '</div>',
-          this.status.message ? '<div class="status-box' + (this.status.type === 'error' ? ' error' : (this.status.type === 'warning' ? ' warning' : '')) + (this.status.hiding ? ' is-hiding' : '') + '">' + escapeHtml(this.status.message) + '</div>' : '',
+          this.renderStatusHtml(),
           '<div class="panel pad">',
             '<div class="form-stack">',
               isEditing
@@ -13072,7 +13152,7 @@ function renderFloatingPlayer(song) {
               actionButtons,
             '</div>',
           '</div>',
-          this.status.message ? '<div class="status-box' + (this.status.type === 'error' ? ' error' : (this.status.type === 'warning' ? ' warning' : '')) + (this.status.hiding ? ' is-hiding' : '') + '">' + escapeHtml(this.status.message) + '</div>' : '',
+          this.renderStatusHtml(),
           '<div class="panel pad">',
             '<div class="search-row">',
               '<input id="list-search-input" class="field" placeholder="Search title / artist / tags" value="' + escapeHtml(this.state.searchDraft) + '" data-app-input="search" data-app-keydown="search" data-app-composition="search">',
