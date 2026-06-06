@@ -11103,7 +11103,7 @@ function renderFloatingPlayer(song) {
       const youtubeText = String(payload && payload.youtube || '').trim();
       if (youtubeText) {
         try {
-          const youtube = normalizeYouTubeSelection(youtubeText);
+          const youtube = window.__PCV_SHARED_NORMALIZERS__.normalizeYouTubeSelection(youtubeText);
           const youtubeLines = youtubeText.split(/\n/).filter(function(line) { return String(line || '').trim(); });
           if (!youtube.length || youtube.length !== youtubeLines.length) throw new Error('Invalid YouTube link or video ID.');
         } catch (err) {
