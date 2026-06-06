@@ -5821,6 +5821,13 @@
       if (event.metaKey || event.ctrlKey || event.altKey) return false;
       if (isKeyboardTextEntryTarget(event.target)) return false;
       const key = event.key;
+      if (key === 'ArrowRight' || key === 'ArrowLeft') {
+        const context = App.state.currentSetlist;
+        if (!context || !Array.isArray(context.items) || !context.items.length) return false;
+        if (event.cancelable) event.preventDefault();
+        App.openAdjacentSetlistSong(key === 'ArrowRight' ? 1 : -1);
+        return true;
+      }
       let delta = 0;
       let affectsAdaptiveSpeed = false;
       const els = cacheElements();
