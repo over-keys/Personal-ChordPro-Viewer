@@ -2692,8 +2692,9 @@
     max-width: min(92vw, 360px);
     padding: 18px 20px;
     border-radius: 12px;
-    border: 2px solid rgba(var(--accent-rgb), 0.24);
-    background: #fff;
+    border: 2px solid rgba(var(--accent-rgb), 0.28);
+    background: rgba(var(--accent-rgb), 0.026);
+    background: color-mix(in srgb, var(--accent) 3%, #fff);
     color: var(--accent);
     display: grid;
     justify-items: center;
@@ -2940,7 +2941,9 @@
     min-width: 220px;
     max-width: min(92vw, 360px);
     margin: 0;
-    border: 2px solid rgba(var(--accent-rgb), 0.24);
+    border: 2px solid rgba(var(--accent-rgb), 0.28);
+    background: rgba(var(--accent-rgb), 0.026);
+    background: color-mix(in srgb, var(--accent) 3%, #fff);
     display: grid;
     justify-items: center;
     justify-content: center;
@@ -2950,6 +2953,16 @@
     padding: 18px 20px;
     transform: translate(-50%, -50%);
     animation: status-toast-in 240ms cubic-bezier(0.2, 0.85, 0.25, 1.15);
+  }
+  .shell > .status-box.error,
+  .viewer-content > .status-box.viewer-status.error {
+    border-color: rgba(185, 28, 28, 0.28);
+    background: #fffafa;
+  }
+  .shell > .status-box.warning,
+  .viewer-content > .status-box.viewer-status.warning {
+    border-color: rgba(146, 64, 14, 0.28);
+    background: #fffdf5;
   }
   .status-icon {
     flex: 0 0 auto;
@@ -8640,7 +8653,12 @@ function renderFloatingPlayer(song) {
       if (!previewHost) return;
       const payload = App.collectEditorPayload();
       App.state.editorSong = payload;
-      previewHost.innerHTML = renderPreview(payload);
+      try {
+        previewHost.innerHTML = renderPreview(payload);
+      } catch (err) {
+        App.flashStatus('error', getStatusMessage(err, 'Failed to update preview.'));
+        return;
+      }
       if (typeof applyPersonalChordProViewerTypography === 'function') applyPersonalChordProViewerTypography(previewHost);
     }
 
@@ -8650,7 +8668,12 @@ function renderFloatingPlayer(song) {
       const tags = Array.isArray(raw.tags)
         ? raw.tags.map(String).map(function(v) { return v.trim(); }).filter(Boolean)
         : String(raw.tags || '').split(/[\n,]/).map(function(v) { return String(v || '').trim(); }).filter(Boolean);
-      const youtube = normalizeYouTubeSelection(raw.youtube);
+      let youtube = [];
+      try {
+        youtube = normalizeYouTubeSelection(raw.youtube);
+      } catch (err) {
+        youtube = [];
+      }
       const scrollStartPercent = parseFloat(raw.scrollStartPercent);
       const scrollEndPercent = parseFloat(raw.scrollEndPercent);
       const safeScrollStartPercent = Number.isFinite(scrollStartPercent) ? Math.max(0, Math.min(1, scrollStartPercent)) : 0;
@@ -11077,6 +11100,18 @@ function renderFloatingPlayer(song) {
         this.focusEditorField('edit-chordpro');
         return false;
       }
+      const youtubeText = String(payload && payload.youtube || '').trim();
+      if (youtubeText) {
+        try {
+          const youtube = normalizeYouTubeSelection(youtubeText);
+          const youtubeLines = youtubeText.split(/\n/).filter(function(line) { return String(line || '').trim(); });
+          if (!youtube.length || youtube.length !== youtubeLines.length) throw new Error('Invalid YouTube link or video ID.');
+        } catch (err) {
+          this.flashStatus('error', getStatusMessage(err, 'Invalid YouTube link or video ID.'));
+          this.focusEditorField('edit-youtube');
+          return false;
+        }
+      }
       return true;
     },
 
@@ -11500,7 +11535,8 @@ function renderFloatingPlayer(song) {
       return '<div class="status-box' + extra + typeClass + hidingClass + '" role="status" aria-live="polite"><span class="status-icon material-symbols-outlined" aria-hidden="true">' + escapeHtml(icon) + '</span><span class="status-message">' + escapeHtml(status.message) + '</span></div>';
     },
 
-    setStatus: function(type, message) {
+    setStatus: function(type, message, options) {
+      options = options || {};
       const normalizedMessage = getStatusMessage(message, '');
       if (this._statusTimer) {
         clearTimeout(this._statusTimer);
@@ -11511,6 +11547,9 @@ function renderFloatingPlayer(song) {
         this._statusHideTimer = null;
       }
       this.status = { type: type, message: normalizedMessage, hiding: false };
+      if (normalizedMessage && !options.persistent) {
+        this.scheduleStatusClear(normalizedMessage, options.durationMs);
+      }
     },
 
     clearStatus: function() {
@@ -11525,10 +11564,7 @@ function renderFloatingPlayer(song) {
       this.status = { type: '', message: '' };
     },
 
-    flashStatus: function(type, message) {
-      const expectedMessage = getStatusMessage(message, '');
-      this.setStatus(type, expectedMessage);
-      this.render();
+    scheduleStatusClear: function(expectedMessage, durationMs) {
       this._statusTimer = window.setTimeout(function() {
         App._statusTimer = null;
         if (App.status && App.status.message === expectedMessage) {
@@ -11542,7 +11578,14 @@ function renderFloatingPlayer(song) {
             }
           }, 180);
         }
-      }, 2000);
+      }, typeof durationMs === 'number' ? durationMs : 2000);
+    },
+
+    flashStatus: function(type, message, durationMs) {
+      const expectedMessage = getStatusMessage(message, '');
+      this.setStatus(type, expectedMessage, { persistent: true });
+      this.render();
+      this.scheduleStatusClear(expectedMessage, durationMs);
     },
 
     isTransientStatusMessage: function(message) {
