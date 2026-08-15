@@ -6012,6 +6012,19 @@
       autoscrollSegmentDurationMs = remainingDistance <= 0 ? 0 : ((remainingDistance / effectivePixelsPerSecond) * 1000);
     }
 
+    function refreshAutoscrollTiming() {
+      if (!App || !App.state || App.state.page !== 'view' || !App.state.scroll || !App.state.scroll.isPlaying) return;
+      let observedGeometry = observedScrollGeometrySnapshot;
+      if (!observedGeometry || !observedGeometry.scrollTarget || observedGeometry.scrollTarget.isConnected === false) {
+        const geometry = getGeometry();
+        observedGeometry = createObservedGeometrySnapshot(geometry);
+        if (observedGeometry) observedScrollGeometrySnapshot = observedGeometry;
+      }
+      if (!observedGeometry || !observedGeometry.scrollTarget) return;
+      exactScrollTop = getScrollTop(observedGeometry.scrollTarget);
+      rebaseAutoscrollSegment(exactScrollTop, observedGeometry);
+    }
+
     function getObservedDurationInputElements() {
       return {
         minutesInput: document.getElementById('scroll-minutes-input'),
@@ -7911,6 +7924,9 @@ function loadCurrentSongNotes(options) {
 
     function startAutoScroll() {
       if (App.state.scroll.isPlaying) return;
+      if (App && typeof App.activatePendingObservedScrollDuration === 'function') {
+        App.activatePendingObservedScrollDuration();
+      }
       syncCommittedScrollDurationInputs();
       cancelResetScrollAnimation();
       const geometry = getGeometry();
@@ -7985,7 +8001,7 @@ function loadCurrentSongNotes(options) {
       const targetTop = geometry ? Math.max(0, geometry.startY - AUTOSCROLL_REFERENCE_OFFSET_PX) : 0;
       exactScrollTop = geometry && geometry.scrollTarget ? getScrollTop(geometry.scrollTarget) : targetTop;
       syncAutoscrollUi();
-      syncCommittedScrollDurationInputs();
+      syncPendingObservedDurationInputs({ force: true });
       requestAnimationFrame(function() {
         animateResetScrollTo(targetTop, 180);
       });
@@ -8650,6 +8666,7 @@ function renderFloatingPlayer(song) {
       resetAutoScroll: resetAutoScroll,
       stopAutoScroll: stopAutoScroll,
       toggleAutoScroll: toggleAutoScroll,
+      refreshAutoscrollTiming: refreshAutoscrollTiming,
       toggleAutoScrollFromSheet: toggleAutoScrollFromSheet,
       toggleNoteCreateMode: toggleNoteCreateMode,
       exportCurrentSongNotes: exportCurrentSongNotes,
@@ -9440,6 +9457,20 @@ function renderFloatingPlayer(song) {
       });
     },
 
+    bindFontLayoutRefresh: function() {
+      if (this._fontLayoutRefreshBound || !document.fonts) return;
+      this._fontLayoutRefreshBound = true;
+      const refresh = function() {
+        App.refreshViewerLayoutAfterReflow();
+      };
+      if (document.fonts.ready && typeof document.fonts.ready.then === 'function') {
+        document.fonts.ready.then(refresh).catch(function() {});
+      }
+      if (typeof document.fonts.addEventListener === 'function') {
+        document.fonts.addEventListener('loadingdone', refresh);
+      }
+    },
+
     notifyStorageUnavailable: function() {
       if (this._storageWarningShown) return;
       this._storageWarningShown = true;
@@ -9454,6 +9485,7 @@ function renderFloatingPlayer(song) {
       this.bindSongListInteractions();
       this.bindAppDelegatedInteractions();
       this.bindViewerPaneResize();
+      this.bindFontLayoutRefresh();
       this.beginBusy('Loading app…');
       google.script.run
         .withSuccessHandler(function(config) {
@@ -11885,6 +11917,7 @@ function renderFloatingPlayer(song) {
       }
       this.state.scroll.durationSec = next;
       this.clearPendingObservedScrollDuration();
+      this.refreshRunningAutoscrollTiming();
       return true;
     },
 
@@ -12081,13 +12114,16 @@ function renderFloatingPlayer(song) {
       const minutesInput = document.getElementById('scroll-minutes-input');
       const secondsInput = document.getElementById('scroll-seconds-input');
       const isObservedDurationPending = !!this.state.scroll.isObservedDurationPending;
+      const displayedDurationSec = Math.max(1, parseInt(this.getDisplayedScrollDurationSec(), 10) || 240);
+      const displayedMinutes = Math.floor(displayedDurationSec / 60);
+      const displayedSeconds = displayedDurationSec % 60;
       if (minutesInput) {
-        minutesInput.value = String(this.getScrollMinutesValue());
-        minutesInput.classList.toggle('is-pending-observed', isObservedDurationPending);
+        minutesInput.value = String(displayedMinutes);
+        minutesInput.classList.toggle('is-observed-pending', isObservedDurationPending);
       }
       if (secondsInput) {
-        secondsInput.value = String(this.getScrollSecondsValue()).padStart(2, '0');
-        secondsInput.classList.toggle('is-pending-observed', isObservedDurationPending);
+        secondsInput.value = String(displayedSeconds).padStart(2, '0');
+        secondsInput.classList.toggle('is-observed-pending', isObservedDurationPending);
       }
       this.syncViewerSongControlsSaveButtons();
     },
@@ -12266,6 +12302,12 @@ function renderFloatingPlayer(song) {
     },
 
 
+    refreshRunningAutoscrollTiming: function() {
+      if (typeof Viewer !== 'undefined' && typeof Viewer.refreshAutoscrollTiming === 'function') {
+        Viewer.refreshAutoscrollTiming();
+      }
+    },
+
     commitScrollMinutesInputValue: function(value) {
       if (this.state.scroll.isObservedDurationPending) return;
       this.setScrollMinutes(value);
@@ -12277,6 +12319,7 @@ function renderFloatingPlayer(song) {
       const minutes = normalized === null ? 0 : normalized;
       const currentSeconds = Math.max(0, Math.min(59, this.getScrollSecondsValue()));
       this.state.scroll.durationSec = Math.max(1, (minutes * 60) + currentSeconds);
+      this.refreshRunningAutoscrollTiming();
       if (this.state.page === 'view') {
         this.refreshViewerSidebarControls();
         return;
@@ -12300,6 +12343,7 @@ function renderFloatingPlayer(song) {
       const seconds = normalized === null ? 0 : normalized;
       const currentMinutes = Math.max(0, this.getScrollMinutesValue());
       this.state.scroll.durationSec = Math.max(1, (currentMinutes * 60) + seconds);
+      this.refreshRunningAutoscrollTiming();
       if (this.state.page === 'view') {
         this.refreshViewerSidebarControls();
         return;
@@ -12311,6 +12355,7 @@ function renderFloatingPlayer(song) {
       this.activatePendingObservedScrollDuration();
       const currentTotal = Math.max(1, parseInt(this.state.scroll.durationSec, 10) || 240);
       this.state.scroll.durationSec = this.stepScrollDurationByRoundedSeconds(currentTotal, delta);
+      this.refreshRunningAutoscrollTiming();
       if (this.state.page === 'view') {
         this.refreshViewerSidebarControls();
         return;
@@ -12321,6 +12366,7 @@ function renderFloatingPlayer(song) {
     applyScrollPreset: function(totalSeconds) {
       this.clearPendingObservedScrollDuration();
       this.state.scroll.durationSec = Math.max(1, parseInt(totalSeconds, 10) || 240);
+      this.refreshRunningAutoscrollTiming();
       const minutesInput = document.getElementById('scroll-minutes-input');
       const secondsInput = document.getElementById('scroll-seconds-input');
       const minutes = this.getScrollMinutesValue();
@@ -12375,6 +12421,7 @@ function renderFloatingPlayer(song) {
         .withSuccessHandler(function() {
           App.state.scroll.durationSec = savedDurationSec;
           App.clearPendingObservedScrollDuration();
+          App.refreshRunningAutoscrollTiming();
           if (App.state.currentSong && App.state.currentSong.slug === song.slug) {
             App.state.currentSong.scrollStartPercent = App.state.scroll.startPercent;
             App.state.currentSong.scrollEndPercent = App.state.scroll.endPercent;
