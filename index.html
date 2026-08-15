@@ -5545,8 +5545,8 @@
     let keyboardScrollRafId = 0;
     let keyboardScrollAnimationToken = 0;
     let adaptiveSpeedMult = 1;
-    let manualScrollIntentUntil = 0;
-    let manualScrollOverrideUntil = 0;
+    let manualScrollSession = null;
+    let manualScrollSettleRafId = 0;
     let lastAdaptiveSpeedAdjustAt = 0;
     let noteUiBound = false;
     let noteCaptureBound = false;
@@ -5577,6 +5577,7 @@
     const ADAPTIVE_SPEED_MAX = 3.5;
     const ADAPTIVE_SPEED_ADJUST_COOLDOWN_MS = 220;
     const MANUAL_SCROLL_DELTA_THRESHOLD_PX = 6;
+    const MANUAL_SCROLL_SETTLE_MS = 180;
     const NOTE_STORAGE_PREFIX = 'personal_chordpro_viewer_notes_v1:';
     const NOTE_MAX_LENGTH = 2000;
     const NOTE_DEFAULT_WIDTH_PX = 220;
@@ -5595,7 +5596,6 @@
     const NOTE_FONT_SIZE_FACTORS = [0.64, 0.82, 1.0, 1.1, 1.18];
     const SHEET_AUTOSCROLL_TOGGLE_SUPPRESS_MS = 260;
     const AUTOSCROLL_REFERENCE_OFFSET_PX = 100;
-    const MANUAL_SCROLL_OVERRIDE_MS = 180;
     const KEYBOARD_PAGE_SCROLL_FACTOR = 0.9;
     const KEYBOARD_LINE_STEP_FALLBACK_PX = 44;
 
@@ -5627,7 +5627,10 @@
     }
 
     function getScrollTop(target) {
-      return target ? target.scrollTop : 0;
+      if (!target) return 0;
+      const value = Number(target.scrollTop);
+      const safeValue = Number.isFinite(value) ? value : 0;
+      return Math.max(0, Math.min(getMaxScrollTop(target), safeValue));
     }
 
     function clampScrollTop(target, value) {
@@ -5715,31 +5718,124 @@
       return !!(target && target.closest && target.closest('#viewer-sidebar-scroll'));
     }
 
-    function markManualScrollIntent(event) {
+    function cancelManualScrollSettleMonitor() {
+      if (!manualScrollSettleRafId) return;
+      cancelAnimationFrame(manualScrollSettleRafId);
+      manualScrollSettleRafId = 0;
+    }
+
+    function recordManualScrollPosition(currentTop, now) {
+      if (!manualScrollSession) return;
+      const safeNow = typeof now === 'number' ? now : performance.now();
+      if (Math.abs(currentTop - manualScrollSession.lastTop) < 1) return;
+      manualScrollSession.lastTop = currentTop;
+      manualScrollSession.lastMotionAt = safeNow;
+      manualScrollSession.moved = true;
+      exactScrollTop = currentTop;
+      suppressNextSheetAutoScrollToggle();
+      if (!App || !App.state || App.state.page !== 'view' || !App.state.scroll || !App.state.scroll.isPlaying) return;
+      const observedGeometry = observedScrollGeometrySnapshot || createObservedGeometrySnapshot(getGeometry());
+      if (observedGeometry) {
+        observedScrollGeometrySnapshot = observedGeometry;
+        rebaseAutoscrollSegment(currentTop, observedGeometry, safeNow);
+      }
+    }
+
+    function scheduleManualScrollSettle() {
+      cancelManualScrollSettleMonitor();
+      if (!manualScrollSession || manualScrollSession.contactActive) return;
+
+      const monitor = function(now) {
+        if (!manualScrollSession) {
+          manualScrollSettleRafId = 0;
+          return;
+        }
+        if (manualScrollSession.contactActive) {
+          manualScrollSettleRafId = 0;
+          return;
+        }
+        const scrollTarget = manualScrollSession.scrollTarget && manualScrollSession.scrollTarget.isConnected !== false
+          ? manualScrollSession.scrollTarget
+          : getScrollTarget();
+        const currentTop = getScrollTop(scrollTarget);
+        recordManualScrollPosition(currentTop, now);
+        if ((now - manualScrollSession.lastMotionAt) >= MANUAL_SCROLL_SETTLE_MS) {
+          manualScrollSettleRafId = 0;
+          finishManualScrollSession();
+          return;
+        }
+        manualScrollSettleRafId = requestAnimationFrame(monitor);
+      };
+
+      manualScrollSettleRafId = requestAnimationFrame(monitor);
+    }
+
+    function startManualScrollSession(event) {
       if (isSidebarInteraction(event)) return;
+      const type = String(event && event.type || '');
+      const pointerType = String(event && event.pointerType || '');
+      const isWheel = type === 'wheel';
+      const isTouch = type.indexOf('touch') === 0;
+      const isTouchLikePointer = type === 'pointerdown' && (pointerType === 'touch' || pointerType === 'pen');
+      if (!isWheel && !isTouch && !isTouchLikePointer) return;
+      if (isWheel && event && event.ctrlKey) return;
       cancelKeyboardScrollAnimation();
+      const scrollTarget = getScrollTarget();
+      const currentTop = getScrollTop(scrollTarget);
       const now = performance.now();
-      manualScrollIntentUntil = now + 800;
-      if (App && App.state && App.state.page === 'view' && App.state.scroll && App.state.scroll.isPlaying) {
-        manualScrollOverrideUntil = Math.max(manualScrollOverrideUntil, now + MANUAL_SCROLL_OVERRIDE_MS);
+      if (!manualScrollSession) {
+        manualScrollSession = {
+          scrollTarget: scrollTarget,
+          startTop: currentTop,
+          lastTop: currentTop,
+          lastMotionAt: now,
+          moved: false,
+          contactActive: false
+        };
+      }
+      if (isTouch || isTouchLikePointer) manualScrollSession.contactActive = true;
+      manualScrollSession.lastMotionAt = now;
+      cancelManualScrollSettleMonitor();
+      if (isWheel) scheduleManualScrollSettle();
+    }
+
+    function endManualScrollContact(event) {
+      if (isSidebarInteraction(event) || !manualScrollSession) return;
+      if (event && event.touches && event.touches.length) return;
+      manualScrollSession.contactActive = false;
+      manualScrollSession.lastMotionAt = performance.now();
+      scheduleManualScrollSettle();
+    }
+
+    function finishManualScrollSession() {
+      cancelManualScrollSettleMonitor();
+      const session = manualScrollSession;
+      manualScrollSession = null;
+      if (!session) return;
+      const scrollTarget = session.scrollTarget && session.scrollTarget.isConnected !== false
+        ? session.scrollTarget
+        : getScrollTarget();
+      const currentTop = getScrollTop(scrollTarget);
+      exactScrollTop = currentTop;
+      if (!App || !App.state || App.state.page !== 'view' || !App.state.scroll || !App.state.scroll.isPlaying || !session.moved) return;
+      const netDelta = currentTop - session.startTop;
+      if (Math.abs(netDelta) >= MANUAL_SCROLL_DELTA_THRESHOLD_PX) {
+        adjustAdaptiveSpeed(netDelta < 0 ? 'slower' : 'faster');
+      }
+      const observedGeometry = observedScrollGeometrySnapshot || createObservedGeometrySnapshot(getGeometry());
+      if (observedGeometry) {
+        observedScrollGeometrySnapshot = observedGeometry;
+        rebaseAutoscrollSegment(currentTop, observedGeometry);
       }
     }
 
     function clearManualScrollIntent() {
-      manualScrollIntentUntil = 0;
-      manualScrollOverrideUntil = 0;
-    }
-
-    function hasRecentManualScrollIntent() {
-      return performance.now() <= manualScrollIntentUntil;
+      cancelManualScrollSettleMonitor();
+      manualScrollSession = null;
     }
 
     function hasManualScrollOverride() {
-      return performance.now() <= manualScrollOverrideUntil;
-    }
-
-    function extendManualScrollOverride() {
-      manualScrollOverrideUntil = Math.max(manualScrollOverrideUntil, performance.now() + MANUAL_SCROLL_OVERRIDE_MS);
+      return !!manualScrollSession || !!keyboardScrollRafId || isDraggingMarker || !!activeNoteDrag;
     }
 
     function adjustAdaptiveSpeed(direction) {
@@ -5792,7 +5888,6 @@
     function rebaseAutoscrollAfterKeyboardScroll(nextTop, affectsAdaptiveSpeed, direction) {
       if (!App || !App.state || App.state.page !== 'view' || !App.state.scroll || !App.state.scroll.isPlaying) return;
       if (affectsAdaptiveSpeed) {
-        extendManualScrollOverride();
         adjustAdaptiveSpeed(direction === 'up' ? 'slower' : 'faster');
       }
       const observedGeometry = observedScrollGeometrySnapshot || createObservedGeometrySnapshot(getGeometry());
@@ -5867,24 +5962,16 @@
     function handleScrollPositionChange(els) {
       const scrollTarget = getScrollTarget(els);
       const currentTop = getScrollTop(scrollTarget);
-      if (isProgrammaticScrollEvent(currentTop) || isDraggingMarker) {
-        return;
-      }
+      const isProgrammatic = isProgrammaticScrollEvent(currentTop);
       const delta = currentTop - exactScrollTop;
       exactScrollTop = currentTop;
+      if (isProgrammatic || isDraggingMarker) return;
       if (App && App.state && App.state.page === 'view') {
         maybeCaptureObservedScrollDuration();
       }
-      if (!App || !App.state || App.state.page !== 'view' || !App.state.scroll.isPlaying) return;
-      if (Math.abs(delta) < MANUAL_SCROLL_DELTA_THRESHOLD_PX) return;
-      if (!hasRecentManualScrollIntent()) return;
-      extendManualScrollOverride();
-      adjustAdaptiveSpeed(delta < 0 ? 'slower' : 'faster');
-      const observedGeometry = observedScrollGeometrySnapshot || createObservedGeometrySnapshot(getGeometry());
-      if (observedGeometry) {
-        observedScrollGeometrySnapshot = observedGeometry;
-        rebaseAutoscrollSegment(currentTop, observedGeometry);
-      }
+      if (!manualScrollSession || Math.abs(delta) < 1) return;
+      recordManualScrollPosition(currentTop, performance.now());
+      if (!manualScrollSession.contactActive) scheduleManualScrollSettle();
     }
 
     function getCurrentSong() {
@@ -5982,6 +6069,7 @@
       const targetEndScrollTop = Math.max(startScrollTop, Math.min(maxScrollTop, Math.max(0, geometry.endY - geometry.viewportHeight + AUTOSCROLL_REFERENCE_OFFSET_PX)));
       const travelDistance = Math.max(0, targetEndScrollTop - startScrollTop);
       return {
+        scrollTarget: geometry.scrollTarget,
         startY: geometry.startY,
         endY: geometry.endY,
         viewportHeight: geometry.viewportHeight,
@@ -7637,16 +7725,28 @@ function loadCurrentSongNotes(options) {
           refreshActiveSongNoteDragPosition();
         }, { passive: true });
         els.scrollPane.addEventListener('wheel', function(event) {
-          markManualScrollIntent(event);
+          startManualScrollSession(event);
         }, { passive: true });
         els.scrollPane.addEventListener('touchstart', function(event) {
-          markManualScrollIntent(event);
+          startManualScrollSession(event);
         }, { passive: true });
         els.scrollPane.addEventListener('touchmove', function(event) {
-          markManualScrollIntent(event);
+          startManualScrollSession(event);
+        }, { passive: true });
+        els.scrollPane.addEventListener('touchend', function(event) {
+          endManualScrollContact(event);
+        }, { passive: true });
+        els.scrollPane.addEventListener('touchcancel', function(event) {
+          endManualScrollContact(event);
         }, { passive: true });
         els.scrollPane.addEventListener('pointerdown', function(event) {
-          markManualScrollIntent(event);
+          startManualScrollSession(event);
+        }, { passive: true });
+        els.scrollPane.addEventListener('pointerup', function(event) {
+          if (event.pointerType === 'touch' || event.pointerType === 'pen') endManualScrollContact(event);
+        }, { passive: true });
+        els.scrollPane.addEventListener('pointercancel', function(event) {
+          if (event.pointerType === 'touch' || event.pointerType === 'pen') endManualScrollContact(event);
         }, { passive: true });
       }
       if (!windowScrollBound) {
@@ -7656,16 +7756,28 @@ function loadCurrentSongNotes(options) {
           refreshActiveSongNoteDragPosition();
         }, { passive: true });
         window.addEventListener('wheel', function(event) {
-          markManualScrollIntent(event);
+          startManualScrollSession(event);
         }, { passive: true });
         window.addEventListener('touchstart', function(event) {
-          markManualScrollIntent(event);
+          startManualScrollSession(event);
         }, { passive: true });
         window.addEventListener('touchmove', function(event) {
-          markManualScrollIntent(event);
+          startManualScrollSession(event);
+        }, { passive: true });
+        window.addEventListener('touchend', function(event) {
+          endManualScrollContact(event);
+        }, { passive: true });
+        window.addEventListener('touchcancel', function(event) {
+          endManualScrollContact(event);
         }, { passive: true });
         window.addEventListener('pointerdown', function(event) {
-          markManualScrollIntent(event);
+          startManualScrollSession(event);
+        }, { passive: true });
+        window.addEventListener('pointerup', function(event) {
+          if (event.pointerType === 'touch' || event.pointerType === 'pen') endManualScrollContact(event);
+        }, { passive: true });
+        window.addEventListener('pointercancel', function(event) {
+          if (event.pointerType === 'touch' || event.pointerType === 'pen') endManualScrollContact(event);
         }, { passive: true });
       }
     }
@@ -7885,22 +7997,26 @@ function loadCurrentSongNotes(options) {
         return;
       }
 
-      const geometry = getGeometry();
-      if (!geometry || !geometry.scrollTarget) {
-        if (App && App._viewerRerenderInProgress) {
-          rafId = requestAnimationFrame(tick);
+      let observedGeometry = observedScrollGeometrySnapshot;
+      if (observedGeometry && observedGeometry.scrollTarget && observedGeometry.scrollTarget.isConnected === false) {
+        observedGeometry = null;
+        observedScrollGeometrySnapshot = null;
+      }
+      if (!observedGeometry) {
+        const geometry = getGeometry();
+        if (!geometry || !geometry.scrollTarget) {
+          if (App && App._viewerRerenderInProgress) {
+            rafId = requestAnimationFrame(tick);
+            return;
+          }
+          pauseAutoScroll();
           return;
         }
-        pauseAutoScroll();
-        return;
+        observedGeometry = createObservedGeometrySnapshot(geometry);
+        if (observedGeometry) observedScrollGeometrySnapshot = observedGeometry;
       }
 
-      const observedGeometry = observedScrollGeometrySnapshot || createObservedGeometrySnapshot(geometry);
-      if (!observedScrollGeometrySnapshot && observedGeometry) {
-        observedScrollGeometrySnapshot = observedGeometry;
-      }
-
-      if (!observedGeometry || observedGeometry.travelDistance <= 0) {
+      if (!observedGeometry || !observedGeometry.scrollTarget || observedGeometry.travelDistance <= 0) {
         maybeCaptureObservedScrollDuration();
         App.state.scroll.isPlaying = false;
         hasStarted = false;
@@ -7913,6 +8029,7 @@ function loadCurrentSongNotes(options) {
         return;
       }
 
+      const scrollTarget = observedGeometry.scrollTarget;
       if (!autoscrollSegmentStartAt || autoscrollSegmentEndTop !== observedGeometry.targetEndScrollTop) {
         rebaseAutoscrollSegment(exactScrollTop, observedGeometry, time);
       }
@@ -7923,14 +8040,14 @@ function loadCurrentSongNotes(options) {
       const nextTop = autoscrollSegmentStartTop + ((autoscrollSegmentEndTop - autoscrollSegmentStartTop) * progress);
 
       if (hasManualScrollOverride()) {
-        exactScrollTop = getScrollTop(geometry.scrollTarget);
+        exactScrollTop = getScrollTop(scrollTarget);
         rebaseAutoscrollSegment(exactScrollTop, observedGeometry, time);
         rafId = requestAnimationFrame(tick);
         return;
       }
 
       setProgrammaticScrollTop(
-        geometry.scrollTarget,
+        scrollTarget,
         Math.min(autoscrollSegmentEndTop, nextTop)
       );
       maybeCaptureObservedScrollDuration();
@@ -8030,6 +8147,10 @@ function loadCurrentSongNotes(options) {
 
     function toggleAutoScrollFromSheet(event) {
       if (isDraggingMarker) return;
+      if (manualScrollSession && manualScrollSession.moved) {
+        suppressNextSheetAutoScrollToggle();
+        return;
+      }
       if (shouldSuppressSheetAutoScrollToggle()) return;
       if (event && event.target && event.target.closest && event.target.closest('.autoscroll-marker')) return;
       if (event && event.target && event.target.closest && event.target.closest('.viewer-note-ui')) return;
@@ -8062,10 +8183,14 @@ function loadCurrentSongNotes(options) {
       isDraggingMarker = true;
       lastDragClientY = event && event.touches ? event.touches[0].clientY : event.clientY;
       const dragSessionId = ++markerDragSessionId;
+      let markerChanged = false;
 
       const updateFromClientY = function(clientY) {
         lastDragClientY = clientY;
+        const before = which === 'start' ? App.state.scroll.startPercent : App.state.scroll.endPercent;
         setMarkerPercent(which, getAutoscrollPercentForClientY(clientY));
+        const after = which === 'start' ? App.state.scroll.startPercent : App.state.scroll.endPercent;
+        if (Math.abs(after - before) > 0.000001) markerChanged = true;
       };
 
       let ended = false;
@@ -8084,6 +8209,7 @@ function loadCurrentSongNotes(options) {
         window.removeEventListener('mouseout', handleWindowMouseOut, true);
         window.removeEventListener('blur', handleEnd);
         document.removeEventListener('visibilitychange', handleVisibilityChange);
+        if (markerChanged) handleScrollBoundsChange(which);
         window.setTimeout(function() {
           if (dragSessionId === markerDragSessionId) isDraggingMarker = false;
         }, 80);
