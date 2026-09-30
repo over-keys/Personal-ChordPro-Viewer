@@ -4366,13 +4366,13 @@
         const slugChanged = !!(originalSlug && originalSlug !== song.slug && existingByOriginal);
         let setlistRefsUpdated = 0;
         let migratedNotes = null;
-        if (slugChanged && !overwritingDifferentSlug) {
+        if (slugChanged || shouldReplaceTitleSlug) {
           const setlists = await this._requestToPromise(setlistStore.getAll());
           (Array.isArray(setlists) ? setlists : []).forEach(function(setlist) {
             const items = normalizeSetlistItems(setlist && setlist.items);
             let changed = false;
             const nextItems = items.map(function(item) {
-              if (item.slug !== originalSlug) return item;
+              if (!(slugChanged && item.slug === originalSlug) && !(shouldReplaceTitleSlug && item.slug === replaceTitleSlug)) return item;
               changed = true;
               setlistRefsUpdated += 1;
               return Object.assign({}, item, { slug: song.slug });
@@ -4381,6 +4381,8 @@
               setlistStore.put(Object.assign({}, setlist, { items: nextItems, updatedAt: now }));
             }
           });
+        }
+        if (slugChanged && !overwritingDifferentSlug) {
           const oldNotesEntry = await this._requestToPromise(notesStore.get(originalSlug));
           if (oldNotesEntry) {
             const newNotesEntry = await this._requestToPromise(notesStore.get(song.slug));
@@ -4621,12 +4623,46 @@
           await this.ready();
           const tx = this._db.transaction(NOTES_STORE, 'readwrite');
           const store = tx.objectStore(NOTES_STORE);
-          if (!normalized.length) store.delete(normalizedSlug);
-          else store.put({ slug: normalizedSlug, notes: cloneValue(normalized) });
+          let nextNotes = normalized;
+          // UI edits merge their changed fields; explicit imports still replace the list.
+          if (Array.isArray(options.baseNotes)) {
+            const latestEntry = await this._requestToPromise(store.get(normalizedSlug));
+            const latestNotes = notesFromEntry(latestEntry);
+            const baseById = new Map(options.baseNotes.map(function(note) { return [note.id, note]; }));
+            const nextById = new Map(normalized.map(function(note) { return [note.id, note]; }));
+            const storedIds = new Set(latestNotes.map(function(note) { return note.id; }));
+            normalized.forEach(function(note) {
+              const base = baseById.get(note.id);
+              if (base && !storedIds.has(note.id) && JSON.stringify(base) !== JSON.stringify(note)) {
+                tx.abort();
+                throw new Error('This note is no longer stored. Reload the song before editing it again.');
+              }
+            });
+            nextNotes = latestNotes.filter(function(note) {
+              return !baseById.has(note.id) || nextById.has(note.id);
+            }).map(function(note) {
+              const base = baseById.get(note.id);
+              const next = nextById.get(note.id);
+              if (!base || !next) return note;
+              const merged = Object.assign({}, note);
+              new Set(Object.keys(base).concat(Object.keys(next))).forEach(function(key) {
+                if (JSON.stringify(base[key]) === JSON.stringify(next[key])) return;
+                if (Object.prototype.hasOwnProperty.call(next, key)) merged[key] = next[key];
+                else delete merged[key];
+              });
+              return merged;
+            });
+            const latestIds = new Set(nextNotes.map(function(note) { return note.id; }));
+            normalized.forEach(function(note) {
+              if (!baseById.has(note.id) && !latestIds.has(note.id)) nextNotes.push(note);
+            });
+          }
+          if (!nextNotes.length) store.delete(normalizedSlug);
+          else store.put({ slug: normalizedSlug, notes: cloneValue(nextNotes) });
           await this._transactionToPromise(tx, 'Failed to persist notes.');
-          if (!normalized.length) delete this._noteCache[normalizedSlug];
-          else this._noteCache[normalizedSlug] = normalized;
-          return { ok: true, count: normalized.length };
+          if (!nextNotes.length) delete this._noteCache[normalizedSlug];
+          else this._noteCache[normalizedSlug] = cloneValue(nextNotes);
+          return { ok: true, count: nextNotes.length };
         } catch (error) {
           console.error('Failed to persist notes:', error);
           return { ok: false, error: error };
@@ -4849,15 +4885,15 @@
 
     let transposed = String(chord);
     if (steps !== 0 || notation !== 'default') {
-      transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)/g, function(match) {
-        const normalized = match.replace('\u266f', '#').replace('\u266d', 'b');
+      transposed = transposed.replace(/(^|[\s/(|])([A-G][#b\u266f\u266d]?)/g, function(match, prefix, note) {
+        const normalized = note.replace('\u266f', '#').replace('\u266d', 'b');
         const index = NOTE_VALUES[normalized];
         if (index == null) return match;
         let newIndex = (index + steps) % 12;
         if (newIndex < 0) newIndex += 12;
-        if (notation === 'flat') return NOTES_FLAT[newIndex];
-        if (notation === 'sharp') return NOTES_SHARP[newIndex];
-        return normalized.indexOf('b') !== -1 ? NOTES_FLAT[newIndex] : NOTES_SHARP[newIndex];
+        if (notation === 'flat') return prefix + NOTES_FLAT[newIndex];
+        if (notation === 'sharp') return prefix + NOTES_SHARP[newIndex];
+        return prefix + (normalized.indexOf('b') !== -1 ? NOTES_FLAT[newIndex] : NOTES_SHARP[newIndex]);
       });
     }
 
@@ -5149,52 +5185,6 @@
     return String(html || '').replace(/\|/g, '<span class="cw-barline">|</span>');
   }
 
-  function shouldInsertAutoLyricSpace(previousText, nextText) {
-    const previous = String(previousText || '');
-    const next = String(nextText || '');
-    if (!previous || !next) return false;
-    if (/\s$/.test(previous) || /^\s/.test(next)) return false;
-    if (/[A-Za-z0-9]$/.test(previous) && /^[A-Za-z0-9]/.test(next)) return true;
-    return /[,.!?;:]$/.test(previous) && /^[A-Za-z0-9]/.test(next);
-  }
-
-  function getLeadingPunctuationSpacingMatch(previousText, nextText) {
-    const previous = String(previousText || '');
-    const next = String(nextText || '');
-    if (!previous || !next) return null;
-    if (!/[A-Za-z0-9]$/.test(previous)) return null;
-    return next.match(/^([,.!?;:])\s*(?=[A-Za-z0-9])/);
-  }
-
-  function applyAutoLyricSpacing(segments) {
-    const result = segments.map(function(seg) {
-      return {
-        chord: seg.chord,
-        text: String(seg.text || '')
-      };
-    });
-    let previousLyricText = '';
-    let previousTextIndex = -1;
-    for (let i = 0; i < result.length; i++) {
-      const seg = result[i];
-      if (seg.chord !== null) {
-        const punctMatch = getLeadingPunctuationSpacingMatch(previousLyricText, seg.text);
-        if (punctMatch && previousTextIndex >= 0) {
-          const movedText = punctMatch[1] + ' ';
-          result[previousTextIndex].text += movedText;
-          previousLyricText += movedText;
-          seg.text = seg.text.slice(punctMatch[0].length);
-        } else if (shouldInsertAutoLyricSpace(previousLyricText, seg.text) && previousTextIndex >= 0) {
-          result[previousTextIndex].text += ' ';
-          previousLyricText += ' ';
-        }
-      }
-      previousLyricText += seg.text;
-      if (seg.text) previousTextIndex = i;
-    }
-    return result;
-  }
-
   function isMuseJazzChordFont(chordFont) {
     return /MuseJazz/i.test(String(chordFont || ''));
   }
@@ -5244,7 +5234,7 @@
       const hasChords = segments.some(function(seg) { return seg.chord !== null; });
       if (!hasChords) return '<div class="cw-plain-line">' + renderBarAwareText(line) + '</div>';
 
-      const displaySegments = applyAutoLyricSpacing(segments);
+      const displaySegments = segments;
       return '<div class="cw-line">' + displaySegments.map(function(seg) {
         const chordHtml = seg.chord
           ? renderBarAwareHtml(renderTransposedChord(transposeChord(seg.chord, transpose, notation, formatOptions), chordRenderOptions))
@@ -5558,6 +5548,7 @@
     let editingNoteId = '';
     let noteFocusPending = false;
     let currentSongNotes = [];
+    let currentSongNotesBaseline = [];
     let currentSongNotesSlug = '';
     let noteResizeObserver = null;
     let lastSongNoteTriggerAt = 0;
@@ -5571,6 +5562,7 @@
     let observedScrollSessionStartAt = 0;
     let observedScrollCaptured = false;
     let observedScrollGeometrySnapshot = null;
+    let scrollLayoutSnapshot = null;
     let autoscrollSegmentStartTop = 0;
     let autoscrollSegmentEndTop = 0;
     let autoscrollSegmentStartAt = 0;
@@ -6124,7 +6116,8 @@
     function createObservedGeometrySnapshot(geometry) {
       if (!geometry || !geometry.scrollTarget) return null;
       const maxScrollTop = getMaxScrollTop(geometry.scrollTarget);
-      const startScrollTop = Math.max(0, Math.min(maxScrollTop, exactScrollTop));
+      // Reflow must keep speed based on the full S/E range, not the remaining distance.
+      const startScrollTop = Math.max(0, Math.min(maxScrollTop, geometry.startY - AUTOSCROLL_REFERENCE_OFFSET_PX));
       const targetEndScrollTop = Math.max(startScrollTop, Math.min(maxScrollTop, Math.max(0, geometry.endY - geometry.viewportHeight + AUTOSCROLL_REFERENCE_OFFSET_PX)));
       const travelDistance = Math.max(0, targetEndScrollTop - startScrollTop);
       return {
@@ -6255,12 +6248,14 @@ function loadCurrentSongNotes(options) {
       const storageKey = getCurrentSongNoteStorageKey();
       if (!storageKey) {
         currentSongNotes = [];
+        currentSongNotesBaseline = [];
         currentSongNotesSlug = '';
         editingNoteId = '';
         return currentSongNotes;
       }
       if (options.force || currentSongNotesSlug !== slug) {
         currentSongNotes = loadSongNotesForSlug(slug);
+        currentSongNotesBaseline = currentSongNotes.map(normalizeSongNote).filter(Boolean);
         currentSongNotesSlug = slug;
       }
       if (editingNoteId && !findSongNoteById(editingNoteId)) {
@@ -6288,7 +6283,9 @@ function loadCurrentSongNotes(options) {
         const normalizedNote = normalizeSongNote(note);
         return !!normalizedNote && (normalizedNote.text.length > 0 || normalizedNote.id === editingNoteId || normalizedNote.id === preserveNoteId);
       });
-      return writeSongNotesForSlug(slug, normalized, { keepEmptyNoteIds: keepEmptyNoteIds }).then(function(result) {
+      const baseNotes = currentSongNotesBaseline;
+      currentSongNotesBaseline = normalized.map(function(note) { return Object.assign({}, note); });
+      return writeSongNotesForSlug(slug, normalized, { keepEmptyNoteIds: keepEmptyNoteIds, baseNotes: baseNotes }).then(function(result) {
         if (!result.ok) {
           setSongNoteStatus('error', getStatusMessage(result && result.error, 'Failed to save notes.'));
         }
@@ -7595,6 +7592,33 @@ function loadCurrentSongNotes(options) {
       ));
     }
 
+    function captureScrollLayout(els, scrollTarget) {
+      const top = getScrollTop(scrollTarget);
+      const viewportTop = getViewportTop(scrollTarget);
+      scrollLayoutSnapshot = {
+        lines: getAutoscrollLineNodes(els).map(function(node) {
+          const rect = node.getBoundingClientRect();
+          return { top: top + rect.top - viewportTop, height: Math.max(1, rect.height) };
+        })
+      };
+    }
+
+    function restoreScrollLayout(els, scrollTarget) {
+      const oldLines = scrollLayoutSnapshot && scrollLayoutSnapshot.lines;
+      if (!oldLines || !oldLines.length || exactScrollTop <= 0) {
+        setProgrammaticScrollTop(scrollTarget, exactScrollTop);
+        return;
+      }
+      let index = oldLines.findIndex(function(line) { return line.top + line.height > exactScrollTop; });
+      if (index < 0) index = oldLines.length - 1;
+      const node = getAutoscrollLineNodes(els)[index];
+      if (!node) return;
+      const fraction = (exactScrollTop - oldLines[index].top) / oldLines[index].height;
+      const rect = node.getBoundingClientRect();
+      const nextTop = getScrollTop(scrollTarget) + rect.top - getViewportTop(scrollTarget) + fraction * rect.height;
+      setProgrammaticScrollTop(scrollTarget, nextTop);
+    }
+
     function getAutoscrollLineMetrics(els, scrollTarget, stageTop, stageHeight) {
       const stageBottom = stageTop + Math.max(stageHeight || 1, 1);
       const scrollTop = getScrollTop(scrollTarget);
@@ -7939,6 +7963,7 @@ function loadCurrentSongNotes(options) {
           ? options.viewerScrollTop
           : exactScrollTop;
         setProgrammaticScrollTop(scrollTarget, viewerTop);
+        captureScrollLayout(els, scrollTarget);
       }
       if (App.state.scroll.isPlaying) {
         const geometry = getGeometry();
@@ -8747,10 +8772,11 @@ function renderFloatingPlayer(song) {
         );
       },
       refreshLayout: function() {
-        const scrollTarget = getScrollTarget();
+        const els = cacheElements();
+        const scrollTarget = getScrollTarget(els);
         if (scrollTarget) {
-          exactScrollTop = getScrollTop(scrollTarget);
-          setProgrammaticScrollTop(scrollTarget, exactScrollTop);
+          restoreScrollLayout(els, scrollTarget);
+          captureScrollLayout(els, scrollTarget);
         }
         if (App && App.state && App.state.scroll && App.state.scroll.isPlaying) {
           const geometry = getGeometry();
