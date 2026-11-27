@@ -4237,25 +4237,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           });
       },
 
-      listSongTitleSlugs: async function() {
-        await this.ready();
-        const store = this._txStore(SONGS_STORE, 'readonly');
-        const rows = await this._requestToPromise(store.getAll());
-        return (Array.isArray(rows) ? rows : [])
-          .filter(function(song) { return !!(song && song.slug); })
-          .map(function(song) {
-            return {
-              slug: song.slug,
-              title: song.title
-            };
-          })
-          .sort(function(a, b) {
-            const titleCompare = String(a.title || '').localeCompare(String(b.title || ''));
-            if (titleCompare) return titleCompare;
-            return String(a.slug || '').localeCompare(String(b.slug || ''));
-          });
-      },
-
       getSong: async function(slug) {
         await this.ready();
         const normalizedSlug = String(slug || '').trim();
@@ -4458,7 +4439,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         const slugChanged = !!(originalSlug && originalSlug !== song.slug && existingByOriginal);
         let setlistRefsUpdated = 0;
         let migratedNotes = null;
-        if (slugChanged && !overwritingDifferentSlug) {
+        if (slugChanged) {
           const setlists = await this._requestToPromise(setlistStore.getAll());
           (Array.isArray(setlists) ? setlists : []).forEach(function(setlist) {
             const items = normalizeSetlistItems(setlist && setlist.items);
@@ -4473,6 +4454,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
               setlistStore.put(Object.assign({}, setlist, { items: nextItems, updatedAt: now }));
             }
           });
+        }
+        if (slugChanged && !overwritingDifferentSlug) {
           const oldNotesEntry = await this._requestToPromise(notesStore.get(originalSlug));
           if (oldNotesEntry) {
             const newNotesEntry = await this._requestToPromise(notesStore.get(song.slug));
@@ -4809,11 +4792,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         }
       },
 
-      getAllNoteEntriesSync: function() {
-        return Object.keys(this._noteCache)
-          .map((slug) => ({ slug: slug, notes: Array.isArray(this._noteCache[slug]) ? cloneValue(this._noteCache[slug]) : [] }))
-          .filter(function(entry) { return entry.slug; })
-          .sort(function(a, b) { return a.slug.localeCompare(b.slug); });
+      getAllNoteEntries: async function() {
+        await this.ready();
+        return this._requestToPromise(this._txStore(NOTES_STORE, 'readonly').getAll());
       }
     };
 
@@ -4836,7 +4817,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       attach('getAppConfig', ChordProStorage.getAppConfig);
       attach('listSongs', ChordProStorage.listSongs);
-      attach('listSongTitleSlugs', ChordProStorage.listSongTitleSlugs);
       attach('getSong', ChordProStorage.getSong);
       attach('getAllSongsFull', ChordProStorage.getAllSongsFull);
       attach('importSongs', ChordProStorage.importSongs);
@@ -4941,15 +4921,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
     let transposed = String(chord);
     if (steps !== 0 || notation !== 'default') {
-      transposed = transposed.replace(/([A-G][#b\u266f\u266d]?)/g, function(match) {
+      transposed = transposed.replace(/(^|[/(])([A-G][#b♯♭]?)/g, function(_, prefix, match) {
         const normalized = match.replace('\u266f', '#').replace('\u266d', 'b');
         const index = NOTE_VALUES[normalized];
-        if (index == null) return match;
+        if (index == null) return prefix + match;
         let newIndex = (index + steps) % 12;
         if (newIndex < 0) newIndex += 12;
-        if (notation === 'flat') return NOTES_FLAT[newIndex];
-        if (notation === 'sharp') return NOTES_SHARP[newIndex];
-        return normalized.indexOf('b') !== -1 ? NOTES_FLAT[newIndex] : NOTES_SHARP[newIndex];
+        if (notation === 'flat') return prefix + NOTES_FLAT[newIndex];
+        if (notation === 'sharp') return prefix + NOTES_SHARP[newIndex];
+        return prefix + (normalized.includes('b') ? NOTES_FLAT[newIndex] : NOTES_SHARP[newIndex]);
       });
     }
 
@@ -5241,54 +5221,16 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     return String(html || '').replace(/\|/g, '<span class="cw-barline">|</span>');
   }
 
-  function shouldInsertAutoLyricSpace(previousText, nextText) {
-    const previous = String(previousText || '');
-    const next = String(nextText || '');
-    if (!previous || !next) return false;
-    if (/\s$/.test(previous) || /^\s/.test(next)) return false;
-    if (/[A-Za-z0-9]$/.test(previous) && /^[A-Za-z0-9]/.test(next)) return true;
-    return /[,.!?;:]$/.test(previous) && /^[A-Za-z0-9]/.test(next);
-  }
-
-  function getLeadingPunctuationSpacingMatch(previousText, nextText) {
-    const previous = String(previousText || '');
-    const next = String(nextText || '');
-    if (!previous || !next) return null;
-    if (!/[A-Za-z0-9]$/.test(previous)) return null;
-    return next.match(/^([,.!?;:])\s*(?=[A-Za-z0-9])/);
-  }
-
-  function applyAutoLyricSpacing(segments) {
-    const result = segments.map(function(seg) {
-      return {
-        chord: seg.chord,
-        text: String(seg.text || '')
-      };
-    });
-    let previousLyricText = '';
-    let previousTextIndex = -1;
-    for (let i = 0; i < result.length; i++) {
-      const seg = result[i];
-      if (seg.chord !== null) {
-        const punctMatch = getLeadingPunctuationSpacingMatch(previousLyricText, seg.text);
-        if (punctMatch && previousTextIndex >= 0) {
-          const movedText = punctMatch[1] + ' ';
-          result[previousTextIndex].text += movedText;
-          previousLyricText += movedText;
-          seg.text = seg.text.slice(punctMatch[0].length);
-        } else if (shouldInsertAutoLyricSpace(previousLyricText, seg.text) && previousTextIndex >= 0) {
-          result[previousTextIndex].text += ' ';
-          previousLyricText += ' ';
-        }
-      }
-      previousLyricText += seg.text;
-      if (seg.text) previousTextIndex = i;
-    }
-    return result;
-  }
-
   function isMuseJazzChordFont(chordFont) {
     return /MuseJazz/i.test(String(chordFont || ''));
+  }
+
+  function autoNotation(key, steps) {
+    const match = key.trim().match(/^([A-G][#b♯♭]?)\s*(major|maj|minor|min|m)?$/i);
+    const root = match ? match[1].replace('♯', '#').replace('♭', 'b') : 'C';
+    const minor = match && /^(minor|min|m)$/.test(match[2] || '');
+    const majorPitch = ((NOTE_VALUES[root] ?? 0) + steps + (minor ? 3 : 0) + 24) % 12;
+    return [1, 3, 5, 8, 10].includes(majorPitch) || (majorPitch === 6 && root.includes('b')) ? 'flat' : 'sharp';
   }
 
   function renderChordPro(content, options) {
@@ -5307,15 +5249,28 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     const lyricsSize = fontSizeScale[options && options.fontSizeLevel || 3] || fontSizeScale[3];
     const chordSize = chordScale[options && options.chordSizeLevel || 3] || chordScale[3];
 
+    let key = findChordProDirectiveValue(text, ['key', 'k']);
+    const spelling = () => transpose && notation === 'default' ? autoNotation(key, transpose) : notation;
+    const renderChord = chord => renderTransposedChord(transposeChord(chord, transpose, spelling(), formatOptions), chordRenderOptions);
     const html = lines.map(function(line) {
+      if (/^\s*#/.test(line)) return '';
+      if (/^\s*\{(?:soc|start_of_chorus)(?:\s*:\s*([^{}]*))?\}\s*$/i.test(line)) {
+        const label = line.match(/:\s*([^{}]*)\}/);
+        return '<div class="cw-comment cw-directive-line">' + escapeHtml(label ? label[1] : 'Chorus') + '</div>';
+      }
+      if (/^\s*\{(?:eoc|end_of_chorus)\}\s*$/i.test(line)) return '';
       const directive = parseChordProDirectiveLine(line);
       if (directive) {
-        const key = directive.key;
+        const directiveName = directive.key;
         const val = directive.value;
-        if (key === 'title' || key === 't' || key === 'subtitle' || key === 'st') return '';
-        if (key === 'comment' || key === 'c') return '<div class="cw-comment cw-directive-line">' + renderTempoAwareComment(val, formatOptions) + '</div>';
-        if (key === 'comment_italic' || key === 'ci') return '<div class="cw-comment-italic cw-directive-line">' + renderTempoAwareComment(val, formatOptions) + '</div>';
-        if (key === 'key' || key === 'k') return '<div class="cw-directive cw-directive-line">Key: ' + renderTransposedChord(transposeChord(val, transpose, notation, formatOptions), chordRenderOptions) + '</div>';
+        if (directiveName === 'title' || directiveName === 't' || directiveName === 'subtitle' || directiveName === 'st') return '';
+        if (directiveName === 'comment' || directiveName === 'c') return '<div class="cw-comment cw-directive-line">' + renderTempoAwareComment(val, formatOptions) + '</div>';
+        if (directiveName === 'comment_italic' || directiveName === 'ci') return '<div class="cw-comment-italic cw-directive-line">' + renderTempoAwareComment(val, formatOptions) + '</div>';
+        if (directive.key === 'key' || directive.key === 'k') {
+          key = val;
+          const parts = val.match(/^([A-G][#b♯♭]?)(.*)$/);
+          return '<div class="cw-directive cw-directive-line">Key: ' + (parts ? renderChord(parts[1]) + escapeHtml(parts[2]) : escapeHtml(val)) + '</div>';
+        }
         return '';
       }
 
@@ -5336,10 +5291,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       const hasChords = segments.some(function(seg) { return seg.chord !== null; });
       if (!hasChords) return '<div class="cw-plain-line">' + renderBarAwareText(line) + '</div>';
 
-      const displaySegments = applyAutoLyricSpacing(segments);
-      return '<div class="cw-line">' + displaySegments.map(function(seg) {
+
+      return '<div class="cw-line">' + segments.map(function(seg) {
         const chordHtml = seg.chord
-          ? renderBarAwareHtml(renderTransposedChord(transposeChord(seg.chord, transpose, notation, formatOptions), chordRenderOptions))
+          ? (seg.chord.startsWith('*') ? escapeHtml(seg.chord.slice(1)) : renderBarAwareHtml(seg.chord.split(/(\s+|\|+)/).map(renderChord).join('')))
           : '';
         const displayLyricText = seg.text || '​';
         return [
@@ -6323,17 +6278,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     : [];
 }
 
+let pendingNoteWrite = Promise.resolve({ ok: true });
 async function writeSongNotesForSlug(slug, notes, options) {
   if (!window.ChordProStorage) {
     return { ok: false, error: new Error('Song note storage is unavailable.') };
   }
-  return window.ChordProStorage.writeNotesSync(slug, notes, options);
-}
-
-function getAllStoredSongNoteEntries() {
-  return window.ChordProStorage
-    ? window.ChordProStorage.getAllNoteEntriesSync()
-    : [];
+  pendingNoteWrite = window.ChordProStorage.writeNotesSync(slug, notes, options);
+  return pendingNoteWrite;
 }
 
 function loadCurrentSongNotes(options) {
@@ -6452,10 +6403,14 @@ function loadCurrentSongNotes(options) {
       return false;
     }
 
-    function exportAllSongNotes() {
+    async function exportAllSongNotes() {
       commitActiveSongNote();
-      const entries = getAllStoredSongNoteEntries();
-      if (!entries) {
+      let entries;
+      try {
+        const saved = await pendingNoteWrite;
+        if (!saved.ok) throw saved.error;
+        entries = await ChordProStorage.getAllNoteEntries();
+      } catch (error) {
         setSongNoteStatus('error', 'Failed to read stored notes.');
         return false;
       }
@@ -9335,7 +9290,6 @@ function renderFloatingPlayer(song) {
       searchText: '',
       searchDraft: '',
       dedupeMode: false,
-      dedupeSongs: null,
       setlistSongSearchText: '',
       setlistSongSearchDraft: '',
       transpose: 0,
@@ -10362,8 +10316,7 @@ function renderFloatingPlayer(song) {
       if (typeof shouldRender === 'undefined') shouldRender = true;
       options = options || {};
       const search = String(this.state.searchText || '').trim().toLowerCase();
-      const dedupeSource = Array.isArray(this.state.dedupeSongs) ? this.state.dedupeSongs : this.state.songs;
-      const baseSongs = this.state.dedupeMode ? this.getDuplicateTitleSongs(dedupeSource) : this.state.songs;
+      const baseSongs = this.state.dedupeMode ? this.getDuplicateTitleSongs(this.state.songs) : this.state.songs;
       if (!search) {
         this.state.filteredSongs = baseSongs.slice();
       } else {
@@ -10414,26 +10367,13 @@ function renderFloatingPlayer(song) {
         return;
       }
       this.state.dedupeMode = false;
-      this.state.dedupeSongs = null;
       this.filterSongs(true);
     },
 
-    showDuplicateTitlesFromMaintenance: async function() {
-      this.beginBusy('Finding duplicate titles...');
-      try {
-        const songs = ChordProStorage && typeof ChordProStorage.listSongTitleSlugs === 'function'
-          ? await ChordProStorage.listSongTitleSlugs()
-          : await ChordProStorage.listSongs();
-        this.state.dedupeSongs = Array.isArray(songs) ? songs : [];
-        this.state.dedupeMode = true;
-        this.state.page = 'list';
-        this.filterSongs(false);
-        this.endBusy();
-        this.showList({ keepStatus: true });
-      } catch (err) {
-        this.endBusy();
-        this.flashStatus('error', getStatusMessage(err, 'Failed to find duplicate titles.'));
-      }
+    showDuplicateTitlesFromMaintenance: function() {
+      this.state.dedupeMode = true;
+      this.filterSongs(false);
+      this.showList({ keepStatus: true });
     },
 
     showMaintenanceMenuDialog: function() {
@@ -10915,13 +10855,9 @@ function renderFloatingPlayer(song) {
 
     getSongSummaryBySlug: function(slug) {
       const normalizedSlug = String(slug || '').trim();
-      const songFromLibrary = (this.state.songs || []).filter(function(song) {
+      return (this.state.songs || []).find(function(song) {
         return String(song && song.slug || '') === normalizedSlug;
-      })[0] || null;
-      if (songFromLibrary) return songFromLibrary;
-      return (this.state.dedupeSongs || []).filter(function(song) {
-        return String(song && song.slug || '') === normalizedSlug;
-      })[0] || null;
+      }) || null;
     },
 
 
@@ -11271,7 +11207,7 @@ function renderFloatingPlayer(song) {
             App.flashStatus('error', 'Song not found.');
             return;
           }
-          var hasUrlTranspose = String(options.urlTranspose || '').trim() !== '';
+          var hasUrlTranspose = String(options.urlTranspose ?? '').trim() !== '';
           var requestedTranspose = App.normalizeTransposeNumber(options.urlTranspose);
           var savedTranspose = normalizeStoredTranspose(song.transpose, 0);
           var hasUrlNotation = String(options.urlNotation || '').trim() !== '';
@@ -11607,7 +11543,7 @@ function renderFloatingPlayer(song) {
           }
           let cleanupWarning = '';
           try {
-            if (window.ChordProStorage && ChordProStorage.deleteNotesSync) {
+            if (!result.notesDeleted && window.ChordProStorage && ChordProStorage.deleteNotesSync) {
               const cleanupResult = await ChordProStorage.deleteNotesSync(slug);
               if (cleanupResult && cleanupResult.ok === false) cleanupWarning = 'Deleted song, but failed to delete sticky notes.';
             }
@@ -11661,7 +11597,7 @@ function renderFloatingPlayer(song) {
           }
           let cleanupWarning = '';
           try {
-            if (window.ChordProStorage && ChordProStorage.deleteNotesSync) {
+            if (!result.notesDeleted && window.ChordProStorage && ChordProStorage.deleteNotesSync) {
               const cleanupResult = await ChordProStorage.deleteNotesSync(normalizedSlug);
               if (cleanupResult && cleanupResult.ok === false) cleanupWarning = 'Deleted song, but failed to delete sticky notes.';
             }
@@ -11669,7 +11605,6 @@ function renderFloatingPlayer(song) {
             cleanupWarning = 'Deleted song, but failed to delete sticky notes: ' + getStatusMessage(error, '');
           }
           App.setBusyMessage('Refreshing list...');
-          App.state.dedupeSongs = null;
           App.loadSongs(function() {
             App.showList({ endBusyOnDone: true });
             if (cleanupWarning) {
@@ -12062,7 +11997,7 @@ function renderFloatingPlayer(song) {
     },
 
     sanitizeIntegerText: function(value, allowNegative) {
-      let text = String(value || '');
+      let text = String(value ?? '');
       if (allowNegative) {
         text = text.replace(/[^\d-]/g, '');
         const hasLeadingMinus = text.charAt(0) === '-';
@@ -13136,6 +13071,7 @@ function renderFloatingPlayer(song) {
           ChordProStorage.importSetlists(setlists)
             .then(function(result) {
               App.showSetlists({
+                skipBusy: true,
                 endBusyOnDone: true,
                 keepStatus: true,
                 onDone: function() { App.flashStatus('info', 'Imported ' + ((result && result.count) || setlists.length) + ' setlist(s).'); }
